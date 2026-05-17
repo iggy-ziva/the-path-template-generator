@@ -1,0 +1,467 @@
+/* ================================================================
+   theme-variants.css
+   Per-theme visual overrides layered on top of threshold.css.
+   Applied via class="theme-root theme-page theme-{slug}".
+   
+   Overrides fall into three categories:
+   1. Hero / section gradients  (threshold.css hardcodes warm tones)
+   2. Shape vocabulary          (button radius, card edges)
+   3. Typography treatment      (weight, style, tracking per theme)
+   ================================================================ */
+
+/* ================================================================
+   THRESHOLD — warm parchment, bookish, contemplative (baseline)
+   Buttons: pill.  Typography: flowing serif.  Cards: gentle radius.
+   ================================================================ */
+.theme-threshold .btn                   { border-radius: var(--r-full); }
+.theme-threshold .hero-visual           { border-radius: var(--r-xl); }
+.theme-threshold .testimonial-card      { border-radius: var(--r-lg); }
+
+/* ================================================================
+   SACRED — dark cosmic, amethyst, ceremonial
+   Dark canvas. Buttons: razor-sharp square. Typography: italic Playfair.
+   Cards: borderless with amethyst glow.
+   ================================================================ */
+
+/* — Dark canvas reset — fix hardcoded warm-grey text values — */
+.theme-sacred .hero .subtitle          { color: rgba(237, 232, 255, 0.65); }
+.theme-sacred .hero-meta               { color: rgba(237, 232, 255, 0.65); }
+.theme-sacred .hero-meta .label        { color: rgba(185, 168, 232, 0.45); }
+.theme-sacred .hero-host-badge         { color: rgba(237, 232, 255, 0.70); }
+.theme-sacred .hero-host-badge::before { background: rgba(155, 111, 245, 0.35); }
+
+/* — Hero gradient — midnight purple with amethyst radial glow — */
+.theme-sacred .hero::before {
+  background:
+    radial-gradient(55% 45% at 65% 12%, rgba(155, 111, 245, 0.25), transparent 65%),
+    radial-gradient(40% 35% at 10% 80%, rgba(30, 10, 54, 0.90), transparent 70%),
+    linear-gradient(180deg, #200A42 0%, #09060F 55%, #060310 100%);
+}
+.theme-sacred .hero-visual {
+  background:
+    radial-gradient(65% 55% at 50% 30%, rgba(155, 111, 245, 0.30), transparent 65%),
+    linear-gradient(180deg, #2A1060 0%, #0E0830 100%);
+  border-radius: 0;
+}
+.theme-sacred .hero-visual::after       { opacity: 0.6; }
+
+/* — Section dark text fix — */
+.theme-sacred .extra-vp p              { color: rgba(237, 232, 255, 0.72); }
+.theme-sacred .extra-vp p strong       { color: var(--text-inverse); }
+.theme-sacred .final-vp p              { color: rgba(237, 232, 255, 0.72); }
+.theme-sacred .final-vp .cta-microcopy { color: rgba(237, 232, 255, 0.92); }
+.theme-sacred .encourage.dark-bg .btn-primary   { color: #09060F; }
+.theme-sacred .encourage.accent-bg .btn-primary { color: #09060F; }
+.theme-sacred .final-vp .btn-primary            { color: #09060F; }
+
+/* — Buttons — zero radius, uppercase, temple-gate feel — */
+.theme-sacred .btn {
+  border-radius: 0;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+}
+.theme-sacred .btn-primary             { border: 1px solid transparent; }
+.theme-sacred .hero-cta-row .btn-primary { border-color: var(--accent-highlight); }
+
+/* — Eyebrow — italic, gold, smaller tracking — */
+.theme-sacred .eyebrow {
+  font-style: italic;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-size: 15px;
+  color: var(--text-accent);
+}
+.theme-sacred .hero .hero-eyebrow      { font-style: normal; }
+
+/* — Typography treatment — */
+.theme-sacred .display-hero {
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.theme-sacred .pull-quote              { font-weight: 700; }
+
+/* — Cards — razor edge with amethyst glow — */
+.theme-sacred .testimonial-card {
+  border-radius: 0;
+  background: var(--surface-raised);
+  border: 1px solid rgba(155, 111, 245, 0.20);
+  box-shadow: 0 0 32px rgba(155, 111, 245, 0.08), 0 0 0 0 transparent;
+}
+.theme-sacred .form-card               { border-radius: 0; }
+.theme-sacred .sales-card              { border-radius: 0; }
+.theme-sacred .video-wrap              { border-radius: 0 !important; }
+.theme-sacred .upsell-card             { border-radius: 0; }
+.theme-sacred .bonus-card              { border-radius: 0; }
+
+/* ================================================================
+   EXECUTIVE — pure white, deep navy, antique gold
+   Buttons: sharp 2px, all-caps. Typography: heavy Montserrat.
+   Cards: left-border accent only.
+   ================================================================ */
+
+/* — Hero gradient — authority navy with gold shimmer — */
+.theme-executive .hero::before {
+  background:
+    radial-gradient(40% 35% at 78% 8%, rgba(201, 168, 76, 0.18), transparent 55%),
+    radial-gradient(55% 45% at 8% 82%, rgba(10, 22, 40, 0.95), transparent 65%),
+    linear-gradient(180deg, #0F1E36 0%, #0A1628 55%, #07101E 100%);
+}
+.theme-executive .hero-visual {
+  background:
+    radial-gradient(50% 40% at 50% 25%, rgba(201, 168, 76, 0.22), transparent 60%),
+    linear-gradient(180deg, #152840 0%, #0A1628 100%);
+  border-radius: 2px;
+}
+
+/* — Buttons — authoritative: 2px, uppercase, tight — */
+.theme-executive .btn {
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* — Eyebrow — very small, very wide tracking — */
+.theme-executive .eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* — Typography treatment — heavy Montserrat — */
+.theme-executive .display-hero {
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.theme-executive .display-section      { font-weight: 700; letter-spacing: -0.03em; }
+.theme-executive .display-sub          { font-weight: 700; }
+.theme-executive .pull-quote           { font-style: normal; font-weight: 600; letter-spacing: -0.02em; }
+
+/* — Cards — clean left-border accent, no shadow — */
+.theme-executive .testimonial-card {
+  border-radius: 2px;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  border-left: 3px solid var(--accent-highlight);
+  box-shadow: none;
+  background: var(--surface-sunken);
+}
+.theme-executive .form-card            { border-radius: 2px; }
+.theme-executive .hero-visual          { border-radius: 2px; }
+.theme-executive .upsell-card          { border-radius: 2px; }
+.theme-executive .bonus-card           { border-radius: 2px; }
+
+/* ================================================================
+   WELLNESS — sage-green cream, terracotta glow, somatic
+   Buttons: very soft 32px pill. Typography: Cormorant flowing italic.
+   Cards: deep rounded, shadowbox only.
+   ================================================================ */
+
+/* — Hero gradient — deep sage forest with terracotta warmth — */
+.theme-wellness .hero::before {
+  background:
+    radial-gradient(55% 45% at 68% 18%, rgba(196, 113, 77, 0.20), transparent 65%),
+    radial-gradient(65% 55% at 12% 82%, rgba(26, 48, 37, 0.95), transparent 70%),
+    linear-gradient(180deg, #243B2C 0%, #1A3025 55%, #0F1C14 100%);
+}
+.theme-wellness .hero-visual {
+  background:
+    radial-gradient(60% 50% at 50% 30%, rgba(196, 113, 77, 0.22), transparent 65%),
+    linear-gradient(180deg, #2D4A38 0%, #0F1C14 100%);
+  border-radius: var(--r-xl);
+}
+
+/* — Buttons — ultra-soft pill — */
+.theme-wellness .btn {
+  border-radius: 32px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* — Eyebrow — italic, lowercase, breathing space — */
+.theme-wellness .eyebrow {
+  text-transform: none;
+  letter-spacing: 0.03em;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--text-accent);
+}
+.theme-wellness .hero .hero-eyebrow    { font-style: normal; }
+
+/* — Typography treatment — flowing, light-weight Cormorant — */
+.theme-wellness .display-hero {
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: 0.005em;
+}
+.theme-wellness .display-section       { font-style: italic; font-weight: 400; }
+.theme-wellness .pull-quote            { font-weight: 300; }
+
+/* — Cards — very rounded, shadow only — */
+.theme-wellness .testimonial-card {
+  border-radius: 20px;
+  border-color: transparent;
+  box-shadow: 0 8px 40px rgba(24, 40, 25, 0.09), 0 2px 8px rgba(24, 40, 25, 0.05);
+}
+.theme-wellness .form-card             { border-radius: 20px; }
+.theme-wellness .hero-visual           { border-radius: var(--r-xl); }
+.theme-wellness .upsell-card           { border-radius: 20px; }
+
+/* ================================================================
+   HIGHPERF — ultra-dark navy, electric blue, neon green
+   Dark canvas. Buttons: 4px technical. Typography: Space Grotesk sans for display.
+   Cards: electric left-border.
+   ================================================================ */
+
+/* — Dark canvas reset — */
+.theme-highperf .hero .subtitle        { color: rgba(232, 238, 248, 0.60); }
+.theme-highperf .hero-meta             { color: rgba(232, 238, 248, 0.60); }
+.theme-highperf .hero-meta .label      { color: rgba(160, 176, 204, 0.45); }
+.theme-highperf .hero-host-badge       { color: rgba(232, 238, 248, 0.65); }
+.theme-highperf .hero-host-badge::before { background: rgba(0, 102, 255, 0.35); }
+
+/* — Hero gradient — ultra-dark with electric blue pulse — */
+.theme-highperf .hero::before {
+  background:
+    radial-gradient(50% 40% at 72% 12%, rgba(0, 102, 255, 0.22), transparent 60%),
+    radial-gradient(35% 30% at 12% 78%, rgba(0, 255, 136, 0.08), transparent 55%),
+    linear-gradient(180deg, #030A1F 0%, #080D17 55%, #050A13 100%);
+}
+.theme-highperf .hero::after            { opacity: 0.7; }
+.theme-highperf .hero-visual {
+  background:
+    radial-gradient(60% 50% at 50% 30%, rgba(0, 102, 255, 0.28), transparent 65%),
+    linear-gradient(180deg, #0A1A3A 0%, #020610 100%);
+  border-radius: 4px;
+}
+
+/* — Hero CTA: neon green primary button — */
+.theme-highperf .hero-cta-row .btn-primary {
+  background: var(--accent-highlight);
+  color: #080D17;
+}
+.theme-highperf .hero-cta-row .btn-primary:hover {
+  background: var(--accent-primary-hover-light);
+}
+
+/* — Section dark text fix — */
+.theme-highperf .extra-vp p            { color: rgba(232, 238, 248, 0.70); }
+.theme-highperf .extra-vp p strong     { color: var(--text-inverse); }
+.theme-highperf .final-vp p            { color: rgba(232, 238, 248, 0.70); }
+.theme-highperf .final-vp .cta-microcopy { color: rgba(232, 238, 248, 0.90); }
+.theme-highperf .encourage.dark-bg .btn-primary   { color: #080D17; }
+.theme-highperf .encourage.accent-bg .btn-primary { color: #080D17; }
+.theme-highperf .final-vp .btn-primary            { color: #080D17; }
+
+/* — Buttons — 4px technical — */
+.theme-highperf .btn {
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* — Eyebrow — monospace, electric, no uppercase conversion — */
+.theme-highperf .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  color: var(--accent-primary);
+  text-transform: none;
+}
+.theme-highperf .hero .hero-eyebrow    { font-family: var(--font-body); }
+
+/* — Typography treatment — Space Grotesk for ALL display — */
+.theme-highperf .display-hero {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  font-style: normal;
+}
+.theme-highperf .display-section {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+.theme-highperf .display-sub {
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+.theme-highperf .pull-quote {
+  font-family: var(--font-body);
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.theme-highperf .h2 {
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+/* — Cards — electric border, technical — */
+.theme-highperf .testimonial-card {
+  border-radius: 4px;
+  background: var(--surface-raised);
+  border: 1px solid rgba(0, 102, 255, 0.18);
+  border-left: 3px solid var(--accent-primary);
+  box-shadow: 0 0 24px rgba(0, 102, 255, 0.06);
+}
+.theme-highperf .form-card {
+  border-radius: 4px;
+  border-color: rgba(0, 102, 255, 0.18);
+}
+.theme-highperf .hero-visual           { border-radius: 4px; }
+.theme-highperf .upsell-card           { border-radius: 4px; }
+.theme-highperf .bonus-card            { border-radius: 4px; }
+
+/* ================================================================
+   ABUNDANCE — blush ivory, vivid rose, champagne gold
+   Buttons: generous pill. Typography: italic Libre Baskerville.
+   Cards: blush-border, very rounded.
+   ================================================================ */
+
+/* — Hero gradient — deep plum with rose bloom — */
+.theme-abundance .hero::before {
+  background:
+    radial-gradient(55% 45% at 68% 14%, rgba(192, 81, 106, 0.28), transparent 62%),
+    radial-gradient(45% 40% at 12% 82%, rgba(40, 8, 26, 0.95), transparent 70%),
+    linear-gradient(180deg, #3C1228 0%, #28081A 55%, #1C0512 100%);
+}
+.theme-abundance .hero-visual {
+  background:
+    radial-gradient(65% 55% at 50% 30%, rgba(192, 81, 106, 0.35), transparent 65%),
+    linear-gradient(180deg, #3A1428 0%, #1C0512 100%);
+  border-radius: var(--r-full);
+  aspect-ratio: 1;
+}
+
+/* — Buttons — generous pill, feminine — */
+.theme-abundance .btn {
+  border-radius: var(--r-full);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* — Eyebrow — italic serif, warm, no-caps — */
+.theme-abundance .eyebrow {
+  text-transform: none;
+  letter-spacing: 0.03em;
+  font-weight: 400;
+  font-style: italic;
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+.theme-abundance .hero .hero-eyebrow   { font-style: normal; font-family: var(--font-body); }
+
+/* — Typography treatment — flowing Libre Baskerville — */
+.theme-abundance .display-hero         { font-style: italic; font-weight: 400; }
+.theme-abundance .display-section      { font-style: italic; font-weight: 400; }
+.theme-abundance .pull-quote           { font-weight: 700; font-style: italic; }
+
+/* — Cards — blush border, rounded — */
+.theme-abundance .testimonial-card {
+  border-radius: var(--r-xl);
+  border-color: rgba(192, 81, 106, 0.18);
+  box-shadow: 0 8px 40px rgba(42, 15, 28, 0.08);
+}
+.theme-abundance .form-card            { border-radius: var(--r-lg); }
+.theme-abundance .hero-visual          { border-radius: var(--r-full); }
+.theme-abundance .upsell-card          { border-radius: var(--r-xl); }
+
+/* ================================================================
+   EARTH — amber parchment, deep forest, ceremonial
+   Buttons: 6px natural. Typography: Josefin bold uppercase + Merriweather body.
+   Cards: offset shadow, small radius.
+   ================================================================ */
+
+/* — Hero gradient — deep dark forest with amber ember — */
+.theme-earth .hero::before {
+  background:
+    radial-gradient(50% 42% at 68% 18%, rgba(196, 137, 26, 0.22), transparent 62%),
+    radial-gradient(65% 55% at 10% 80%, rgba(15, 32, 24, 0.96), transparent 70%),
+    linear-gradient(180deg, #1A2E20 0%, #0F2018 55%, #081410 100%);
+}
+.theme-earth .hero-visual {
+  background:
+    radial-gradient(60% 50% at 50% 32%, rgba(196, 137, 26, 0.30), transparent 65%),
+    linear-gradient(180deg, #1A2E20 0%, #081410 100%);
+  border-radius: var(--r-md);
+}
+
+/* — Buttons — natural, 6px — */
+.theme-earth .btn {
+  border-radius: 6px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+
+/* — Eyebrow — very wide tracking, reverent, tiny — */
+.theme-earth .eyebrow {
+  letter-spacing: 0.28em;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--accent-highlight);
+  font-family: var(--font-display);
+}
+
+/* — Typography treatment — Josefin Sans display, all-caps hero — */
+.theme-earth .display-hero {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: clamp(36px, 5.5vw, 64px);
+}
+.theme-earth .display-section {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.theme-earth .display-sub {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.theme-earth .pull-quote {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: 0em;
+}
+.theme-earth .h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* — Cards — offset shadow (hand-made feel) — */
+.theme-earth .testimonial-card {
+  border-radius: 4px;
+  background: var(--surface-raised);
+  border-color: var(--border-subtle);
+  box-shadow: 3px 3px 0 var(--border-subtle);
+}
+.theme-earth .form-card                { border-radius: 4px; }
+.theme-earth .hero-visual              { border-radius: var(--r-md); }
+.theme-earth .upsell-card              { border-radius: 4px; box-shadow: 3px 3px 0 var(--border-subtle); }
+
+/* ================================================================
+   Shared dark-canvas section backgrounds — keep sections distinct
+   ================================================================ */
+.theme-sacred .hero,
+.theme-highperf .hero {
+  /* surface-inverse is already set to the dark theme inverse colour */
+}
+
+/* On dark canvases, "sunken" encourage sections need enough contrast */
+.theme-sacred .encourage.sunken-bg     { background: var(--surface-sunken); }
+.theme-highperf .encourage.sunken-bg   { background: var(--surface-sunken); }

@@ -4,6 +4,7 @@ import ThemeSwitcher from "@/components/ThemeSwitcher";
 import FunnelNav from "@/components/FunnelNav";
 import type { ThemeSlug } from "@/lib/themes";
 import "./threshold.css";
+import "./theme-variants.css";
 
 export default async function ThemeLayout({
   children,
@@ -55,7 +56,7 @@ export default async function ThemeLayout({
         }}
       />
       <ThemeSwitcher currentSlug={theme.slug as ThemeSlug} />
-      <div className="theme-root theme-page" style={cssVars}>
+      <div className={`theme-root theme-page theme-${theme.slug}`} style={cssVars}>
         {children}
       </div>
       <FunnelNav slug={theme.slug as ThemeSlug} />

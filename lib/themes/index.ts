@@ -239,25 +239,25 @@ const wellness = makeTheme({
       "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap",
   },
   colors: {
-    surfaceCanvas: "#FAF6F0",
-    surfaceSunken: "#F1E9DA",
+    surfaceCanvas: "#F3F7F0",   // sage-tinted cream — clearly green-leaning
+    surfaceSunken: "#E5EDDE",   // sage green
     surfaceRaised: "#FFFFFF",
-    surfaceAccent: "#3A4A3F",
-    surfaceInverse: "#1F2A20",
-    textPrimary: "#2C1810",
-    textSecondary: "#4A3528",
-    textTertiary: "#7A6450",
-    textInverse: "#FAF6F0",
-    textAccent: "#A85E3A",
-    accentPrimary: "#A85E3A",
-    accentPrimaryHover: "#82452A",
-    accentPrimaryLight: "#E1B47A",
-    accentPrimaryHoverLight: "#F0C892",
-    accentSecondary: "#7A9E7E",
-    accentHighlight: "#E1B47A",
-    borderSubtle: "#DECFB5",
-    borderStrong: "#2C1810",
-    success: "#5C7A4F",
+    surfaceAccent: "#2D4A38",   // forest green for dark sections
+    surfaceInverse: "#1A3025",  // deep forest hero
+    textPrimary: "#182819",     // dark forest green (not warm brown!)
+    textSecondary: "#334A3A",
+    textTertiary: "#6A8570",
+    textInverse: "#F3F7F0",
+    textAccent: "#5A8B65",      // sage green
+    accentPrimary: "#5A8B65",   // sage green buttons (very different from Threshold terracotta)
+    accentPrimaryHover: "#3D6B4A",
+    accentPrimaryLight: "#C4714D", // warm terracotta on dark backgrounds
+    accentPrimaryHoverLight: "#D88060",
+    accentSecondary: "#C4714D",
+    accentHighlight: "#C4714D", // terracotta highlight on dark hero
+    borderSubtle: "#CCDBC4",
+    borderStrong: "#182819",
+    success: "#4A7A50",
   },
 });
 
@@ -343,25 +343,25 @@ const sacred = makeTheme({
       "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Raleway:wght@300;400;500;600&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap",
   },
   colors: {
-    surfaceCanvas: "#F9F4ED",
-    surfaceSunken: "#EEE5D5",
-    surfaceRaised: "#FFFFFF",
-    surfaceAccent: "#2A1444",
-    surfaceInverse: "#160820",
-    textPrimary: "#1A0A2E",
-    textSecondary: "#3D2858",
-    textTertiary: "#6B5876",
-    textInverse: "#F9F4ED",
-    textAccent: "#5C2A8E",
-    accentPrimary: "#5C2A8E",
-    accentPrimaryHover: "#3D1A6B",
-    accentPrimaryLight: "#D4AF37",
-    accentPrimaryHoverLight: "#E8C955",
-    accentSecondary: "#4A7C5F",
-    accentHighlight: "#D4AF37",
-    borderSubtle: "#D9CCB8",
-    borderStrong: "#1A0A2E",
-    success: "#4A7C5F",
+    surfaceCanvas: "#09060F",   // near-black, deep purple tint — DARK CANVAS
+    surfaceSunken: "#060310",   // even darker for sunken sections
+    surfaceRaised: "#140D24",   // slightly lighter for cards
+    surfaceAccent: "#1A1035",   // dark purple for extra-vp / accent sections
+    surfaceInverse: "#1E0A36",  // deep purple hero
+    textPrimary: "#EDE8FF",     // lavender white — light on dark
+    textSecondary: "#C8B8F0",   // muted lavender
+    textTertiary: "#8A7AB8",    // darker muted lavender
+    textInverse: "#EDE8FF",     // also light (inverse sections are still dark)
+    textAccent: "#D4AF37",      // gold
+    accentPrimary: "#9B6FF5",   // amethyst
+    accentPrimaryHover: "#7A4FD4",
+    accentPrimaryLight: "#D4AF37",  // gold on dark
+    accentPrimaryHoverLight: "#E0C050",
+    accentSecondary: "#3A2A6A",
+    accentHighlight: "#D4AF37", // gold
+    borderSubtle: "#2A1E44",    // dark purple border
+    borderStrong: "#9B6FF5",    // amethyst border
+    success: "#4A9B6A",
   },
   overrides: {
     landing: {
@@ -605,25 +605,25 @@ const highperf = makeTheme({
       "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap",
   },
   colors: {
-    surfaceCanvas: "#F4F7FC",
-    surfaceSunken: "#E6EDF8",
-    surfaceRaised: "#FFFFFF",
-    surfaceAccent: "#0A1730",
-    surfaceInverse: "#06101F",
-    textPrimary: "#0A0F1A",
-    textSecondary: "#2A3548",
-    textTertiary: "#6B7A8C",
-    textInverse: "#F4F7FC",
-    textAccent: "#0050D8",
-    accentPrimary: "#0050D8",
-    accentPrimaryHover: "#003BAA",
-    accentPrimaryLight: "#00DD7A",
-    accentPrimaryHoverLight: "#33EA94",
-    accentSecondary: "#00AAFF",
-    accentHighlight: "#00DD7A",
-    borderSubtle: "#D2DCEC",
-    borderStrong: "#0A0F1A",
-    success: "#00B85F",
+    surfaceCanvas: "#080D17",   // ultra-dark navy — DARK CANVAS
+    surfaceSunken: "#050A13",   // even darker
+    surfaceRaised: "#0E1525",   // slightly lighter for cards
+    surfaceAccent: "#0A1A3A",   // dark blue for accent sections
+    surfaceInverse: "#030710",  // near-black hero
+    textPrimary: "#E8EEF8",     // cool near-white
+    textSecondary: "#A0B0CC",   // muted blue-grey
+    textTertiary: "#5A7090",    // darker muted
+    textInverse: "#E8EEF8",     // also light
+    textAccent: "#00AAFF",      // bright cyan-blue
+    accentPrimary: "#0066FF",   // electric blue
+    accentPrimaryHover: "#0050CC",
+    accentPrimaryLight: "#00FF88",  // neon green on dark
+    accentPrimaryHoverLight: "#33FF9E",
+    accentSecondary: "#004499",
+    accentHighlight: "#00FF88", // neon green
+    borderSubtle: "#1A2840",    // dark blue border
+    borderStrong: "#0066FF",    // electric blue border
+    success: "#00CC6A",
   },
   overrides: {
     landing: {
@@ -772,24 +772,24 @@ const abundance = makeTheme({
       "https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600&family=Cinzel:wght@400;600&display=swap",
   },
   colors: {
-    surfaceCanvas: "#FDF7F0",
-    surfaceSunken: "#F5E8DA",
+    surfaceCanvas: "#FDF0EE",   // blush ivory — warm pink-leaning
+    surfaceSunken: "#F5DCE0",   // deeper blush
     surfaceRaised: "#FFFFFF",
-    surfaceAccent: "#2A1A1E",
-    surfaceInverse: "#1F1218",
-    textPrimary: "#2A1A1E",
-    textSecondary: "#4C2E36",
-    textTertiary: "#7A5560",
-    textInverse: "#FDF7F0",
-    textAccent: "#A35462",
-    accentPrimary: "#A35462",
-    accentPrimaryHover: "#7E3D4A",
-    accentPrimaryLight: "#C9A96E",
-    accentPrimaryHoverLight: "#DCC18E",
-    accentSecondary: "#6B9E7A",
-    accentHighlight: "#C9A96E",
-    borderSubtle: "#E5D2C4",
-    borderStrong: "#2A1A1E",
+    surfaceAccent: "#3A0F1F",   // deep plum for dark sections
+    surfaceInverse: "#28081A",  // very deep plum hero
+    textPrimary: "#2A0F1C",     // deep plum text
+    textSecondary: "#5C2A3A",
+    textTertiary: "#8A6070",
+    textInverse: "#FDF0EE",     // blush on dark
+    textAccent: "#C0516A",      // vivid rose
+    accentPrimary: "#C0516A",   // vivid rose buttons
+    accentPrimaryHover: "#9B3A52",
+    accentPrimaryLight: "#E8C090",   // champagne on dark
+    accentPrimaryHoverLight: "#F0D0A8",
+    accentSecondary: "#7A9E7E",
+    accentHighlight: "#E8C090", // champagne
+    borderSubtle: "#F0C8D0",    // blush pink border
+    borderStrong: "#2A0F1C",
     success: "#6B9E7A",
   },
   overrides: {
