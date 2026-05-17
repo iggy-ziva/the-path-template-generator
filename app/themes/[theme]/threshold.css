@@ -795,7 +795,7 @@
   .theme-root .value-prop.image-left .vp-text { order: 1; }
   .theme-root .value-prop.image-left .vp-image { order: 2; }
 }
-.theme-root .vp-text .h2 { margin-bottom: var(--s-6); max-width: 16ch; }
+.theme-root .vp-text .h2 { margin-bottom: var(--s-6); }
 .theme-root .vp-text p { color: var(--text-secondary); font-size: 18px; line-height: 1.65; }
 .theme-root .vp-pull {
   margin-top: var(--s-6);
