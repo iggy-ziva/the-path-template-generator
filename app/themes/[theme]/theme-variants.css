@@ -453,6 +453,22 @@
 .theme-earth .upsell-card              { border-radius: 4px; box-shadow: 3px 3px 0 var(--border-subtle); }
 
 /* ================================================================
+   Program-checkout page backgrounds
+   Threshold keeps the original dark-canvas feel for this page.
+   Other themes let the canvas show (split light-form / dark-order).
+   ================================================================ */
+
+/* Threshold: full dark canvas for program-checkout */
+.theme-threshold .co-wrap    { background: var(--surface-inverse); border-radius: var(--r-lg); }
+
+/* Rounded order-col per theme (overrides base r-lg) */
+.theme-sacred .order-col     { border-radius: 0; }
+.theme-executive .order-col  { border-radius: 2px; }
+.theme-highperf .order-col   { border-radius: 4px; }
+.theme-abundance .order-col  { border-radius: var(--r-xl); }
+.theme-earth .order-col      { border-radius: 4px; }
+
+/* ================================================================
    Shared dark-canvas section backgrounds — keep sections distinct
    ================================================================ */
 .theme-sacred .hero,
