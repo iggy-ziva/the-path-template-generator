@@ -252,8 +252,8 @@
   content: "";
   position: absolute; inset: 0;
   background:
-    radial-gradient(120% 80% at 30% 20%, rgba(212,168,120,0.18), transparent 60%),
-    radial-gradient(120% 80% at 80% 90%, rgba(15,14,12,0.6), transparent 60%);
+    radial-gradient(120% 80% at 30% 20%, color-mix(in srgb, var(--accent-highlight) 18%, transparent), transparent 60%),
+    radial-gradient(120% 80% at 80% 90%, color-mix(in srgb, var(--surface-inverse) 60%, transparent), transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -272,12 +272,12 @@
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(245, 241, 234, 0.7);
+  color: color-mix(in srgb, var(--text-inverse) 70%, transparent);
   max-width: 80%;
 }
 .theme-root .img-placeholder .img-label strong {
   display: block;
-  color: rgba(245, 241, 234, 0.95);
+  color: color-mix(in srgb, var(--text-inverse) 95%, transparent);
   margin-top: 4px;
   font-family: var(--font-display);
   font-style: italic;
@@ -292,15 +292,16 @@
 .theme-root .ratio-1-1  { aspect-ratio: 1 / 1; }
 .theme-root .ratio-21-9 { aspect-ratio: 21 / 9; }
 
-.theme-root .tint-forest    { background: #1F2A2A; }
-.theme-root .tint-stone     { background: #2A2724; }
-.theme-root .tint-bronze    { background: #3a2a1c; }
-.theme-root .tint-sage      { background: #2c3a32; }
-.theme-root .tint-terracotta{ background: #3a2620; }
-.theme-root .tint-ink       { background: #0F0E0C; }
+/* Tint variants — all derive from theme palette so each theme looks distinct */
+.theme-root .tint-forest    { background: var(--surface-accent); }
+.theme-root .tint-stone     { background: color-mix(in srgb, var(--surface-inverse) 70%, var(--surface-accent)); }
+.theme-root .tint-bronze    { background: color-mix(in srgb, var(--accent-primary) 15%, var(--surface-accent)); }
+.theme-root .tint-sage      { background: color-mix(in srgb, var(--accent-secondary) 20%, var(--surface-accent)); }
+.theme-root .tint-terracotta{ background: color-mix(in srgb, var(--accent-highlight) 20%, var(--surface-accent)); }
+.theme-root .tint-ink       { background: var(--surface-inverse); }
 .theme-root .tint-cream     { background: var(--surface-sunken); color: var(--text-secondary); }
 .theme-root .tint-cream .img-label { color: var(--text-tertiary); }
-.theme-root .tint-cream .img-label strong { color: var(--text-primary); }
+.theme-root .tint-cream .img-label strong { color: var(--text-primary); font-style: normal; }
 
 /* =====================================================================
    Sticky bar (01)
@@ -615,8 +616,8 @@
   content: "";
   position: absolute; inset: 0;
   background:
-    radial-gradient(60% 60% at 50% 50%, rgba(212,168,120,0.18), transparent 70%),
-    linear-gradient(180deg, #1F2A2A 0%, #0F0E0C 100%);
+    radial-gradient(60% 60% at 50% 50%, color-mix(in srgb, var(--accent-highlight) 18%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
 }
 .theme-root .video-frame::after {
   content: "";
@@ -630,11 +631,12 @@
   transform: translate(-50%, -50%);
   width: 88px; height: 88px;
   border-radius: 50%;
-  background: rgba(245,241,234,0.95);
+  background: color-mix(in srgb, var(--text-inverse) 95%, transparent);
   display: grid; place-items: center;
   transition: transform 200ms ease;
   z-index: 1;
   border: none;
+  cursor: pointer;
 }
 .theme-root .video-frame:hover .play-button { transform: translate(-50%, -50%) scale(1.06); }
 .theme-root .play-button svg { width: 28px; height: 28px; fill: var(--text-primary); margin-left: 4px; }

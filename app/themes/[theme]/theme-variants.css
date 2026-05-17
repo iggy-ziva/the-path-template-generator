@@ -479,3 +479,108 @@
 /* On dark canvases, "sunken" encourage sections need enough contrast */
 .theme-sacred .encourage.sunken-bg     { background: var(--surface-sunken); }
 .theme-highperf .encourage.sunken-bg   { background: var(--surface-sunken); }
+
+/* ================================================================
+   Image placeholder & video-frame per-theme personalities.
+   Base CSS in threshold.css uses color-mix on theme variables, so
+   each theme already gets its own palette. These overrides add
+   distinct gradient directions, edge treatments, and label styles.
+   ================================================================ */
+
+/* — THRESHOLD — warm radial glow, film-grain overlay, gentle serif label — */
+.theme-threshold .img-placeholder      { border-radius: var(--r-xl); }
+.theme-threshold .img-label            { font-style: italic; letter-spacing: 0.04em; }
+.theme-threshold .video-frame          { border-radius: var(--r-xl); }
+
+/* — SACRED — ceremonial, dramatic diagonal light from upper-right — */
+.theme-sacred .img-placeholder::before {
+  background:
+    radial-gradient(80% 60% at 75% 10%, color-mix(in srgb, var(--accent-highlight) 22%, transparent), transparent 55%),
+    linear-gradient(160deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
+}
+.theme-sacred .img-placeholder         { border-radius: 0; border: 1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent); }
+.theme-sacred .img-label               { font-style: normal; font-weight: 300; letter-spacing: 0.14em; }
+.theme-sacred .video-frame             { border-radius: 0; border: 1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent); }
+.theme-sacred .video-frame::before {
+  background:
+    radial-gradient(70% 50% at 75% 20%, color-mix(in srgb, var(--accent-highlight) 22%, transparent), transparent 65%),
+    linear-gradient(160deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
+}
+
+/* — EXECUTIVE — disciplined, sharp diagonal, understated glow — */
+.theme-executive .img-placeholder::before {
+  background:
+    radial-gradient(50% 40% at 80% 15%, color-mix(in srgb, var(--accent-primary) 12%, transparent), transparent 60%),
+    linear-gradient(135deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
+}
+.theme-executive .img-placeholder      { border-radius: 2px; }
+.theme-executive .img-label            { font-style: normal; font-weight: 600; letter-spacing: 0.12em; }
+.theme-executive .video-frame          { border-radius: 2px; }
+.theme-executive .video-frame::before {
+  background:
+    radial-gradient(50% 40% at 70% 20%, color-mix(in srgb, var(--accent-primary) 12%, transparent), transparent 60%),
+    linear-gradient(135deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
+}
+
+/* — WELLNESS — soft natural light from top-left, breathing feel — */
+.theme-wellness .img-placeholder::before {
+  background:
+    radial-gradient(100% 70% at 15% 10%, color-mix(in srgb, var(--accent-highlight) 20%, transparent), transparent 60%),
+    radial-gradient(60% 50% at 90% 90%, color-mix(in srgb, var(--surface-inverse) 40%, transparent), transparent 55%);
+}
+.theme-wellness .img-placeholder       { border-radius: var(--r-xl); }
+.theme-wellness .img-label             { font-style: italic; letter-spacing: 0.06em; }
+.theme-wellness .video-frame           { border-radius: var(--r-xl); }
+.theme-wellness .video-frame::before {
+  background:
+    radial-gradient(70% 55% at 30% 20%, color-mix(in srgb, var(--accent-highlight) 18%, transparent), transparent 65%),
+    linear-gradient(150deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
+}
+
+/* — HIGHPERF — electric neon scan-line, sharp top-bottom gradient — */
+.theme-highperf .img-placeholder::before {
+  background:
+    radial-gradient(70% 50% at 60% 5%, color-mix(in srgb, var(--accent-highlight) 25%, transparent), transparent 55%),
+    linear-gradient(180deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
+}
+.theme-highperf .img-placeholder       { border-radius: 4px; border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent); }
+.theme-highperf .img-label             { font-style: normal; font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.06em; font-size: 11px; }
+.theme-highperf .img-label strong      { font-family: var(--font-body); font-style: normal; font-weight: 700; }
+.theme-highperf .video-frame           { border-radius: 4px; border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent); }
+.theme-highperf .video-frame::before {
+  background:
+    radial-gradient(65% 45% at 50% 10%, color-mix(in srgb, var(--accent-highlight) 28%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
+}
+
+/* — ABUNDANCE — soft rose vignette, feminine, champagne shimmer — */
+.theme-abundance .img-placeholder::before {
+  background:
+    radial-gradient(90% 65% at 25% 15%, color-mix(in srgb, var(--accent-highlight) 20%, transparent), transparent 58%),
+    radial-gradient(60% 50% at 85% 85%, color-mix(in srgb, var(--accent-primary) 15%, transparent), transparent 55%),
+    linear-gradient(155deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
+}
+.theme-abundance .img-placeholder      { border-radius: var(--r-xl); }
+.theme-abundance .img-label            { font-style: italic; letter-spacing: 0.05em; }
+.theme-abundance .video-frame          { border-radius: var(--r-xl); }
+.theme-abundance .video-frame::before {
+  background:
+    radial-gradient(70% 55% at 45% 40%, color-mix(in srgb, var(--accent-highlight) 20%, transparent), transparent 65%),
+    linear-gradient(155deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
+}
+
+/* — EARTH — raw and textured, warm earth gradients, handcrafted feel — */
+.theme-earth .img-placeholder::before {
+  background:
+    radial-gradient(110% 75% at 20% 25%, color-mix(in srgb, var(--accent-highlight) 18%, transparent), transparent 58%),
+    radial-gradient(80% 60% at 85% 80%, color-mix(in srgb, var(--accent-secondary) 15%, transparent), transparent 55%),
+    linear-gradient(170deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
+}
+.theme-earth .img-placeholder          { border-radius: 4px; }
+.theme-earth .img-label                { font-style: italic; letter-spacing: 0.07em; }
+.theme-earth .video-frame              { border-radius: 4px; }
+.theme-earth .video-frame::before {
+  background:
+    radial-gradient(65% 50% at 40% 30%, color-mix(in srgb, var(--accent-highlight) 18%, transparent), transparent 60%),
+    linear-gradient(170deg, var(--surface-accent) 0%, var(--surface-inverse) 100%);
+}
