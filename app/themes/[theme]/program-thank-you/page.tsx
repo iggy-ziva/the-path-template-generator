@@ -178,13 +178,13 @@ export default async function ProgramThankYouPage({
       {/* Footer */}
       <footer className="ty-footer">
         <div className="inner">
-          <div className="ty-footer-brand">{host.name}</div>
-          <nav className="ty-footer-links">
+          <div className="brand">{host.name}</div>
+          <nav className="links">
             <a href="#">Privacy</a>
             <a href="#">Terms</a>
             <a href={`mailto:${host.email}`}>Contact</a>
           </nav>
-          <span className="ty-footer-copy">
+          <span className="copy">
             © {new Date().getFullYear()} {host.name}
           </span>
         </div>

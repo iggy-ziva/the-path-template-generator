@@ -1342,7 +1342,7 @@
   letter-spacing: 0.01em;
   margin-bottom: var(--s-2);
 }
-.theme-root footer.lp-footer .copy { color: rgba(245,241,234,0.5); font-size: 13px; }
+.theme-root footer.lp-footer .copy { color: color-mix(in srgb, var(--text-inverse) 50%, transparent); font-size: 13px; }
 .theme-root footer.lp-footer .right {
   display: flex; align-items: center; gap: var(--s-6);
   flex-wrap: wrap;
@@ -1353,9 +1353,10 @@
 }
 .theme-root footer.lp-footer .links {
   display: flex; gap: var(--s-5);
-  color: rgba(245,241,234,0.65);
+  color: color-mix(in srgb, var(--text-inverse) 65%, transparent);
   font-size: 14px;
 }
+.theme-root footer.lp-footer .links a { color: inherit; text-decoration: none; }
 .theme-root footer.lp-footer .links a:hover { color: var(--text-inverse); }
 .theme-root footer.lp-footer .btn-primary {
   background: var(--accent-highlight); color: #0F0E0C;
@@ -1836,12 +1837,13 @@
   }
 }
 .theme-root .checkout-footer .copy {
-  font-size: 13px; color: rgba(245,241,234,0.5);
+  font-size: 13px; color: color-mix(in srgb, var(--text-inverse) 50%, transparent);
 }
 .theme-root .checkout-footer .links {
   display: flex; gap: var(--s-5);
-  font-size: 13px; color: rgba(245,241,234,0.6);
+  font-size: 13px; color: color-mix(in srgb, var(--text-inverse) 60%, transparent);
 }
+.theme-root .checkout-footer .links a { color: inherit; text-decoration: none; }
 .theme-root .checkout-footer .links a:hover { color: var(--text-inverse); }
 .theme-root .checkout-ftc {
   max-width: 1100px; margin-inline: auto;
@@ -2121,11 +2123,12 @@
     text-align: center;
   }
 }
-.theme-root .upsell-footer .copy { font-size: 13px; color: rgba(245,241,234,0.5); }
+.theme-root .upsell-footer .copy { font-size: 13px; color: color-mix(in srgb, var(--text-inverse) 50%, transparent); }
 .theme-root .upsell-footer .links {
   display: flex; gap: var(--s-5);
-  font-size: 13px; color: rgba(245,241,234,0.6);
+  font-size: 13px; color: color-mix(in srgb, var(--text-inverse) 60%, transparent);
 }
+.theme-root .upsell-footer .links a { color: inherit; text-decoration: none; }
 .theme-root .upsell-footer .links a:hover { color: var(--text-inverse); }
 
 /* =====================================================================
@@ -2461,11 +2464,12 @@
   font-size: 18px;
   margin-bottom: var(--s-1);
 }
-.theme-root .ty-footer .copy { font-size: 13px; color: rgba(245,241,234,0.5); }
+.theme-root .ty-footer .copy { font-size: 13px; color: color-mix(in srgb, var(--text-inverse) 50%, transparent); }
 .theme-root .ty-footer .links {
   display: flex; gap: var(--s-5);
-  font-size: 13px; color: rgba(245,241,234,0.6);
+  font-size: 13px; color: color-mix(in srgb, var(--text-inverse) 60%, transparent);
 }
+.theme-root .ty-footer .links a { color: inherit; text-decoration: none; }
 .theme-root .ty-footer .links a:hover { color: var(--text-inverse); }
 
 /* =====================================================================
@@ -3067,7 +3071,7 @@
 .theme-root .footer-logo {
   font-family: var(--font-display);
   font-size: 16px; font-weight: 600;
-  color: rgba(245,241,234,0.5);
+  color: color-mix(in srgb, var(--text-inverse) 50%, transparent);
 }
 .theme-root .footer-links {
   display: flex; gap: var(--s-5); flex-wrap: wrap;
@@ -3075,11 +3079,11 @@
 .theme-root .footer-links a {
   font-family: var(--font-body);
   font-size: 12px;
-  color: rgba(245,241,234,0.35);
+  color: color-mix(in srgb, var(--text-inverse) 35%, transparent);
   text-decoration: none;
   transition: color 150ms ease;
 }
-.theme-root .footer-links a:hover { color: rgba(245,241,234,0.7); }
+.theme-root .footer-links a:hover { color: color-mix(in srgb, var(--text-inverse) 70%, transparent); }
 
 /* =====================================================================
    PROGRAM LP
@@ -4177,7 +4181,7 @@
 .theme-root .prog-footer-logo {
   font-family: var(--font-display);
   font-size: 16px; font-weight: 600;
-  color: rgba(245,241,234,0.5);
+  color: color-mix(in srgb, var(--text-inverse) 50%, transparent);
 }
 .theme-root .prog-footer-links {
   display: flex; gap: var(--s-5);
@@ -4186,11 +4190,11 @@
 .theme-root .prog-footer-links a {
   font-family: var(--font-body);
   font-size: 12px;
-  color: rgba(245,241,234,0.35);
+  color: color-mix(in srgb, var(--text-inverse) 35%, transparent);
   text-decoration: none;
   transition: color 150ms ease;
 }
-.theme-root .prog-footer-links a:hover { color: rgba(245,241,234,0.7); }
+.theme-root .prog-footer-links a:hover { color: color-mix(in srgb, var(--text-inverse) 70%, transparent); }
 
 /* =====================================================================
    PROGRAM CHECKOUT
@@ -4675,19 +4679,19 @@
   max-width: 1160px;
   margin-inline: auto;
   padding: var(--s-7) var(--s-7) 0;
-  border-top: 1px solid rgba(245,241,234,0.07);
+  border-top: 1px solid color-mix(in srgb, var(--text-inverse) 7%, transparent);
 }
 @media (max-width: 768px) { .theme-root .co-ftc { padding-inline: var(--s-5); } }
 .theme-root .co-ftc h2 {
   font-size: 11px; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase;
-  color: rgba(245,241,234,0.25);
+  color: color-mix(in srgb, var(--text-inverse) 25%, transparent);
   margin: 0 0 var(--s-3);
 }
 .theme-root .co-ftc p {
   font-size: 13px;
   line-height: 1.65;
-  color: rgba(245,241,234,0.3);
+  color: color-mix(in srgb, var(--text-inverse) 30%, transparent);
   max-width: 860px;
   margin: 0;
 }
@@ -4708,14 +4712,15 @@
 }
 .theme-root .co-footer-copy {
   font-size: 13px;
-  color: rgba(245,241,234,0.25);
+  color: color-mix(in srgb, var(--text-inverse) 25%, transparent);
 }
 .theme-root .co-footer-links {
   display: flex; gap: var(--s-5);
   font-size: 13px;
-  color: rgba(245,241,234,0.35);
+  color: color-mix(in srgb, var(--text-inverse) 35%, transparent);
 }
-.theme-root .co-footer-links a:hover { color: rgba(245,241,234,0.7); }
+.theme-root .co-footer-links a { color: inherit; text-decoration: none; }
+.theme-root .co-footer-links a:hover { color: color-mix(in srgb, var(--text-inverse) 70%, transparent); }
 
 /* =====================================================================
    PROGRAM THANK YOU
@@ -4729,7 +4734,7 @@
 .theme-root .ty-celebration-ring {
   position: absolute; inset: 0;
   border-radius: 50%;
-  border: 1.5px solid rgba(212,168,120,0.4);
+  border: 1.5px solid color-mix(in srgb, var(--accent-highlight) 40%, transparent);
   animation: theme-ring-expand 2.4s ease-out infinite;
 }
 .theme-root .ty-celebration-ring:nth-child(2) { animation-delay: 0.8s; }
@@ -4742,8 +4747,8 @@
 .theme-root .ty-celebration-check {
   width: 80px; height: 80px;
   border-radius: 50%;
-  background: rgba(212,168,120,0.12);
-  border: 1.5px solid rgba(212,168,120,0.35);
+  background: color-mix(in srgb, var(--accent-highlight) 12%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--accent-highlight) 35%, transparent);
   display: grid; place-items: center;
   position: relative; z-index: 1;
 }

@@ -510,7 +510,7 @@ export default async function LandingPage({
       </section>
 
       {/* 21 — Footer */}
-      <footer>
+      <footer className="lp-footer">
         <span className="section-marker">21 — Footer</span>
         <div className="container">
           <div>
