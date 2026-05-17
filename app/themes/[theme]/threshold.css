@@ -1643,8 +1643,9 @@
 }
 .theme-root .privacy-notice a { color: var(--accent-primary); text-decoration: underline; }
 .theme-root .submit-btn {
+  display: block;
   width: 100%;
-  padding: 18px;
+  padding: 19px var(--s-6);
   background: var(--accent-primary);
   color: var(--text-inverse);
   border: none;
@@ -1653,8 +1654,11 @@
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.01em;
+  text-align: center;
   cursor: pointer;
-  transition: background 200ms ease, transform 200ms ease;
+  transition: background 200ms ease, transform 150ms ease;
+  text-decoration: none;
+  margin-bottom: var(--s-4);
 }
 .theme-root .submit-btn:hover {
   background: var(--accent-primary-hover);
@@ -4301,7 +4305,7 @@
   font-family: var(--font-body);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
-.theme-root .plan-card:hover { border-color: rgba(122,74,40,0.35); }
+.theme-root .plan-card:hover { border-color: color-mix(in srgb, var(--accent-primary) 35%, transparent); }
 .theme-root .plan-card.selected {
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 1px var(--accent-primary);
@@ -4310,7 +4314,7 @@
   background: var(--surface-inverse);
   border-color: transparent;
 }
-.theme-root .plan-card-featured:hover { border-color: rgba(212,168,120,0.4); }
+.theme-root .plan-card-featured:hover { border-color: color-mix(in srgb, var(--accent-highlight) 40%, transparent); }
 .theme-root .plan-card-featured.selected {
   border-color: var(--accent-highlight);
   box-shadow: 0 0 0 1px var(--accent-highlight);
@@ -4318,7 +4322,7 @@
 .theme-root .plan-card-badge {
   font-size: 9px; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase;
-  background: rgba(212,168,120,0.2);
+  background: color-mix(in srgb, var(--accent-highlight) 20%, transparent);
   color: var(--accent-highlight);
   padding: 2px 8px;
   border-radius: 9999px;
@@ -4376,6 +4380,129 @@
   transition: opacity 150ms ease;
 }
 .theme-root .plan-card.selected .plan-card-selector svg { opacity: 1; }
+/* ── Stripe placeholder fields ── */
+.theme-root .stripe-field {
+  padding: 12px var(--s-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  font-size: 15px;
+  color: var(--text-tertiary);
+  background: var(--surface-canvas);
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  user-select: none;
+}
+.theme-root .stripe-field svg { width: 16px; height: 16px; opacity: 0.4; flex-shrink: 0; }
+.theme-root .stripe-field-label { font-size: 12px; font-weight: 500; letter-spacing: 0.02em; }
+.theme-root .stripe-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--accent-primary) 60%, transparent);
+  background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+.theme-root .stripe-branding {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* ── Card brand chips ── */
+.theme-root .card-icons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  align-items: center;
+  margin-top: var(--s-2);
+}
+.theme-root .card-chip {
+  width: 30px; height: 19px;
+  border-radius: 3px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  display: grid;
+  place-items: center;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-tertiary);
+}
+.theme-root .card-chip.visa  { color: #1A1F71; background: #f0f2ff; border-color: #c8cde0; }
+.theme-root .card-chip.mc   { background: #f5f0ee; border-color: #ddd; color: #EB001B; }
+.theme-root .card-chip.amex { background: #f0f5ff; border-color: #ccd8ee; color: #2E77BC; }
+
+/* ── "or pay with" divider ── */
+.theme-root .payment-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  margin: var(--s-4) 0;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+.theme-root .payment-divider::before,
+.theme-root .payment-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* ── PayPal button ── */
+.theme-root .paypal-btn {
+  width: 100%;
+  padding: 12px var(--s-5);
+  background: #FFC439;
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  color: #003087;
+  letter-spacing: 0.01em;
+  transition: background 150ms ease, transform 100ms ease;
+}
+.theme-root .paypal-btn:hover { background: #FFD060; transform: translateY(-1px); }
+.theme-root .paypal-btn + .submit-security { margin-top: var(--s-5); }
+
+/* ── Security trust badges ── */
+.theme-root .submit-security {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  margin-top: var(--s-4);
+}
+.theme-root .submit-security-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.theme-root .submit-security-item svg { width: 12px; height: 12px; color: var(--success); }
+.theme-root .submit-security-sep {
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: var(--border-subtle);
+}
+
 .theme-root .submit-section { padding: var(--s-6) var(--s-7) var(--s-7); }
 @media (max-width: 480px) { .theme-root .submit-section { padding: var(--s-5); } }
 .theme-root .order-col {
