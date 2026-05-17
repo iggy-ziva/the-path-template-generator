@@ -593,10 +593,20 @@
   font-weight: 600;
   letter-spacing: 0.04em;
 }
-.theme-root .credibility.inline { padding-block: var(--s-8); }
+.theme-root .credibility.inline {
+  background: var(--surface-sunken);
+}
+/* Padding lives on the container so Tailwind's section-level reset can't zero it */
+.theme-root .credibility.inline > .container {
+  padding-top: var(--s-9);
+  padding-bottom: var(--s-9);
+}
 .theme-root .credibility.inline blockquote { font-size: clamp(20px, 2vw, 24px); }
 @media (max-width: 768px) {
-  .theme-root .credibility.inline { padding-block: var(--s-7); }
+  .theme-root .credibility.inline > .container {
+    padding-top: var(--s-8);
+    padding-bottom: var(--s-8);
+  }
 }
 
 /* =====================================================================
