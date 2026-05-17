@@ -593,8 +593,11 @@
   font-weight: 600;
   letter-spacing: 0.04em;
 }
-.theme-root .credibility.inline { padding-block: var(--s-9); }
+.theme-root .credibility.inline { padding-block: var(--s-8); }
 .theme-root .credibility.inline blockquote { font-size: clamp(20px, 2vw, 24px); }
+@media (max-width: 768px) {
+  .theme-root .credibility.inline { padding-block: var(--s-7); }
+}
 
 /* =====================================================================
    Video (04)
