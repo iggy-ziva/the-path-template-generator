@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>You're In — Threshold · Lena Hartwell</title>
+  <meta name="description" content="Your registration for Threshold is confirmed. Here's everything you need." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- AddEvent calendar widget -->
+  <script type="text/javascript" src="https://cdn.addevent.com/libs/atc/1.6.1/atc.min.js" async defer></script>
+  <style>
+    /* =====================================================================
+       Thank You page — page-specific styles
+       ===================================================================== */
+    body { background: var(--surface-canvas); }
+
+    /* =====================================================================
+       01 — Confirmation hero (dark, full-width)
+       ===================================================================== */
+    .ty-hero {
+      background: var(--surface-inverse);
+      color: var(--text-inverse);
+      padding: var(--s-11) 0 var(--s-10);
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .ty-hero::before {
+      content: "";
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(60% 50% at 60% 20%, rgba(212,168,120,0.15), transparent 70%),
+        radial-gradient(80% 60% at 10% 80%, rgba(31,42,42,0.9), transparent 70%),
+        linear-gradient(180deg, #14130f 0%, #0F0E0C 100%);
+      z-index: -1;
+    }
+    .ty-hero::after {
+      content: "";
+      position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 3px 3px;
+      mix-blend-mode: overlay;
+      opacity: 0.4;
+      z-index: -1;
+    }
+    .ty-hero .inner {
+      max-width: 760px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+      text-align: center;
+    }
+    @media (max-width: 768px) {
+      .ty-hero .inner { padding-inline: var(--s-5); }
+    }
+    .ty-check {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: rgba(92, 122, 79, 0.2);
+      border: 2px solid rgba(92, 122, 79, 0.5);
+      display: grid; place-items: center;
+      margin: 0 auto var(--s-6);
+    }
+    .ty-check svg { width: 28px; height: 28px; color: #9CC48A; }
+    .ty-headline {
+      font-family: var(--font-display);
+      font-size: clamp(48px, 7vw, 72px);
+      font-weight: 400;
+      line-height: 1.0;
+      letter-spacing: -0.025em;
+      color: var(--text-inverse);
+      margin: 0 0 var(--s-5);
+    }
+    .ty-event-name {
+      font-family: var(--font-display);
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 400;
+      color: #D4A878;
+      letter-spacing: -0.01em;
+      margin: 0 0 var(--s-4);
+    }
+    .ty-event-details {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s-4);
+      font-size: 15px;
+      color: rgba(245,241,234,0.65);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .ty-event-details .sep {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: rgba(245,241,234,0.3);
+    }
+    .ty-email-note {
+      margin-top: var(--s-6);
+      padding: var(--s-4) var(--s-5);
+      background: rgba(245,241,234,0.06);
+      border: 1px solid rgba(245,241,234,0.1);
+      border-radius: var(--r-md);
+      font-size: 14px;
+      color: rgba(245,241,234,0.75);
+      display: inline-block;
+    }
+    .ty-email-note strong { color: var(--text-inverse); }
+
+    /* =====================================================================
+       Page content wrapper
+       ===================================================================== */
+    .ty-content {
+      max-width: 760px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+    }
+    @media (max-width: 768px) {
+      .ty-content { padding-inline: var(--s-5); }
+    }
+
+    /* =====================================================================
+       02 — What happens next
+       ===================================================================== */
+    .next-steps-section {
+      padding-block: var(--s-9);
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin: 0 0 var(--s-6);
+    }
+    .steps-list {
+      display: grid;
+      gap: var(--s-5);
+    }
+    .step-item {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: var(--s-5);
+      align-items: start;
+    }
+    .step-num {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--surface-sunken);
+      border: 2px solid var(--border-subtle);
+      display: grid; place-items: center;
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--accent-primary);
+      flex-shrink: 0;
+    }
+    .step-content h3 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--text-primary);
+      margin: 0 0 var(--s-2);
+      letter-spacing: -0.005em;
+    }
+    .step-content p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* =====================================================================
+       03 — Add to Calendar
+       ===================================================================== */
+    .calendar-section {
+      padding-block: var(--s-8);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .calendar-inner {
+      text-align: center;
+    }
+    .calendar-headline {
+      font-family: var(--font-display);
+      font-size: clamp(26px, 3.5vw, 36px);
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      margin: 0 0 var(--s-3);
+    }
+    .calendar-sub {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: var(--s-6);
+    }
+    /* AddEvent widget default button overrides */
+    .addeventatc {
+      display: inline-flex !important;
+      align-items: center;
+      gap: var(--s-2);
+      padding: 14px 28px !important;
+      background: var(--accent-primary) !important;
+      color: var(--text-inverse) !important;
+      border-radius: var(--r-md) !important;
+      font-family: var(--font-body) !important;
+      font-size: 15px !important;
+      font-weight: 600 !important;
+      border: none !important;
+      box-shadow: none !important;
+      cursor: pointer !important;
+      transition: background 200ms ease, transform 200ms ease !important;
+    }
+    .addeventatc:hover {
+      background: var(--accent-primary-hover) !important;
+      transform: translateY(-1px) !important;
+    }
+    /* Nuke the AddEvent injected icon — note underscore in class name */
+    .addeventatc .addeventatc_icon,
+    .addeventatc_icon {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      opacity: 0 !important;
+    }
+    /* White calendar icon via pseudo-element — reliable since it targets the container, not injected children */
+    .addeventatc::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F5F1EA' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    /* Force text white — target AddEvent's .atc_node wrapper spans explicitly */
+    .addeventatc,
+    .addeventatc *,
+    .addeventatc .atc_node,
+    .atc_node {
+      color: #FFFFFF !important;
+    }
+    /* Fallback manual buttons (shown if AddEvent script doesn't load) */
+    .calendar-fallback {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--s-3);
+      justify-content: center;
+      margin-top: var(--s-4);
+    }
+    .cal-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s-2);
+      padding: 10px 18px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--surface-raised);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 150ms ease;
+    }
+    .cal-btn:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+    .cal-btn svg { width: 16px; height: 16px; }
+    .calendar-date-reminder {
+      margin-top: var(--s-5);
+      padding: var(--s-4) var(--s-5);
+      background: var(--surface-sunken);
+      border-radius: var(--r-md);
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+    .calendar-date-reminder strong { color: var(--text-primary); }
+
+    /* =====================================================================
+       04 — Event details
+       ===================================================================== */
+    .details-section {
+      padding-block: var(--s-8);
+    }
+    .details-grid {
+      display: grid;
+      gap: 0;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      background: var(--surface-raised);
+    }
+    .detail-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: var(--s-4);
+      padding: var(--s-4) var(--s-5);
+      border-bottom: 1px solid var(--border-subtle);
+      align-items: baseline;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      font-weight: 600;
+    }
+    .detail-value {
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+    .detail-value .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: var(--r-full);
+      background: rgba(58, 74, 63, 0.12);
+      color: var(--accent-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .detail-value .live-badge .dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent-secondary);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .zoom-note {
+      margin-top: var(--s-5);
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-style: italic;
+    }
+
+    /* =====================================================================
+       05 — Share prompt
+       ===================================================================== */
+    .share-section {
+      padding-block: var(--s-8);
+      border-top: 1px solid var(--border-subtle);
+    }
+    .share-headline {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 3vw, 32px);
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      margin: 0 0 var(--s-3);
+      text-wrap: balance;
+    }
+    .share-sub {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: var(--s-5);
+    }
+    .share-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--s-3);
+    }
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s-2);
+      padding: 10px 18px;
+      border-radius: var(--r-md);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 200ms ease;
+      border: none;
+    }
+    .share-btn:hover { opacity: 0.85; }
+    .share-btn svg { width: 16px; height: 16px; }
+    .share-email { background: var(--surface-sunken); color: var(--text-primary); }
+    .share-facebook { background: #1877F2; color: #fff; }
+    .share-x { background: #000; color: #fff; }
+    .share-copy { background: var(--surface-sunken); color: var(--text-primary); border: 1px solid var(--border-subtle); }
+
+    /* =====================================================================
+       06 — Personal note
+       ===================================================================== */
+    .personal-note-section {
+      padding-block: var(--s-9);
+      background: var(--surface-sunken);
+    }
+    .personal-note-section .ty-content {
+      text-align: left;
+    }
+    .personal-note-section .note-headline {
+      font-family: var(--font-display);
+      font-size: clamp(22px, 2.8vw, 30px);
+      font-weight: 400;
+      color: var(--text-primary);
+      margin: 0 0 var(--s-6);
+      letter-spacing: -0.01em;
+    }
+    .personal-note-section blockquote {
+      margin: 0;
+      padding-left: var(--s-6);
+      border-left: 2px solid var(--accent-primary);
+      font-family: var(--font-display);
+      font-size: clamp(18px, 2vw, 22px);
+      line-height: 1.55;
+      font-style: italic;
+      color: var(--text-primary);
+      letter-spacing: -0.005em;
+    }
+    .personal-note-section blockquote p { margin-bottom: var(--s-5); }
+    .personal-note-section .signature {
+      margin-top: var(--s-6);
+      text-align: right;
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 18px;
+      color: var(--text-secondary);
+    }
+
+    /* =====================================================================
+       Footer
+       ===================================================================== */
+    .ty-footer {
+      background: var(--surface-inverse);
+      color: var(--text-inverse);
+      padding-block: var(--s-7);
+    }
+    .ty-footer .inner {
+      max-width: 760px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s-4);
+      flex-wrap: wrap;
+    }
+    @media (max-width: 768px) {
+      .ty-footer .inner { padding-inline: var(--s-5); flex-direction: column; text-align: center; }
+    }
+    .ty-footer .brand {
+      font-family: var(--font-display);
+      font-size: 18px;
+      margin-bottom: var(--s-1);
+    }
+    .ty-footer .copy { font-size: 13px; color: rgba(245,241,234,0.5); }
+    .ty-footer .links { display: flex; gap: var(--s-5); font-size: 13px; color: rgba(245,241,234,0.6); }
+    .ty-footer .links a:hover { color: var(--text-inverse); }
+  </style>
+</head>
+<body>
+
+  <!-- =====================================================================
+       01 — Confirmation Hero
+       ===================================================================== -->
+  <section class="ty-hero">
+    <div class="inner">
+      <div class="ty-check" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <h1 class="ty-headline">You're in.</h1>
+      <p class="ty-event-name">Threshold &mdash; with Lena Hartwell</p>
+      <div class="ty-event-details">
+        <span>October 14, 2026</span>
+        <span class="sep"></span>
+        <span>Wednesday 9am &ndash; 1pm Pacific Time</span>
+        <span class="sep"></span>
+        <span>Live Online &middot; Zoom</span>
+      </div>
+      <div class="ty-email-note">
+        A confirmation email is on its way. Check your inbox — including your spam folder — for <strong>hello@hartwellstudio.com</strong>.
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       02 — What happens next
+       ===================================================================== -->
+  <section class="next-steps-section">
+    <div class="ty-content">
+      <p class="section-title">What happens next</p>
+      <div class="steps-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h3>Check your email</h3>
+            <p>Your confirmation and receipt are on their way from <strong>hello@hartwellstudio.com</strong>. Your Zoom link will arrive 48 hours before the session and again on the morning of October 14.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h3>Add the date to your calendar</h3>
+            <p>Block the full morning — 9am to 1pm Pacific Time on October 14. Protect the space. This work asks for four uninterrupted hours.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h3>Come with your question</h3>
+            <p>Begin noticing what you're carrying. You don't need to prepare anything — but arriving with a specific decision, transition, or question you want to work on will make the four hours significantly more potent.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       03 — Add to Calendar (AddEvent)
+       ===================================================================== -->
+  <section class="calendar-section">
+    <div class="ty-content">
+      <div class="calendar-inner">
+        <h2 class="calendar-headline">Save the date now.</h2>
+        <p class="calendar-sub">Add Threshold to your calendar so October 14 is protected.</p>
+
+        <!-- AddEvent widget — swap placeholder event data per client deployment -->
+        <div title="Add to Calendar" class="addeventatc">
+          Add to Calendar
+          <span class="start">10/14/2026 09:00 AM</span>
+          <span class="end">10/14/2026 01:00 PM</span>
+          <span class="timezone">America/Los_Angeles</span>
+          <span class="title">Threshold — A live online gathering with Lena Hartwell</span>
+          <span class="description">A live online gathering for those standing at a pivotal turning point — and ready to cross it. With Lena Hartwell. Your Zoom link will arrive 48 hours before the session.</span>
+          <span class="location">Online via Zoom (link emailed 48 hours before)</span>
+          <span class="organizer">Lena Hartwell</span>
+          <span class="organizer_email">hello@hartwellstudio.com</span>
+        </div>
+
+        <!-- Individual calendar links as fallback / additional options -->
+        <div class="calendar-fallback">
+          <a class="cal-btn" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Threshold+%E2%80%94+Lena+Hartwell&dates=20261014T160000Z/20261014T200000Z&details=A+live+online+gathering.+Zoom+link+emailed+48+hours+before.&location=Online+via+Zoom" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Google Calendar
+          </a>
+          <a class="cal-btn" href="#" download="threshold-lena-hartwell.ics">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Apple Calendar
+          </a>
+          <a class="cal-btn" href="#" download="threshold-lena-hartwell.ics">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Outlook / iCal
+          </a>
+        </div>
+
+        <div class="calendar-date-reminder">
+          <strong>October 14, 2026 &middot; Wednesday 9am &ndash; 1pm Pacific Time</strong><br>
+          That's 12 noon &ndash; 4pm Eastern &middot; 5pm &ndash; 9pm London &middot; Midnight AEST (Oct 15)
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       04 — Event details
+       ===================================================================== -->
+  <section class="details-section">
+    <div class="ty-content">
+      <p class="section-title">Your event details</p>
+      <div class="details-grid">
+        <div class="detail-row">
+          <span class="detail-label">Format</span>
+          <span class="detail-value">
+            <span class="live-badge"><span class="dot"></span>Live Online</span>
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Date</span>
+          <span class="detail-value">October 14, 2026</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Time</span>
+          <span class="detail-value">Wednesday 9:00am &ndash; 1:00pm Pacific Time<br><span style="font-size:13px;color:var(--text-tertiary);">12pm &ndash; 4pm ET &middot; 5pm &ndash; 9pm London &middot; Midnight AEST (Oct 15)</span></span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Duration</span>
+          <span class="detail-value">Four hours, with two short breaks</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Platform</span>
+          <span class="detail-value">Zoom &mdash; link emailed 48 hours before</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Recording</span>
+          <span class="detail-value">Yes &mdash; lifetime access, emailed within 48 hours after the session</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Host</span>
+          <span class="detail-value">Lena Hartwell &middot; Lena Hartwell</span>
+        </div>
+      </div>
+      <p class="zoom-note">You don't need to do anything to prepare. Your Zoom link will arrive in your inbox 48 hours before the session and again on the morning of October 14. If you don't see it, check your spam folder or email <a href="mailto:hello@hartwellstudio.com" style="color:var(--accent-primary);">hello@hartwellstudio.com</a>.</p>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       05 — Share prompt
+       ===================================================================== -->
+  <section class="share-section">
+    <div class="ty-content">
+      <h2 class="share-headline">Know someone who's standing at a threshold?</h2>
+      <p class="share-sub">Some thresholds are crossed alone. This one isn't. If someone comes to mind, send them the page.</p>
+      <div class="share-buttons">
+        <a href="mailto:?subject=Threshold%20with%20Lena%20Hartwell&body=I%20just%20registered%20for%20this%20and%20thought%20of%20you%3A%20https%3A%2F%2Ftemplates.ziva.marketing" class="share-btn share-email">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"></polyline></svg>
+          Email a friend
+        </a>
+        <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Ftemplates.ziva.marketing" target="_blank" rel="noopener" class="share-btn share-facebook">
+          <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          Share on Facebook
+        </a>
+        <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Ftemplates.ziva.marketing&text=I%20just%20registered%20for%20Threshold%20with%20Lena%20Hartwell." target="_blank" rel="noopener" class="share-btn share-x">
+          <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          Share on X
+        </a>
+        <button class="share-btn share-copy" onclick="copyLink()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy link
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       06 — Personal note from Lena
+       ===================================================================== -->
+  <section class="personal-note-section">
+    <div class="ty-content">
+      <h2 class="note-headline">A note from Lena</h2>
+      <blockquote>
+        <p>I want to say something simple: thank you for trusting this.</p>
+        <p>I know the question you're carrying isn't small. And I know that choosing to bring it somewhere — rather than continuing to carry it alone — is its own act of courage.</p>
+        <p>Between now and October 14, I'd invite you to simply notice what's on the table. Not to analyse it. Not to resolve it early. Just to observe it, with some lightness, the way you might watch weather move in.</p>
+        <p>The room will be ready. I'll see you there.</p>
+      </blockquote>
+      <div class="signature">— Lena Hartwell</div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       Footer
+       ===================================================================== -->
+  <footer class="ty-footer">
+    <div class="inner">
+      <div>
+        <div class="brand">Lena Hartwell</div>
+        <div class="copy">&copy; 2026 Lena Hartwell &middot; Inner Practice Library &middot; All Rights Reserved</div>
+      </div>
+      <nav class="links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms of Use</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    function copyLink() {
+      const url = window.location.origin + '/';
+      navigator.clipboard.writeText(url).then(function () {
+        const btn = document.querySelector('.share-copy');
+        const original = btn.innerHTML;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+        setTimeout(function () { btn.innerHTML = original; }, 2000);
+      });
+    }
+  </script>
+  <script src="funnel-nav.js"></script>
+  <script>
+    // AddEvent injects its own stylesheet after ours, beating !important in CSS.
+    // Force white color via inline style after the widget finishes loading.
+    function forceCalendarBtnWhite() {
+      var btn = document.getElementById('addeventatc1');
+      if (btn) {
+        btn.style.setProperty('color', '#FFFFFF', 'important');
+        btn.querySelectorAll('*').forEach(function(el) {
+          el.style.setProperty('color', '#FFFFFF', 'important');
+        });
+      }
+    }
+    // Run once on load, then again after AddEvent's script has had time to run
+    window.addEventListener('load', function() {
+      forceCalendarBtnWhite();
+      setTimeout(forceCalendarBtnWhite, 500);
+      setTimeout(forceCalendarBtnWhite, 1500);
+    });
+  </script>
+</body>
+</html>

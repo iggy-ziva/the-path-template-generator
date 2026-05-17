@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Checkout — Threshold · Lena Hartwell</title>
+  <meta name="description" content="Secure checkout for Threshold — A live online gathering with Lena Hartwell." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* =====================================================================
+       Checkout page — page-specific styles
+       ===================================================================== */
+    body { background: var(--surface-canvas); }
+
+    /* Header */
+    .checkout-header {
+      background: var(--surface-raised);
+      border-bottom: 1px solid var(--border-subtle);
+      padding-block: var(--s-4);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .checkout-header .inner {
+      max-width: 1100px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    @media (max-width: 768px) {
+      .checkout-header .inner { padding-inline: var(--s-5); }
+    }
+    .checkout-header .logo {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--text-primary);
+      letter-spacing: 0.01em;
+    }
+    .trust-badges {
+      display: flex;
+      align-items: center;
+      gap: var(--s-5);
+    }
+    .trust-badge {
+      display: flex;
+      align-items: center;
+      gap: var(--s-2);
+      color: var(--text-tertiary);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .trust-badge-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--success);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .trust-badge-icon svg { width: 13px; height: 13px; }
+    @media (max-width: 600px) {
+      .trust-badges { gap: var(--s-3); }
+      .trust-badge span { display: none; }
+    }
+
+    /* Main two-column layout */
+    .checkout-wrap {
+      max-width: 1100px;
+      margin-inline: auto;
+      padding: var(--s-8) var(--s-7);
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: var(--s-8);
+      align-items: start;
+    }
+    @media (max-width: 1024px) {
+      .checkout-wrap { grid-template-columns: 1fr 340px; gap: var(--s-6); }
+    }
+    @media (max-width: 768px) {
+      .checkout-wrap {
+        grid-template-columns: 1fr;
+        padding: var(--s-5) var(--s-5);
+        gap: var(--s-6);
+      }
+    }
+
+    /* Form column */
+    .form-col { display: flex; flex-direction: column; gap: var(--s-6); min-width: 0; }
+
+    .form-card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .form-card-header {
+      padding: var(--s-5) var(--s-6);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .form-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin: 0;
+    }
+    .form-card-body { padding: var(--s-6); }
+
+    /* Choose Your Price */
+    .price-range-label {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: var(--s-5);
+    }
+    .price-range-label strong { color: var(--text-primary); }
+    .price-input-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .price-currency {
+      position: absolute;
+      left: var(--s-4);
+      font-family: var(--font-display);
+      font-size: 24px;
+      color: var(--text-tertiary);
+      pointer-events: none;
+    }
+    .price-input {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 400;
+      color: var(--text-primary);
+      border: 2px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      padding: var(--s-4) var(--s-5) var(--s-4) 40px;
+      width: 180px;
+      background: var(--surface-canvas);
+      outline: none;
+      transition: border-color 200ms ease;
+      letter-spacing: -0.02em;
+    }
+    .price-input:focus { border-color: var(--accent-primary); }
+    .price-hint {
+      margin-top: var(--s-3);
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+    .price-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--s-2);
+      margin-top: var(--s-4);
+    }
+    .price-preset {
+      padding: 6px 14px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-full);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--surface-canvas);
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    /* Tier colours: muted → warm → amber → bright amber → green */
+    .price-preset[data-tier="1"] { color: rgba(122,95,68,0.45); border-color: rgba(122,95,68,0.2); }
+    .price-preset[data-tier="2"] { color: rgba(185,150,100,0.7); border-color: rgba(185,150,100,0.3); }
+    .price-preset[data-tier="3"] { color: #C49060;               border-color: rgba(196,144,96,0.45); }
+    .price-preset[data-tier="4"] { color: #D4A878;               border-color: rgba(212,168,120,0.5); }
+    .price-preset[data-tier="5"] { color: #5E8A52;               border-color: rgba(94,138,82,0.5); }
+    .price-preset[data-tier="1"]:hover { background: rgba(122,95,68,0.04); }
+    .price-preset[data-tier="2"]:hover { background: rgba(185,150,100,0.06); }
+    .price-preset[data-tier="3"]:hover { background: rgba(196,144,96,0.08); }
+    .price-preset[data-tier="4"]:hover { background: rgba(212,168,120,0.08); }
+    .price-preset[data-tier="5"]:hover { background: rgba(94,138,82,0.08); }
+
+    /* Active state — unified accent ring, but tinted background matches tier */
+    .price-preset.active { border-color: var(--accent-primary); color: var(--accent-primary); }
+    .price-preset[data-tier="5"].active { border-color: #5E8A52; color: #5E8A52; background: rgba(94,138,82,0.1); }
+
+    /* Order summary */
+    .order-summary-toggle {
+      display: flex;
+      align-items: center;
+      gap: var(--s-2);
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-primary);
+      cursor: pointer;
+      letter-spacing: 0.02em;
+    }
+    .order-summary-toggle svg { width: 14px; height: 14px; transition: transform 200ms; }
+    .order-summary-toggle.open svg { transform: rotate(180deg); }
+    .order-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin-top: var(--s-5);
+      font-size: 15px;
+      word-break: break-word;
+    }
+    .order-table td { padding: var(--s-3) 0; color: var(--text-secondary); }
+    .order-table td:last-child { text-align: right; color: var(--text-primary); font-weight: 500; }
+    .order-table tr + tr td { border-top: 1px solid var(--border-subtle); }
+    .order-table .total-row td {
+      padding-top: var(--s-4);
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 17px;
+    }
+    .coupon-row {
+      display: flex;
+      gap: var(--s-3);
+      margin-top: var(--s-4);
+    }
+    .coupon-input {
+      flex: 1;
+      padding: 10px var(--s-4);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      font-size: 14px;
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      background: var(--surface-canvas);
+      outline: none;
+    }
+    .coupon-input:focus { border-color: var(--accent-primary); }
+    .coupon-btn {
+      padding: 10px var(--s-5);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: transparent;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* Form fields */
+    .field-group {
+      display: grid;
+      gap: var(--s-4);
+    }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--s-4);
+    }
+    @media (max-width: 480px) {
+      .field-row { grid-template-columns: 1fr; }
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--s-2);
+    }
+    .field label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+    }
+    .field input,
+    .field select {
+      padding: 12px var(--s-4);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--text-primary);
+      background: var(--surface-canvas);
+      outline: none;
+      transition: border-color 200ms ease;
+    }
+    .field input:focus,
+    .field select:focus { border-color: var(--accent-primary); }
+    .field input::placeholder { color: var(--text-tertiary); }
+
+    /* Payment tabs */
+    .payment-tabs {
+      display: flex;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      overflow: hidden;
+      margin-bottom: var(--s-5);
+    }
+    .payment-tab {
+      flex: 1;
+      padding: var(--s-4) var(--s-5);
+      border: none;
+      background: var(--surface-canvas);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--s-2);
+      transition: all 150ms ease;
+      border-right: 1px solid var(--border-subtle);
+    }
+    .payment-tab:last-child { border-right: none; }
+    .payment-tab.active {
+      background: var(--surface-raised);
+      color: var(--text-primary);
+      box-shadow: inset 0 -2px 0 var(--accent-primary);
+    }
+    .payment-tab svg { width: 18px; height: 18px; }
+    @media (max-width: 480px) {
+      .payment-tab { padding: var(--s-3) var(--s-3); font-size: 13px; }
+    }
+    .card-fields { display: grid; gap: var(--s-4); }
+    .card-number-wrap {
+      position: relative;
+    }
+    .card-number-icons {
+      position: absolute;
+      right: var(--s-4);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      gap: var(--s-2);
+      align-items: center;
+    }
+    .card-icon {
+      width: 32px;
+      height: 20px;
+      border-radius: 3px;
+      background: var(--surface-sunken);
+      border: 1px solid var(--border-subtle);
+      display: grid;
+      place-items: center;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--text-tertiary);
+    }
+    .paypal-option {
+      padding: var(--s-5);
+      background: var(--surface-canvas);
+      border-radius: var(--r-md);
+      border: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+    .paypal-option p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .paypal-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s-2);
+      padding: 12px 28px;
+      background: #FFC439;
+      color: #003087;
+      border-radius: var(--r-md);
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      margin-top: var(--s-4);
+      transition: opacity 200ms ease;
+    }
+    .paypal-btn:hover { opacity: 0.9; }
+
+    /* Privacy notice */
+    .privacy-notice {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      line-height: 1.55;
+      margin: 0;
+    }
+    .privacy-notice a { color: var(--accent-primary); text-decoration: underline; }
+
+    /* Submit CTA */
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      background: var(--accent-primary);
+      color: var(--text-inverse);
+      border: none;
+      border-radius: var(--r-md);
+      font-family: var(--font-body);
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: background 200ms ease, transform 200ms ease;
+    }
+    .submit-btn:hover {
+      background: var(--accent-primary-hover);
+      transform: translateY(-1px);
+    }
+    .submit-guarantee {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-top: var(--s-3);
+    }
+
+    /* =====================================================================
+       Sales column (right)
+       ===================================================================== */
+    .sales-col {
+      position: sticky;
+      top: 88px;
+      min-width: 0;
+    }
+    @media (max-width: 768px) {
+      .sales-col { position: static; order: -1; }
+    }
+    .sales-card {
+      background: var(--surface-inverse);
+      color: var(--text-inverse);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .sales-card-hero {
+      padding: var(--s-7) var(--s-6) var(--s-5);
+      background:
+        radial-gradient(80% 60% at 80% 10%, rgba(212,168,120,0.2), transparent 60%),
+        linear-gradient(160deg, #1a1816 0%, #0F0E0C 100%);
+      border-bottom: 1px solid rgba(245,241,234,0.08);
+    }
+    .sales-live-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid rgba(212,168,120,0.3);
+      border-radius: var(--r-full);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #D4A878;
+      margin-bottom: var(--s-4);
+    }
+    .sales-live-tag .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #D4A878;
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    .sales-event-name {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--text-inverse);
+      letter-spacing: -0.01em;
+      line-height: 1.15;
+      margin: 0 0 var(--s-3);
+    }
+    .sales-tagline {
+      font-size: 14px;
+      color: rgba(245,241,234,0.65);
+      line-height: 1.5;
+      margin: 0;
+    }
+    .sales-details {
+      padding: var(--s-5) var(--s-6);
+      border-bottom: 1px solid rgba(245,241,234,0.08);
+      display: grid;
+      gap: var(--s-3);
+    }
+    .sales-detail-row {
+      display: flex;
+      align-items: baseline;
+      gap: var(--s-3);
+      font-size: 14px;
+    }
+    .sales-detail-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.45);
+      min-width: 60px;
+      font-weight: 600;
+    }
+    .sales-detail-value {
+      color: rgba(245,241,234,0.85);
+    }
+    .sales-detail-value strong { color: var(--text-inverse); font-weight: 500; }
+
+    /* Countdown */
+    .sales-countdown {
+      padding: var(--s-4) var(--s-6);
+      border-bottom: 1px solid rgba(245,241,234,0.08);
+      display: flex;
+      align-items: center;
+      gap: var(--s-4);
+    }
+    .sales-countdown-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.4);
+      font-weight: 600;
+    }
+    .countdown-units {
+      display: flex;
+      gap: var(--s-3);
+    }
+    .countdown-unit {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .countdown-number {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text-inverse);
+      line-height: 1;
+    }
+    .countdown-label {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.4);
+    }
+
+    /* Price range */
+    .sales-price {
+      padding: var(--s-4) var(--s-6);
+      border-bottom: 1px solid rgba(245,241,234,0.08);
+    }
+    .sales-price-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.4);
+      font-weight: 600;
+      margin-bottom: var(--s-2);
+    }
+    .sales-price-value {
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: #D4A878;
+      letter-spacing: -0.01em;
+    }
+
+    /* Benefits */
+    .sales-benefits {
+      padding: var(--s-5) var(--s-6) var(--s-6);
+    }
+    .sales-benefits-title {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.4);
+      font-weight: 600;
+      margin-bottom: var(--s-4);
+    }
+    .sales-benefit-list {
+      display: grid;
+      gap: var(--s-3);
+    }
+    .sales-benefit {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: var(--s-3);
+      align-items: start;
+      font-size: 14px;
+      color: rgba(245,241,234,0.78);
+      line-height: 1.5;
+    }
+    .sales-benefit svg {
+      width: 16px; height: 16px;
+      color: #D4A878;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .sales-benefit strong { color: var(--text-inverse); font-weight: 600; }
+
+    /* Mobile summary toggle */
+    .mobile-summary-toggle {
+      display: none;
+      width: 100%;
+      padding: var(--s-4) var(--s-5);
+      background: var(--surface-accent);
+      color: var(--text-inverse);
+      border: none;
+      border-radius: var(--r-md);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      align-items: center;
+      justify-content: space-between;
+    }
+    @media (max-width: 768px) {
+      .mobile-summary-toggle { display: flex; }
+      .sales-card { display: none; }
+      .sales-card.is-open { display: block; }
+    }
+
+    /* Footer */
+    .checkout-footer {
+      background: var(--surface-inverse);
+      color: var(--text-inverse);
+      padding-block: var(--s-6);
+      margin-top: var(--s-8);
+    }
+    .checkout-footer .inner {
+      max-width: 1100px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s-5);
+      flex-wrap: wrap;
+    }
+    @media (max-width: 768px) {
+      .checkout-footer .inner { padding-inline: var(--s-5); flex-direction: column; text-align: center; }
+    }
+    .checkout-footer .copy { font-size: 13px; color: rgba(245,241,234,0.5); }
+    .checkout-footer .links { display: flex; gap: var(--s-5); font-size: 13px; color: rgba(245,241,234,0.6); }
+    .checkout-footer .links a:hover { color: var(--text-inverse); }
+
+    /* FTC */
+    .checkout-ftc {
+      max-width: 1100px;
+      margin-inline: auto;
+      padding: var(--s-7) var(--s-7) 0;
+    }
+    @media (max-width: 768px) {
+      .checkout-ftc { padding-inline: var(--s-5); }
+    }
+    .checkout-ftc h2 {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin: 0 0 var(--s-3);
+    }
+    .checkout-ftc p {
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--text-tertiary);
+      max-width: 900px;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =====================================================================
+       01 — Checkout Header
+       ===================================================================== -->
+  <header class="checkout-header">
+    <div class="inner">
+      <div class="logo">Lena Hartwell</div>
+      <div class="trust-badges">
+        <div class="trust-badge">
+          <div class="trust-badge-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path stroke="#ffffff" fill="none" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <span>Safe &amp; Secure</span>
+        </div>
+        <div class="trust-badge">
+          <div class="trust-badge-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect stroke="#ffffff" fill="none" x="3" y="11" width="18" height="11" rx="2" ry="2"/><path stroke="#ffffff" fill="none" d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <span>SSL Encrypted</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       Mobile: collapsible sales summary toggle
+       ===================================================================== -->
+  <div style="max-width:1100px;margin-inline:auto;padding:var(--s-4) var(--s-5) 0;">
+    <button class="mobile-summary-toggle" id="mobileSummaryToggle" aria-expanded="false">
+      <span>Show what you're getting</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </button>
+  </div>
+
+  <!-- =====================================================================
+       Main checkout body
+       ===================================================================== -->
+  <main class="checkout-wrap">
+
+    <!-- ===== FORM COLUMN ===== -->
+    <div class="form-col">
+
+      <!-- 02 — Choose Your Price -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h2 class="form-card-title">Choose your price</h2>
+        </div>
+        <div class="form-card-body">
+          <p class="price-range-label">Pay any amount from <strong>$11</strong> to the regular full price of <strong>$111</strong>. Pay what is genuinely accessible and meaningful for you.</p>
+          <div class="price-input-wrap">
+            <span class="price-currency">$</span>
+            <input class="price-input" type="number" id="priceInput" value="77" min="11" max="111" aria-label="Enter your price" />
+          </div>
+          <p class="price-hint">Minimum $11 &middot; Full price $111</p>
+          <div class="price-presets">
+            <button class="price-preset" data-tier="1" onclick="setPrice(11)">$11</button>
+            <button class="price-preset" data-tier="2" onclick="setPrice(33)">$33</button>
+            <button class="price-preset" data-tier="3" onclick="setPrice(47)">$47</button>
+            <button class="price-preset active" data-tier="4" onclick="setPrice(77)">$77</button>
+            <button class="price-preset" data-tier="5" onclick="setPrice(111)">$111</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03 — Order Summary -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h2 class="form-card-title">Order summary</h2>
+          <button class="order-summary-toggle open" id="orderToggle" aria-expanded="true">
+            Hide
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          </button>
+        </div>
+        <div class="form-card-body" id="orderSummaryBody">
+          <table class="order-table">
+            <tbody>
+              <tr>
+                <td>Threshold — Live Online Gathering<br><span style="font-size:12px;color:var(--text-tertiary);">October 14, 2026 · With Lena Hartwell</span></td>
+                <td id="orderPrice">$77.00</td>
+              </tr>
+              <tr>
+                <td>Subtotal</td>
+                <td id="orderSubtotal">$77.00</td>
+              </tr>
+              <tr class="total-row">
+                <td>Total</td>
+                <td id="orderTotal">$77.00</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="coupon-row">
+            <input class="coupon-input" type="text" placeholder="Coupon code" aria-label="Coupon code" />
+            <button class="coupon-btn">Apply</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 04 — Customer Information -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h2 class="form-card-title">Customer information</h2>
+        </div>
+        <div class="form-card-body">
+          <div class="field-group">
+            <div class="field">
+              <label for="email">Email address</label>
+              <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 05 — Billing Details -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h2 class="form-card-title">Billing details</h2>
+        </div>
+        <div class="form-card-body">
+          <div class="field-group">
+            <div class="field-row">
+              <div class="field">
+                <label for="firstName">First name</label>
+                <input type="text" id="firstName" name="first_name" placeholder="Lena" autocomplete="given-name" />
+              </div>
+              <div class="field">
+                <label for="lastName">Last name</label>
+                <input type="text" id="lastName" name="last_name" placeholder="Hartwell" autocomplete="family-name" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 06 — Payment Methods -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <h2 class="form-card-title">Payment</h2>
+        </div>
+        <div class="form-card-body">
+          <div class="payment-tabs">
+            <button class="payment-tab active" id="tabCard" onclick="switchTab('card')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Credit / Debit Card
+            </button>
+            <button class="payment-tab" id="tabPaypal" onclick="switchTab('paypal')">
+              <img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_100x26.png" alt="PayPal" style="height:16px;width:auto;vertical-align:middle;">
+            </button>
+          </div>
+
+          <!-- Card fields -->
+          <div id="cardFields" class="card-fields">
+            <div class="field">
+              <label for="cardNumber">Card number</label>
+              <div class="card-number-wrap">
+                <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" inputmode="numeric" style="padding-right: 90px;" />
+                <div class="card-number-icons">
+                  <div class="card-icon">VISA</div>
+                  <div class="card-icon">MC</div>
+                </div>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="expiry">Expiry date</label>
+                <input type="text" id="expiry" placeholder="MM / YY" inputmode="numeric" />
+              </div>
+              <div class="field">
+                <label for="cvv">Security code</label>
+                <input type="text" id="cvv" placeholder="CVV" inputmode="numeric" />
+              </div>
+            </div>
+          </div>
+
+          <!-- PayPal option (hidden by default) -->
+          <div id="paypalFields" class="paypal-option" style="display:none;">
+            <p>You'll be redirected to PayPal to complete your payment securely.</p>
+            <button class="paypal-btn" onclick="window.location.href='/upsell'">
+              <img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_100x26.png" alt="PayPal" style="height:18px;width:auto;vertical-align:middle;">
+              Pay with PayPal
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 07 — Privacy Notice + Submit -->
+      <div class="form-card">
+        <div class="form-card-body">
+          <p class="privacy-notice">Your personal data will be used to process your order and support your experience throughout this website, as described in our <a href="#">Privacy Policy</a>. We do not store your card details and we will never share or sell your data.</p>
+          <div style="margin-top:var(--s-5);">
+            <button class="submit-btn" id="submitBtn" onclick="window.location.href='/upsell'">
+              Register Now — $<span id="submitPrice">77</span>.00
+            </button>
+            <p class="submit-guarantee">No prerequisites &middot; Recording included &middot; No refunds on donation-based events</p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /form-col -->
+
+    <!-- ===== SALES COLUMN ===== -->
+    <aside class="sales-col">
+      <div class="sales-card" id="salesCard">
+
+        <!-- Event identity -->
+        <div class="sales-card-hero">
+          <div class="sales-live-tag">
+            <span class="dot"></span>
+            Live Online
+          </div>
+          <h2 class="sales-event-name">Threshold</h2>
+          <p class="sales-tagline">A live online gathering for those standing at a pivotal turning point — and ready to cross it.</p>
+        </div>
+
+        <!-- Event details -->
+        <div class="sales-details">
+          <div class="sales-detail-row">
+            <span class="sales-detail-label">Date</span>
+            <span class="sales-detail-value"><strong>October 14, 2026</strong></span>
+          </div>
+          <div class="sales-detail-row">
+            <span class="sales-detail-label">Time</span>
+            <span class="sales-detail-value">Wednesday 9am – 1pm Pacific Time</span>
+          </div>
+          <div class="sales-detail-row">
+            <span class="sales-detail-label">Format</span>
+            <span class="sales-detail-value">Live online via Zoom &middot; Recording included</span>
+          </div>
+          <div class="sales-detail-row">
+            <span class="sales-detail-label">Host</span>
+            <span class="sales-detail-value">Lena Hartwell</span>
+          </div>
+        </div>
+
+        <!-- Countdown -->
+        <div class="sales-countdown">
+          <span class="sales-countdown-label">Starts in</span>
+          <div class="countdown-units">
+            <div class="countdown-unit">
+              <span class="countdown-number">23</span>
+              <span class="countdown-label">Days</span>
+            </div>
+            <div class="countdown-unit">
+              <span class="countdown-number">14</span>
+              <span class="countdown-label">Hrs</span>
+            </div>
+            <div class="countdown-unit">
+              <span class="countdown-number">09</span>
+              <span class="countdown-label">Mins</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price -->
+        <div class="sales-price">
+          <div class="sales-price-label">Your contribution</div>
+          <div class="sales-price-value" id="salesPriceDisplay">$77 — pay what feels right</div>
+        </div>
+
+        <!-- Benefits -->
+        <div class="sales-benefits">
+          <div class="sales-benefits-title">What you'll experience</div>
+          <div class="sales-benefit-list">
+            <div class="sales-benefit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>Clear direction.</strong> Leave with a single, specific next move.</span>
+            </div>
+            <div class="sales-benefit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>Trustworthy stillness.</strong> A daily 10-minute practice you'll actually keep.</span>
+            </div>
+            <div class="sales-benefit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>Lower decision drag.</strong> A reliable protocol for aligned choices.</span>
+            </div>
+            <div class="sales-benefit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>Steadier nervous system.</strong> Two techniques for returning to baseline in 90 seconds.</span>
+            </div>
+            <div class="sales-benefit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>Cleaner relationships.</strong> A felt sense of which conversations are owed.</span>
+            </div>
+            <div class="sales-benefit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span><strong>A defended interior.</strong> Boundaries held from the inside, not negotiated outside.</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /sales-card -->
+    </aside>
+
+  </main><!-- /checkout-wrap -->
+
+  <!-- FTC -->
+  <div class="checkout-ftc">
+    <h2>FTC Disclaimer</h2>
+    <p>The information provided by Lena Hartwell through Lena Hartwell and the Inner Practice Library is for educational and personal-development purposes only. It is not intended or implied to be a substitute for professional medical, psychological, or financial advice, diagnosis, or treatment. All testimonials are genuine. Individual results may vary. This is a donation-based offering; no refunds will be issued.</p>
+  </div>
+
+  <!-- Footer -->
+  <footer class="checkout-footer">
+    <div class="inner">
+      <span class="copy">&copy; 2026 Lena Hartwell &middot; Inner Practice Library</span>
+      <nav class="links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms of Use</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    // Price preset selection
+    function setPrice(amount) {
+      document.getElementById('priceInput').value = amount;
+      document.querySelectorAll('.price-preset').forEach(b => b.classList.remove('active'));
+      updatePriceDisplays(amount);
+    }
+
+    function updatePriceDisplays(amount) {
+      const formatted = amount.toFixed(2);
+      document.getElementById('orderPrice').textContent = '$' + formatted;
+      document.getElementById('orderSubtotal').textContent = '$' + formatted;
+      document.getElementById('orderTotal').textContent = '$' + formatted;
+      document.getElementById('submitPrice').textContent = amount;
+      document.getElementById('salesPriceDisplay').textContent = '$' + amount + ' — pay what feels right';
+    }
+
+    document.getElementById('priceInput').addEventListener('input', function () {
+      const v = parseFloat(this.value) || 0;
+      document.querySelectorAll('.price-preset').forEach(b => b.classList.remove('active'));
+      updatePriceDisplays(v);
+    });
+
+    // Payment tab switching
+    function switchTab(tab) {
+      document.getElementById('tabCard').classList.toggle('active', tab === 'card');
+      document.getElementById('tabPaypal').classList.toggle('active', tab === 'paypal');
+      document.getElementById('cardFields').style.display = tab === 'card' ? 'grid' : 'none';
+      document.getElementById('paypalFields').style.display = tab === 'paypal' ? 'block' : 'none';
+    }
+
+    // Mobile summary toggle
+    document.getElementById('mobileSummaryToggle').addEventListener('click', function () {
+      const card = document.getElementById('salesCard');
+      const open = card.classList.toggle('is-open');
+      this.setAttribute('aria-expanded', open);
+      this.querySelector('span').textContent = open ? 'Hide what you\'re getting' : 'Show what you\'re getting';
+    });
+  </script>
+  <script src="funnel-nav.js"></script>
+</body>
+</html>

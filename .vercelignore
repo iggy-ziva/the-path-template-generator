@@ -1,0 +1,7 @@
+source-materials/
+specs/
+copy/
+figma-handoff/
+*.docx
+*.pdf
+*.rtf

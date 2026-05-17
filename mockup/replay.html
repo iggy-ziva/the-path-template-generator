@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Replay — Threshold · Lena Hartwell</title>
+  <meta name="description" content="Watch the full Threshold replay. Your recordings and resources are waiting." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* =====================================================================
+       Replay page — page-specific styles
+       ===================================================================== */
+    body { background: var(--surface-canvas); }
+
+    /* =====================================================================
+       01 — Sticky offer bar
+       ===================================================================== */
+    .replay-offer-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--surface-inverse);
+      color: var(--text-inverse);
+      border-bottom: 1px solid rgba(245,241,234,0.08);
+    }
+    .replay-offer-bar .inner {
+      max-width: 1080px;
+      margin-inline: auto;
+      padding: var(--s-4) var(--s-7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s-6);
+    }
+    @media (max-width: 768px) {
+      .replay-offer-bar .inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--s-3);
+        padding: var(--s-4) var(--s-5);
+      }
+    }
+    .offer-bar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .offer-bar-label {
+      font-family: var(--font-body);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-primary-light);
+    }
+    .offer-bar-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-inverse);
+      line-height: 1.2;
+    }
+    .offer-bar-urgency {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: rgba(245,241,234,0.5);
+      margin-top: 1px;
+    }
+    .offer-bar-right {
+      display: flex;
+      align-items: center;
+      gap: var(--s-5);
+      flex-shrink: 0;
+    }
+    .offer-bar-price {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1px;
+    }
+    @media (max-width: 768px) {
+      .offer-bar-price { align-items: flex-start; }
+    }
+    .offer-bar-price-main {
+      font-family: var(--font-body);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-inverse);
+    }
+    .offer-bar-price-plan {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: rgba(245,241,234,0.45);
+    }
+    .offer-bar-cta {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 20px;
+      background: var(--accent-primary-light);
+      color: var(--surface-inverse);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      border-radius: 6px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 150ms ease, transform 100ms ease;
+    }
+    .offer-bar-cta:hover {
+      background: var(--accent-primary-hover-light);
+      transform: translateY(-1px);
+    }
+
+    /* =====================================================================
+       02 — Page header
+       ===================================================================== */
+    .replay-header {
+      background: var(--surface-canvas);
+      padding: var(--s-10) 0 var(--s-8);
+      border-bottom: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+    .replay-header .container {
+      max-width: 700px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+    }
+    @media (max-width: 768px) {
+      .replay-header .container { padding-inline: var(--s-5); }
+    }
+    .replay-eyebrow {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--s-4);
+    }
+    .replay-event-title {
+      font-family: var(--font-display);
+      font-size: clamp(36px, 5vw, 58px);
+      font-weight: 700;
+      line-height: 1.05;
+      color: var(--text-primary);
+      margin-bottom: var(--s-4);
+    }
+    .replay-subtitle {
+      font-family: var(--font-body);
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: var(--s-6);
+    }
+    .replay-meta {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--s-4);
+      flex-wrap: wrap;
+    }
+    .replay-meta-dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--border-subtle);
+      display: inline-block;
+    }
+
+    /* =====================================================================
+       03 — Resource downloads
+       ===================================================================== */
+    .resources-section {
+      background: var(--surface-sunken);
+      padding: var(--s-7) 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .resources-section .container {
+      max-width: 1080px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+    }
+    @media (max-width: 768px) {
+      .resources-section .container { padding-inline: var(--s-5); }
+    }
+    .resources-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--s-4);
+      text-align: center;
+    }
+    .resources-list {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--s-4);
+      flex-wrap: wrap;
+    }
+    .resource-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s-3);
+      padding: 10px 18px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: border-color 150ms ease, box-shadow 150ms ease, transform 120ms ease;
+    }
+    .resource-btn:hover {
+      border-color: var(--accent-primary);
+      box-shadow: 0 2px 12px rgba(122,74,40,0.1);
+      transform: translateY(-1px);
+    }
+    .resource-btn-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 5px;
+      background: var(--surface-sunken);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .resource-btn-icon svg {
+      width: 14px;
+      height: 14px;
+      fill: var(--accent-primary);
+    }
+    .resource-btn-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .resource-btn-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .resource-btn-size {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-tertiary);
+    }
+
+    /* =====================================================================
+       04 — Video parts section
+       ===================================================================== */
+    .videos-section {
+      padding: var(--s-11) 0 var(--s-10);
+    }
+    .videos-section .container {
+      max-width: 1080px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+    }
+    @media (max-width: 768px) {
+      .videos-section .container { padding-inline: var(--s-5); }
+    }
+
+    /* Individual video part */
+    .video-part {
+      margin-bottom: var(--s-12);
+    }
+    .video-part:last-child { margin-bottom: 0; }
+
+    .video-part-header {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--s-5);
+      margin-bottom: var(--s-6);
+    }
+    .video-part-num {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-subtle);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      margin-top: 3px;
+    }
+    .video-part-num.active {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      background: rgba(122,74,40,0.05);
+    }
+    .video-part-meta { flex: 1; }
+    .video-part-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--s-2);
+    }
+    .video-part-title {
+      font-family: var(--font-display);
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 600;
+      line-height: 1.15;
+      color: var(--text-primary);
+      margin-bottom: var(--s-3);
+    }
+    .video-part-desc {
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      max-width: 640px;
+    }
+    .video-part-duration {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: var(--s-2);
+      display: flex;
+      align-items: center;
+      gap: var(--s-2);
+    }
+
+    /* Video player placeholder */
+    .video-player {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: var(--surface-inverse);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: var(--s-7);
+    }
+    .video-player-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--s-4);
+    }
+    .video-play-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(245,241,234,0.1);
+      border: 1.5px solid rgba(245,241,234,0.2);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background 150ms ease, transform 150ms ease;
+    }
+    .video-play-btn:hover {
+      background: rgba(245,241,234,0.18);
+      transform: scale(1.06);
+    }
+    .video-play-btn svg {
+      width: 26px;
+      height: 26px;
+      fill: rgba(245,241,234,0.9);
+      margin-left: 3px;
+    }
+    .video-player-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: rgba(245,241,234,0.55);
+      text-align: center;
+      max-width: 400px;
+      padding-inline: var(--s-5);
+    }
+    .video-player-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.25);
+    }
+
+    /* Mini testimonials beneath each part */
+    .part-quotes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--s-4) var(--s-7);
+      padding: var(--s-6) var(--s-7);
+      background: var(--surface-sunken);
+      border-radius: 10px;
+      margin-top: var(--s-2);
+    }
+    @media (max-width: 900px) {
+      .part-quotes { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .part-quotes { grid-template-columns: 1fr; padding: var(--s-5); }
+    }
+    .part-quote-item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--s-2);
+    }
+    .part-quote-text {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-style: italic;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+    .part-quote-author {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+    }
+
+    /* Divider between parts */
+    .part-divider {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: var(--s-10) 0;
+    }
+
+    /* =====================================================================
+       05 — Live chat comments carousel
+       ===================================================================== */
+    .live-comments-section {
+      background: var(--surface-raised);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: var(--s-10) 0;
+      overflow: hidden;
+    }
+    .live-comments-section .container {
+      max-width: 1080px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+    }
+    @media (max-width: 768px) {
+      .live-comments-section .container { padding-inline: var(--s-5); }
+    }
+    .live-comments-header {
+      text-align: center;
+      margin-bottom: var(--s-8);
+    }
+    .live-comments-eyebrow {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: var(--s-3);
+    }
+    .live-comments-title {
+      font-family: var(--font-display);
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .comments-track {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--s-5);
+    }
+    @media (max-width: 900px) {
+      .comments-track { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .comments-track { grid-template-columns: 1fr; }
+    }
+    .comment-card {
+      background: var(--surface-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: var(--s-5) var(--s-6);
+      display: flex;
+      flex-direction: column;
+      gap: var(--s-3);
+    }
+    .comment-bubble {
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    .comment-name {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: var(--s-2);
+    }
+    .comment-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-secondary);
+      display: inline-block;
+    }
+
+    /* =====================================================================
+       06 — Program upsell CTA
+       ===================================================================== */
+    .program-cta-section {
+      background: var(--surface-inverse);
+      color: var(--text-inverse);
+      padding: var(--s-12) 0;
+    }
+    .program-cta-section .container {
+      max-width: 1080px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+    }
+    @media (max-width: 768px) {
+      .program-cta-section .container { padding-inline: var(--s-5); }
+    }
+    .program-cta-inner {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--s-10);
+      align-items: center;
+      padding-top: var(--s-4);
+    }
+    @media (max-width: 900px) {
+      .program-cta-inner {
+        grid-template-columns: 1fr;
+        gap: var(--s-8);
+      }
+    }
+    .program-cta-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-primary-light);
+      margin-bottom: var(--s-4);
+    }
+    .program-cta-headline {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--text-inverse);
+      margin-bottom: var(--s-5);
+    }
+    .program-cta-desc {
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.65;
+      color: rgba(245,241,234,0.65);
+      max-width: 560px;
+      margin-bottom: var(--s-6);
+    }
+    .program-cta-benefits {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--s-8) 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--s-3);
+    }
+    .program-cta-benefits li {
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: rgba(245,241,234,0.75);
+      display: flex;
+      align-items: flex-start;
+      gap: var(--s-3);
+      line-height: 1.5;
+    }
+    .benefit-check {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(212,168,120,0.15);
+      border: 1px solid rgba(212,168,120,0.35);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .benefit-check svg {
+      width: 9px;
+      height: 9px;
+      fill: var(--accent-primary-light);
+    }
+
+    /* Price block */
+    .program-price-block {
+      background: rgba(245,241,234,0.04);
+      border: 1px solid rgba(245,241,234,0.1);
+      border-radius: 16px;
+      padding: var(--s-7) var(--s-8);
+      min-width: 280px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--s-4);
+    }
+    @media (max-width: 900px) {
+      .program-price-block { min-width: unset; width: 100%; max-width: 360px; }
+    }
+    .program-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-inverse);
+    }
+    .program-price-divider {
+      width: 32px;
+      height: 1px;
+      background: rgba(245,241,234,0.15);
+    }
+    .program-price-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.35);
+    }
+    .program-price-main {
+      font-family: var(--font-body);
+      font-size: 42px;
+      font-weight: 800;
+      color: var(--text-inverse);
+      line-height: 1;
+    }
+    .program-price-main sup {
+      font-size: 22px;
+      font-weight: 700;
+      vertical-align: super;
+      line-height: 0;
+    }
+    .program-price-plan {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: rgba(245,241,234,0.45);
+      line-height: 1.5;
+    }
+    .program-price-plan strong {
+      color: rgba(245,241,234,0.7);
+      font-weight: 600;
+    }
+    .program-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 15px 24px;
+      background: var(--accent-primary-light);
+      color: var(--surface-inverse);
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 8px;
+      text-decoration: none;
+      letter-spacing: 0.01em;
+      transition: background 150ms ease, transform 100ms ease;
+    }
+    .program-cta-btn:hover {
+      background: var(--accent-primary-hover-light);
+      transform: translateY(-1px);
+    }
+    .program-cta-sub {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: rgba(245,241,234,0.3);
+      line-height: 1.5;
+    }
+    .program-urgency {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s-2);
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-primary-light);
+      padding: 6px 12px;
+      background: rgba(212,168,120,0.1);
+      border: 1px solid rgba(212,168,120,0.2);
+      border-radius: 9999px;
+    }
+
+    /* =====================================================================
+       07 — Disclaimer + footer
+       ===================================================================== */
+    .replay-disclaimer {
+      background: var(--surface-canvas);
+      padding: var(--s-8) 0;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .replay-disclaimer .container {
+      max-width: 760px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+      text-align: center;
+    }
+    @media (max-width: 768px) {
+      .replay-disclaimer .container { padding-inline: var(--s-5); }
+    }
+    .disclaimer-text {
+      font-family: var(--font-body);
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-tertiary);
+    }
+    .replay-footer {
+      background: var(--surface-inverse);
+      padding: var(--s-6) 0;
+    }
+    .replay-footer .container {
+      max-width: 1080px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s-5);
+      flex-wrap: wrap;
+    }
+    @media (max-width: 768px) {
+      .replay-footer .container {
+        padding-inline: var(--s-5);
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--s-3);
+      }
+    }
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(245,241,234,0.5);
+    }
+    .footer-links {
+      display: flex;
+      gap: var(--s-5);
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: rgba(245,241,234,0.35);
+      text-decoration: none;
+      transition: color 150ms ease;
+    }
+    .footer-links a:hover { color: rgba(245,241,234,0.7); }
+
+    /* CSS variable aliases for dark-surface usage */
+    :root {
+      --accent-primary-light: #D4A878;
+      --accent-primary-hover-light: #E8C896;
+      --accent-secondary: #7A9080;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =====================================================================
+       01 — Sticky offer bar
+       ===================================================================== -->
+  <div class="replay-offer-bar">
+    <div class="inner">
+      <div class="offer-bar-left">
+        <span class="offer-bar-label">Special offer for attendees</span>
+        <span class="offer-bar-title">Join The Presence Collective</span>
+        <span class="offer-bar-urgency">Enrolment closes Friday · Payment plans available</span>
+      </div>
+      <div class="offer-bar-right">
+        <div class="offer-bar-price">
+          <span class="offer-bar-price-main">$1,997</span>
+          <span class="offer-bar-price-plan">or 3 × $749</span>
+        </div>
+        <a href="/program" class="offer-bar-cta">Learn more →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       02 — Page header
+       ===================================================================== -->
+  <header class="replay-header">
+    <div class="container">
+      <p class="replay-eyebrow">Replay · Live event recording</p>
+      <h1 class="replay-event-title">Threshold</h1>
+      <p class="replay-subtitle">Your recordings are ready. Watch at your own pace — the event, the follow-up call, and all the take-home resources are below.</p>
+      <div class="replay-meta">
+        <span>Hosted by Lena Hartwell</span>
+        <span class="replay-meta-dot"></span>
+        <span>2 recordings</span>
+        <span class="replay-meta-dot"></span>
+        <span>Available for 30 days</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       03 — Resource downloads
+       ===================================================================== -->
+  <section class="resources-section">
+    <div class="container">
+      <p class="resources-label">Your take-home resources</p>
+      <div class="resources-list">
+
+        <a href="#" class="resource-btn">
+          <div class="resource-btn-icon">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 1v9M4.5 6.5 8 10l3.5-3.5M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" style="fill:none;stroke:#7A4A28;"/>
+            </svg>
+          </div>
+          <div class="resource-btn-text">
+            <span class="resource-btn-name">The Threshold Practice Card</span>
+            <span class="resource-btn-size">PDF · 2 pages</span>
+          </div>
+        </a>
+
+        <a href="#" class="resource-btn">
+          <div class="resource-btn-icon">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 1v9M4.5 6.5 8 10l3.5-3.5M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" style="fill:none;stroke:#7A4A28;"/>
+            </svg>
+          </div>
+          <div class="resource-btn-text">
+            <span class="resource-btn-name">The Three Protocols Workbook</span>
+            <span class="resource-btn-size">PDF · 12 pages</span>
+          </div>
+        </a>
+
+        <a href="#" class="resource-btn">
+          <div class="resource-btn-icon">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 1v9M4.5 6.5 8 10l3.5-3.5M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" style="fill:none;stroke:#7A4A28;"/>
+            </svg>
+          </div>
+          <div class="resource-btn-text">
+            <span class="resource-btn-name">Annotated Reading List</span>
+            <span class="resource-btn-size">PDF · 4 pages</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       04 — Video parts
+       ===================================================================== -->
+  <section class="videos-section">
+    <div class="container">
+
+      <!-- Part 1: The main event -->
+      <article class="video-part">
+        <div class="video-part-header">
+          <div class="video-part-num active">1</div>
+          <div class="video-part-meta">
+            <p class="video-part-label">Part 1 · The Event</p>
+            <h2 class="video-part-title">The Full Threshold Experience</h2>
+            <p class="video-part-desc">The complete four-hour live event. Work through the three protocols, the attention anchoring sequence, and the closing integration practice at whatever pace suits you.</p>
+            <p class="video-part-duration">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="5" stroke="#6B665E" stroke-width="1.2"/><path d="M6 3v3.5l2 1.5" stroke="#6B665E" stroke-width="1.2" stroke-linecap="round"/></svg>
+              4 hrs 12 min
+            </p>
+          </div>
+        </div>
+
+        <div class="video-player">
+          <div class="video-player-inner">
+            <span class="video-player-label">Part 1 · Video placeholder</span>
+            <button class="video-play-btn" aria-label="Play video">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5.5v13l11-6.5L8 5.5z"/></svg>
+            </button>
+            <p class="video-player-title">The Full Threshold Experience</p>
+          </div>
+        </div>
+
+        <div class="part-quotes">
+          <div class="part-quote-item">
+            <p class="part-quote-text">"Something shifted in the first hour and I couldn't name it. By the end I could."</p>
+            <span class="part-quote-author">— Rachel M.</span>
+          </div>
+          <div class="part-quote-item">
+            <p class="part-quote-text">"I've done a lot of this kind of work. This was the cleanest delivery I've experienced."</p>
+            <span class="part-quote-author">— Daniel F.</span>
+          </div>
+          <div class="part-quote-item">
+            <p class="part-quote-text">"The attention anchoring sequence alone was worth it. I've come back to it three times today."</p>
+            <span class="part-quote-author">— Priya S.</span>
+          </div>
+        </div>
+      </article>
+
+      <div class="part-divider"></div>
+
+      <!-- Part 2: The follow-up / pitch call -->
+      <article class="video-part">
+        <div class="video-part-header">
+          <div class="video-part-num">2</div>
+          <div class="video-part-meta">
+            <p class="video-part-label">Part 2 · The Follow-Up Call</p>
+            <h2 class="video-part-title">What Comes After the Threshold</h2>
+            <p class="video-part-desc">A 90-minute follow-up session held two days after the event. Lena answers questions, deepens key threads from the event, and walks through the path forward for those who want to continue this work in The Presence Collective.</p>
+            <p class="video-part-duration">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="5" stroke="#6B665E" stroke-width="1.2"/><path d="M6 3v3.5l2 1.5" stroke="#6B665E" stroke-width="1.2" stroke-linecap="round"/></svg>
+              1 hr 34 min
+            </p>
+          </div>
+        </div>
+
+        <div class="video-player">
+          <div class="video-player-inner">
+            <span class="video-player-label">Part 2 · Video placeholder</span>
+            <button class="video-play-btn" aria-label="Play video">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5.5v13l11-6.5L8 5.5z"/></svg>
+            </button>
+            <p class="video-player-title">What Comes After the Threshold</p>
+          </div>
+        </div>
+
+        <div class="part-quotes">
+          <div class="part-quote-item">
+            <p class="part-quote-text">"The Q&amp;A deepened everything from the event. I needed to hear those answers."</p>
+            <span class="part-quote-author">— Miriam K.</span>
+          </div>
+          <div class="part-quote-item">
+            <p class="part-quote-text">"After watching this I enrolled immediately. The logic was just airtight."</p>
+            <span class="part-quote-author">— Thomas W.</span>
+          </div>
+          <div class="part-quote-item">
+            <p class="part-quote-text">"I appreciated the honesty. She didn't oversell. She just showed you what was possible."</p>
+            <span class="part-quote-author">— Yuki A.</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       05 — Live chat comments
+       ===================================================================== -->
+  <section class="live-comments-section">
+    <div class="container">
+      <div class="live-comments-header">
+        <p class="live-comments-eyebrow">From the live chat</p>
+        <h2 class="live-comments-title">What people said during the event</h2>
+      </div>
+      <div class="comments-track">
+
+        <div class="comment-card">
+          <p class="comment-bubble">I just want to sit here in this silence for a moment before we move on. That was a lot.</p>
+          <span class="comment-name"><span class="comment-dot"></span> Sarah B.</span>
+        </div>
+
+        <div class="comment-card">
+          <p class="comment-bubble">The protocol 2 section hit different. I've been chasing this exact distinction for two years.</p>
+          <span class="comment-name"><span class="comment-dot"></span> Marcus T.</span>
+        </div>
+
+        <div class="comment-card">
+          <p class="comment-bubble">Crying in the best possible way. This is the clearest articulation of what I've been trying to teach my clients.</p>
+          <span class="comment-name"><span class="comment-dot"></span> Jenna R.</span>
+        </div>
+
+        <div class="comment-card">
+          <p class="comment-bubble">I came in skeptical. I'm leaving with three pages of notes and a completely reordered sense of what's possible.</p>
+          <span class="comment-name"><span class="comment-dot"></span> Oliver N.</span>
+        </div>
+
+        <div class="comment-card">
+          <p class="comment-bubble">The room feels so alive right now. How is this possible through a screen?</p>
+          <span class="comment-name"><span class="comment-dot"></span> Amara F.</span>
+        </div>
+
+        <div class="comment-card">
+          <p class="comment-bubble">Genuine question — how do I bring this into my therapy practice? This is exactly the missing piece.</p>
+          <span class="comment-name"><span class="comment-dot"></span> Claire D.</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       06 — Program upsell CTA
+       ===================================================================== -->
+  <section class="program-cta-section">
+    <div class="container">
+      <div class="program-cta-inner">
+
+        <div class="program-cta-content">
+          <p class="program-cta-label">The next step</p>
+          <h2 class="program-cta-headline">The Presence<br>Collective</h2>
+          <p class="program-cta-desc">A small ongoing group for people who want to do this work continuously, not just at events. Monthly deep-dives, live Q&A, protocol integration support, and a community that takes this seriously.</p>
+          <ul class="program-cta-benefits">
+            <li>
+              <span class="benefit-check">
+                <svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 5l2.5 2.5 4.5-4" stroke="#D4A878" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+              </span>
+              Monthly live sessions with Lena — deep protocol work, not replays of lectures
+            </li>
+            <li>
+              <span class="benefit-check">
+                <svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 5l2.5 2.5 4.5-4" stroke="#D4A878" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+              </span>
+              The full Threshold resource library plus all future materials
+            </li>
+            <li>
+              <span class="benefit-check">
+                <svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 5l2.5 2.5 4.5-4" stroke="#D4A878" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+              </span>
+              Private community of practitioners using this work in their lives and practices
+            </li>
+            <li>
+              <span class="benefit-check">
+                <svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 5l2.5 2.5 4.5-4" stroke="#D4A878" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+              </span>
+              Direct Q&amp;A access — your questions answered, not just queued
+            </li>
+          </ul>
+        </div>
+
+        <div class="program-price-block">
+          <span class="program-name">The Presence Collective</span>
+          <div class="program-price-divider"></div>
+          <span class="program-price-label">One payment</span>
+          <span class="program-price-main"><sup>$</sup>1,997</span>
+          <p class="program-price-plan">or <strong>3 monthly payments of $749</strong><br>No hidden fees. Cancel before month 2.</p>
+          <span class="program-urgency">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="4" stroke="#D4A878" stroke-width="1.2"/><path d="M5 2.5v3l1.5 1" stroke="#D4A878" stroke-width="1.2" stroke-linecap="round"/></svg>
+            Enrolment closes Friday
+          </span>
+          <a href="/program" class="program-cta-btn">Enrol in The Presence Collective</a>
+          <p class="program-cta-sub">Secure checkout · Instant access · Questions? <a href="mailto:hello@example.com" style="color:rgba(245,241,234,0.45);text-decoration:underline;">Email us</a></p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       07 — Disclaimer + footer
+       ===================================================================== -->
+  <div class="replay-disclaimer">
+    <div class="container">
+      <p class="disclaimer-text">These recordings are for the personal use of registered attendees only and may not be shared, redistributed, or reproduced in any form. Content is provided for educational and personal development purposes. Results are individual and are not guaranteed. © 2026 Lena Hartwell. All rights reserved.</p>
+    </div>
+  </div>
+
+  <footer class="replay-footer">
+    <div class="container">
+      <span class="footer-logo">Lena Hartwell</span>
+      <nav class="footer-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Use</a>
+        <a href="#">Refund Policy</a>
+        <a href="mailto:hello@example.com">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="funnel-nav.js"></script>
+</body>
+</html>

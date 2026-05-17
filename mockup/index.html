@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Threshold — A live online gathering with Lena Hartwell</title>
+  <meta name="description" content="A white-label visual mockup of the Event Landing Page spec. Threshold by Lena Hartwell." />
+
+  <!-- Free font stack closest to the spec recommendations:
+       Display: Source Serif 4 (Tiempos/GT Sectra alt)
+       Body:    Inter (Söhne alt)
+       Mono:    JetBrains Mono (numerals)
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+  <!-- =====================================================================
+       01 — Sticky Bar
+       ===================================================================== -->
+  <div class="sticky-bar" id="stickyBar" aria-label="Registration bar">
+    <div class="container">
+      <div class="logo">Lena Hartwell</div>
+      <div class="event-title">Threshold</div>
+      <div class="countdown" aria-label="Time until event">
+        <span><b>23</b> Days</span>
+        <span><b>14</b> Hours</span>
+        <span><b>09</b> Mins</span>
+      </div>
+      <a href="/checkout" class="btn btn-primary btn-sm" style="background:#D4A878;color:#0F0E0C;">Register Now</a>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       02 — Hero
+       ===================================================================== -->
+  <section class="hero on-dark" id="hero">
+    <span class="section-marker">02 — Hero</span>
+    <div class="container">
+      <div class="hero-grid">
+        <div>
+          <span class="eyebrow hero-eyebrow"><span class="dot" aria-hidden="true"></span>Live Online</span>
+          <h1 class="display-hero">Threshold</h1>
+          <p class="subtitle">
+            A live online gathering for those standing at a pivotal turning point — and ready to cross it.
+          </p>
+
+          <div class="hero-host-badge">With <strong>Lena Hartwell</strong> &mdash;<br class="mob-br"> Facilitator of Inner Stillness</div>
+
+          <div class="hero-meta">
+            <div><span class="label">Date</span><span class="value"><strong>October 14, 2026</strong></span></div>
+            <div><span class="label">Time</span><span class="value"><strong>Wednesday 9am – 1pm</strong> Pacific Time</span></div>
+          </div>
+
+          <div class="price-line">
+            <span class="price-label">Choose your price</span>
+            <span class="price-value">$11 — $111</span>
+          </div>
+
+          <div class="hero-cta-row">
+            <a href="/checkout" class="btn btn-primary btn-xl">Register Now</a>
+            <span class="meta" style="color:rgba(245,241,234,0.55);">No prerequisites · Recording included</span>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-hidden="false">
+          <div class="hv-label">
+            Hero visual
+            <strong>Atmospheric. Mountain ridge at dawn. Single small figure for cinematic scale. Film grain 8%, deep vignette.</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       03 — Credibility Statement (under hero)
+       ===================================================================== -->
+  <section class="credibility">
+    <span class="section-marker">03 — Credibility statement</span>
+    <div class="container">
+      <div class="quote-glyph" aria-hidden="true">“</div>
+      <blockquote>
+        The clearest four hours I've spent with myself in a decade. I came in scattered. I left knowing the next move.
+      </blockquote>
+      <cite><strong>Adaeze O.</strong> · Lagos</cite>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       04 — Video
+       ===================================================================== -->
+  <section class="video-section" style="background: var(--surface-sunken);">
+    <span class="section-marker">04 — Video</span>
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">A note from Lena</span>
+        <h2 class="display-section">The threshold is not a place. It is a quality of attention.</h2>
+      </div>
+      <div class="video-frame" role="button" aria-label="Play video">
+        <button class="play-button" aria-label="Play">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+      </div>
+      <p class="video-caption">A two-minute invitation from Lena.</p>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       05 — As Seen On
+       ===================================================================== -->
+  <section class="as-seen-on">
+    <span class="section-marker">05 — As seen on</span>
+    <div class="container">
+      <span class="eyebrow">As featured in</span>
+      <div class="logo-wall" aria-label="Press logos">
+        <div class="logo-slot">The Atlantic</div>
+        <div class="logo-slot style-2">Tedx</div>
+        <div class="logo-slot">Psyche</div>
+        <div class="logo-slot style-3">/Tricycle</div>
+        <div class="logo-slot style-2">Forbes</div>
+        <div class="logo-slot">Mindful</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       06 — Audience Callouts
+       ===================================================================== -->
+  <section class="audience">
+    <span class="section-marker">06 — Audience callouts</span>
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">For whom this is built</span>
+        <h2 class="display-section">This is for you if&hellip;</h2>
+      </div>
+      <div class="audience-list">
+        <div class="audience-item">
+          <div class="audience-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5.5 5.5l2.8 2.8M15.7 15.7l2.8 2.8M5.5 18.5l2.8-2.8M15.7 8.3l2.8-2.8"/></svg>
+          </div>
+          <p>You are at the <strong>edge of a decision</strong> that everyone around you wants to make for you.</p>
+        </div>
+        <div class="audience-item">
+          <div class="audience-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c0-5 4-9 9-9s9 4 9 9-4 9-9 9c-3 0-5.7-1.5-7.3-3.7"/><path d="M3 12V6"/></svg>
+          </div>
+          <p>You feel <strong>the old version of your life</strong> dissolving — and the new one hasn't arrived yet.</p>
+        </div>
+        <div class="audience-item">
+          <div class="audience-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/></svg>
+          </div>
+          <p>You've been told you're "doing well" but a quieter voice keeps saying, <em>something has to change</em>.</p>
+        </div>
+        <div class="audience-item">
+          <div class="audience-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <p>You've been <strong>collecting frameworks and practices</strong> for years, and you sense it is time to actually live one.</p>
+        </div>
+        <div class="audience-item">
+          <div class="audience-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2 6h6l-5 4 2 7-5-4-5 4 2-7-5-4h6z"/></svg>
+          </div>
+          <p>You are tired of advice. You want <strong>a clean encounter with your own knowing</strong>.</p>
+        </div>
+        <div class="audience-item">
+          <div class="audience-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          </div>
+          <p>You've reached the natural end of a chapter and refuse to begin the next one <strong>on autopilot</strong>.</p>
+        </div>
+      </div>
+
+      <p class="audience-close">Now is your time to step over the line, not around it.</p>
+      <p class="cta-microcopy">Some thresholds are crossed alone. This one isn't.</p>
+      <div class="cta-row">
+        <a href="/checkout" class="btn btn-primary btn-xl">Register Now</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       07 — Encouragement CTA (dark variant)
+       ===================================================================== -->
+  <section class="encourage dark-bg on-dark">
+    <span class="section-marker">07 — Encouragement CTA</span>
+    <div class="container">
+      <p class="line">Some thresholds are crossed alone. This one isn't.</p>
+      <a href="/checkout" class="btn btn-primary btn-xl">Register Now</a>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       08 — Value Proposition (image right)
+       ===================================================================== -->
+  <section>
+    <span class="section-marker">08 — Value proposition · image right</span>
+    <div class="container">
+      <div class="value-prop">
+        <div class="vp-text">
+          <span class="eyebrow">The premise</span>
+          <h2 class="h2 display-section" style="margin-top: var(--s-4);">A different kind of clarity</h2>
+
+          <p>You don't have a thinking problem. You have an <strong>attention</strong> problem.</p>
+          <p>When the inputs never stop, the inner signal goes quiet. Strategies multiply. Practices stack up. And the simple, <strong>specific</strong> answer to the specific question you're actually carrying gets harder to hear, not easier.</p>
+          <p>Threshold is built around a single proposition: that <strong>stillness is not a luxury</strong>. It is the most direct method we have for retrieving information that is already inside us. We will spend four hours building the conditions for that retrieval — together, in real time.</p>
+
+          <div class="vp-pull">
+            <p class="pull-quote">The work is not to figure it out. The work is to become quiet enough to hear what you already know.</p>
+          </div>
+        </div>
+        <div class="vp-image">
+          <div class="img-placeholder tint-forest">
+            <span class="img-label">
+              Supporting image · 4:5
+              <strong>Light through pine forest, soft fog, desaturated by 15%, warm-bias grade.</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       09 — Credibility Statement (inline)
+       ===================================================================== -->
+  <section class="credibility inline">
+    <span class="section-marker">09 — Credibility statement</span>
+    <div class="container">
+      <div class="quote-glyph" aria-hidden="true">“</div>
+      <blockquote>
+        <em>"I came expecting a workshop. What I got was a recalibration. The decision I'd been wrestling with for eight months made itself in the second hour."</em>
+      </blockquote>
+      <cite><strong>Tomás R.</strong> · Mexico City</cite>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       10 — Outcomes — Edward Style
+       ===================================================================== -->
+  <section class="outcomes" style="background: var(--surface-sunken);">
+    <span class="section-marker">10 — Outcomes (Edward style) · the critical section</span>
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Outcomes</span>
+        <h2 class="display-section">What you'll experience</h2>
+        <p class="body-lg">Your life after Threshold &mdash; not in a year, but starting on Thursday.</p>
+      </div>
+
+      <div class="outcome-grid">
+        <div class="outcome">
+          <div class="outcome-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M16 8l-4 6-3-2"/></svg></div>
+          <p><strong>Clear direction.</strong> You'll leave with a single, specific next move that integrates what your mind has been arguing about for months.</p>
+        </div>
+        <div class="outcome">
+          <div class="outcome-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg></div>
+          <p><strong>Trustworthy stillness.</strong> A daily 10-minute practice that you'll actually keep — built around your existing life, not added on top of it.</p>
+        </div>
+        <div class="outcome">
+          <div class="outcome-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h6l3-9 3 18 3-9h3"/></svg></div>
+          <p><strong>Lower decision drag.</strong> A reliable internal protocol for distinguishing <em>fear-based no</em> from <em>aligned no</em> &mdash; applied in real time during the session.</p>
+        </div>
+        <div class="outcome">
+          <div class="outcome-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/><path d="M3 18c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg></div>
+          <p><strong>Steadier nervous system.</strong> Two embodied techniques for returning to baseline in 90 seconds — useful for everything from boardrooms to bedtime.</p>
+        </div>
+        <div class="outcome">
+          <div class="outcome-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <p><strong>Cleaner relationships.</strong> A felt sense of which conversations are owed, which are released, and which are misnamed entirely.</p>
+        </div>
+        <div class="outcome">
+          <div class="outcome-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6l-8-4z"/></svg></div>
+          <p><strong>A defended interior.</strong> Boundaries that don't require an explanation — because the perimeter is held from the inside, not negotiated outside.</p>
+        </div>
+      </div>
+
+      <div class="outcomes-image">
+        <div class="img-placeholder tint-stone">
+          <span class="img-label">
+            Supporting image · 21:9
+            <strong>Mountain ridge at first light, single small figure, cinematic scale. Warm-bias grade, film grain 8%.</strong>
+          </span>
+        </div>
+      </div>
+
+      <p class="outcomes-close">This is not a list of someday-results. These are the deliverables of the four hours.</p>
+      <p class="outcomes-microcopy">Threshold begins October 14. The work begins the moment you commit.</p>
+      <div class="outcomes-cta">
+        <a href="/checkout" class="btn btn-primary btn-xl">Register Now</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       11 — Personal Message
+       ===================================================================== -->
+  <section class="personal-message">
+    <span class="section-marker">11 — Personal message to audience</span>
+    <div class="container">
+      <h2 class="h2">A note from Lena</h2>
+      <div class="reading">
+        <blockquote>
+          <p>Most of what gets sold under the heading of <em>transformation</em> is rearrangement. New language for old patterns. New practices stacked on top of unexamined assumptions.</p>
+          <p>Threshold is different in one specific way: it asks nothing of you except presence for four hours. No prerequisites. No previous practice. No belief system to inhabit. The work is built on what you already are. You will not leave with a new identity. You will leave with a quieter relationship to the one you've been wearing.</p>
+          <p>If that sounds modest, good. The modest claim is the honest one. And the honest work is the work that holds.</p>
+        </blockquote>
+        <p class="signature">— Lena Hartwell</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       12 — Testimonials Carousel
+       ===================================================================== -->
+  <section class="testimonials">
+    <span class="section-marker">12 — Testimonials carousel</span>
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">In their words</span>
+        <h2 class="display-section">From people who crossed the threshold</h2>
+      </div>
+
+      <div class="testimonial-track">
+        <article class="testimonial-card">
+          <h3 class="h3">"The decision arrived without effort."</h3>
+          <p class="quote">I had been agonising over leaving the company I built. Two hours into Threshold, the answer was just there — calm and certain. I gave notice on Friday.</p>
+          <div class="attrib">
+            <span class="name">Saoirse N.</span>
+            <span class="loc">Dublin</span>
+          </div>
+        </article>
+
+        <article class="testimonial-card">
+          <h3 class="h3">"Less noise. More signal."</h3>
+          <p class="quote">I have done a great deal of inner work over the past decade. This was the first session in years that felt structurally different — like being given a tool I could put in my pocket and use the next morning.</p>
+          <div class="attrib">
+            <span class="name">Wei T.</span>
+            <span class="loc">Singapore</span>
+          </div>
+        </article>
+
+        <article class="testimonial-card">
+          <h3 class="h3">"My sleep changed within a week."</h3>
+          <p class="quote">The 90-second nervous-system practice from Threshold is now the most-used tool in my life. I use it before sleep, before hard meetings, before calling my mother.</p>
+          <div class="attrib">
+            <span class="name">Marisol B.</span>
+            <span class="loc">Buenos Aires</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="carousel-controls">
+        <button aria-label="Previous"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="carousel-dots" role="tablist">
+          <span class="dot active"></span>
+          <span class="dot"></span>
+        </div>
+        <button aria-label="Next"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       07b — Encouragement CTA (accent variant)
+       ===================================================================== -->
+  <section class="encourage accent-bg on-dark">
+    <span class="section-marker">07 — Encouragement CTA</span>
+    <div class="container">
+      <p class="line">Four hours. One threshold. One you, on the other side of it.</p>
+      <a href="/checkout" class="btn btn-primary btn-xl">Register Now</a>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       13 — How It Works
+       ===================================================================== -->
+  <section class="how-it-works">
+    <span class="section-marker">13 — How it works</span>
+    <div class="container">
+      <h2 class="h2 display-section">How the four hours unfold</h2>
+      <div class="reading">
+        <p>The session opens with a <strong>forty-minute orientation</strong>. We name what is on the table — not in the abstract, but specifically: <em>what is the actual decision, transition, or question you carry into this room?</em> You'll write it down. We'll come back to it.</p>
+        <p>The middle two hours are <strong>practice</strong>. Three guided protocols, each building on the previous: stillness, inquiry, integration. These are not visualisations or guided meditations. They are practical methods, drawn from contemplative traditions and stripped of religious vocabulary, for accessing information that surface attention cannot reach.</p>
+        <p>The final hour is <strong>application</strong>. We come back to the question you wrote down at the beginning. You'll work with it directly, with my support, in writing. Many participants leave with a clear next action. Some leave with a clearer question. A few leave with the recognition that nothing needs to change. All three are valid outcomes.</p>
+      </div>
+      <p class="closing">The structure is simple. The structure is what makes the depth possible.</p>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       14 — Event Overview
+       ===================================================================== -->
+  <section class="event-overview">
+    <span class="section-marker">14 — Event overview</span>
+    <div class="container">
+      <div class="overview-top">
+        <h2 class="h2 display-section">Event overview</h2>
+        <div class="overview-meta">
+          <div class="overview-row">
+            <span class="label">Status</span>
+            <span class="value"><span class="live-tag"><span class="dot" aria-hidden="true"></span>Live online</span></span>
+          </div>
+          <div class="overview-row">
+            <span class="label">Date</span>
+            <span class="value">October 14, 2026</span>
+          </div>
+          <div class="overview-row">
+            <span class="label">Time</span>
+            <span class="value">Wednesday 9am – 1pm Pacific Time</span>
+          </div>
+          <div class="overview-row">
+            <span class="label">Duration</span>
+            <span class="value">Four hours, with two short breaks</span>
+          </div>
+          <p class="recording-note"><em>Threshold will be recorded, so you are welcome to register even if you cannot attend live. Most participants attend live; recordings are best used for revisiting specific protocols afterwards.</em></p>
+        </div>
+      </div>
+
+      <div class="overview-bottom">
+        <div>
+          <h3>What you'll experience</h3>
+          <div class="experience-list">
+            <div class="experience-item">
+              <div class="experience-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+              <p>A <strong>40-minute orientation</strong> to name and frame the specific question, decision, or transition you are bringing.</p>
+            </div>
+            <div class="experience-item">
+              <div class="experience-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/></svg></div>
+              <p><strong>Three guided practices</strong> for stillness, inquiry, and integration — taught and practiced in real time.</p>
+            </div>
+            <div class="experience-item">
+              <div class="experience-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+              <p><strong>Live application</strong> to your written question, with one-on-one space to refine it.</p>
+            </div>
+            <div class="experience-item">
+              <div class="experience-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div>
+              <p>A take-home <strong>practice card</strong> distilling the protocols into a daily 10-minute structure.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3>This session is built to address things like</h3>
+          <ul class="challenges-list">
+            <li>A pivotal career or vocational decision</li>
+            <li>The end of a chapter (relationship, business, location, identity)</li>
+            <li>The middle of a transition that has stalled</li>
+            <li>A persistent inner question that has resisted analysis</li>
+            <li>A hunger for stillness that hasn't found a structure yet</li>
+            <li>Burnout disguised as ambition</li>
+            <li>The growing sense that you've been thinking about this for too long</li>
+            <li>The need to make a real decision before the year is out</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       09 — Credibility Statement (post-overview)
+       ===================================================================== -->
+  <section class="credibility inline">
+    <span class="section-marker">09 — Credibility statement</span>
+    <div class="container">
+      <div class="quote-glyph" aria-hidden="true">“</div>
+      <blockquote>
+        <em>"I have never seen four hours produce results like this. As a researcher of contemplative interventions, I am not easily impressed. I was impressed."</em>
+      </blockquote>
+      <cite><strong>Dr. P. Vasquez</strong> · Madrid</cite>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       15 — Extra Value Proposition
+       ===================================================================== -->
+  <section class="extra-vp on-dark">
+    <span class="section-marker">15 — Extra value proposition</span>
+    <div class="container">
+      <h2 class="h2 display-section">What if the answer is already drafted?</h2>
+      <div class="reading">
+        <p>Here is a question worth sitting with: in your most uncluttered moments — the rare, quiet ones, the long walks, the early mornings before anyone else is awake — what do you know?</p>
+        <p>You probably already know.</p>
+        <p>The work of Threshold is not to install new knowledge. The work is to <strong>build a reliable bridge</strong> between the part of you that knows and the part of you that decides. We have been trained to live with that bridge in disrepair. It is, fortunately, very easy to rebuild — once you have the method.</p>
+      </div>
+      <p class="closing">The answer is already drafted. We are here to retrieve it.</p>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       07c — Encouragement CTA (light/sunken variant)
+       ===================================================================== -->
+  <section class="encourage sunken-bg">
+    <span class="section-marker">07 — Encouragement CTA</span>
+    <div class="container">
+      <p class="line">If you are reading this far down the page, that is already a signal worth listening to.</p>
+      <a href="/checkout" class="btn btn-primary btn-xl">Register Now</a>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       16 — Outcomes 2 — Full-Width Icon Grid
+       ===================================================================== -->
+  <section class="outcomes-grid">
+    <span class="section-marker">16 — Outcomes 2 · full-width icon grid</span>
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">What you take home</span>
+        <h2 class="display-section">Six things you'll take home</h2>
+      </div>
+
+      <div class="outcomes-grid-list">
+        <div class="outcomes-grid-item">
+          <svg class="big-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+          <div class="outcomes-grid-text">
+            <h3>A practice card.</h3>
+            <p>A printed-quality PDF distilling the three protocols into a daily 10-minute structure.</p>
+          </div>
+        </div>
+        <div class="outcomes-grid-item">
+          <svg class="big-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4z"/></svg>
+          <div class="outcomes-grid-text">
+            <h3>The recording.</h3>
+            <p>Lifetime access to the full four-hour session, plus a chaptered breakdown for revisiting specific moments.</p>
+          </div>
+        </div>
+        <div class="outcomes-grid-item">
+          <svg class="big-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M9 5h6M5 12c0 4 3 7 7 7s7-3 7-7"/><circle cx="12" cy="14" r="1"/></svg>
+          <div class="outcomes-grid-text">
+            <h3>Two written prompts.</h3>
+            <p>Questions designed to keep the work alive in the weeks following.</p>
+          </div>
+        </div>
+        <div class="outcomes-grid-item">
+          <svg class="big-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/><path d="M3 18c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg>
+          <div class="outcomes-grid-text">
+            <h3>A 90-second reset.</h3>
+            <p>The breathing-and-attention sequence for returning to baseline anywhere.</p>
+          </div>
+        </div>
+        <div class="outcomes-grid-item">
+          <svg class="big-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <div class="outcomes-grid-text">
+            <h3>An integration call invite.</h3>
+            <p>A live community follow-up two weeks after, included in your registration.</p>
+          </div>
+        </div>
+        <div class="outcomes-grid-item">
+          <svg class="big-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+          <div class="outcomes-grid-text">
+            <h3>Quiet correspondence.</h3>
+            <p>A short, considered email from Lena once a month — not marketing, not noise.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       17 — Bio
+       ===================================================================== -->
+  <section style="background: var(--surface-sunken);">
+    <span class="section-marker">17 — Bio</span>
+    <div class="container">
+      <div class="bio">
+        <div class="bio-image">
+          <div class="img-placeholder tint-bronze ratio-3-4">
+            <span class="img-label">
+              Host portrait · 3:4
+              <strong>Lena Hartwell. Single high-quality portrait. Warm tones, soft directional light. NOT a logo wall.</strong>
+            </span>
+          </div>
+        </div>
+        <div class="bio-text">
+          <span class="eyebrow">About the host</span>
+          <h2 class="h2 display-section" style="margin-top: var(--s-4);">About Lena</h2>
+
+          <p>I am a facilitator. That is the most accurate one-word description of what I do. I work with people who have arrived at a threshold they cannot cross with their existing strategies.</p>
+          <p>I came to this work the slow way. <strong>Twelve years inside contemplative traditions</strong> — sitting with teachers in monasteries in Thailand, India, and Italy — followed by another decade applying those methods inside organisations: leadership teams, surgical departments, two start-ups, one think tank. I learned that the methods worked, but the language didn't travel. So I rebuilt the language.</p>
+          <p>The Inner Practice Library is the result. A library of stripped-down, secular, applicable contemplative methods, taught in plain English to people who do real work in the real world. Threshold is the doorway most people use to find the rest of it.</p>
+          <p>I write about all of this in my book, <em>The Quiet Path</em>, and quietly, in a monthly letter, to a small audience who chose to come along.</p>
+          <p class="signature">I would be glad to spend four hours with you on October 14. — Lena</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       18 — Final Value Proposition
+       ===================================================================== -->
+  <section class="final-vp on-dark">
+    <span class="section-marker">18 — Final value proposition</span>
+    <div class="container">
+      <h2>One real decision is worth more than a year of analysis.</h2>
+      <div class="reading">
+        <p>Most of us have a question we have been carrying for months — sometimes years. The question is real. The carrying is what wears us down.</p>
+        <p>Threshold is built for the carrying to stop.</p>
+
+        <ul class="from-to">
+          <li>From <em>"I think I need to change something"</em> to <em>"I have done the changing."</em></li>
+          <li>From <em>"I should probably leave"</em> to <em>"I have left."</em></li>
+          <li>From <em>"I keep meaning to start a practice"</em> to <em>"I have a practice."</em></li>
+        </ul>
+
+        <p>This is not motivational language. These are the actual transitions Threshold participants have made — not in six months, not in a year, but inside the four hours of the session itself, or in the week immediately following.</p>
+        <p>You can go on carrying the question. You can also put it down on October 14.</p>
+      </div>
+
+      <div class="cta-block">
+        <p class="cta-microcopy">The work is simple. The threshold is real. The room is open.</p>
+        <a href="/checkout" class="btn btn-primary btn-xl">Register Now</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       19 — FAQ
+       ===================================================================== -->
+  <section class="faq">
+    <span class="section-marker">19 — FAQ</span>
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Questions</span>
+        <h2 class="display-section">Frequently Asked Questions</h2>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item is-open">
+          <button class="faq-question" aria-expanded="true">
+            <span>What if I can't attend live?</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Threshold is recorded and you'll have lifetime access. That said, the live session is meaningfully different — most of the value is in real-time presence with the group. We recommend attending live if at all possible, and using the recording to revisit specific protocols afterwards.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            <span>I don't have a meditation practice. Will I keep up?</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Yes. Threshold assumes no prior practice. The methods are taught from zero, and the protocols are designed to be useful in the first session, not after months of training. If anything, beginners often have the most striking experience because they bring fewer assumptions.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            <span>How is this different from therapy?</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Therapy investigates patterns, often over months or years. Threshold is a single four-hour intervention focused on one specific question or transition you bring in. It complements therapy; it does not replace it. If you are working with a therapist, Threshold tends to accelerate that work, not interfere with it.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            <span>What does "Choose your price" mean?</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              You choose what to pay between $11 and $111, based on what is genuinely accessible and meaningful for you. There is no judgement attached to either end. Pay $11 if that is what is realistic. Pay $111 if you have the means and want to support participants who pay less. The work is the same regardless.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            <span>What technology do I need?</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              A laptop or tablet, a stable internet connection, and a private space where you will not be interrupted for four hours. Headphones recommended. We use Zoom; the link is sent on registration and again the morning of the session.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            <span>I've done a lot of inner work. Will this be too basic for me?</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Probably not. Experienced practitioners report that the value of Threshold isn't in being introduced to new ideas — it's in the structural simplicity. A clean, four-hour return to fundamentals, with one specific question, often surfaces clarity that hasn't appeared inside more elaborate work. Bring your most stubborn question and find out.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       07d — Encouragement CTA (final, dark)
+       ===================================================================== -->
+  <section class="encourage dark-bg on-dark" id="register">
+    <span class="section-marker">07 — Encouragement CTA · final</span>
+    <div class="container">
+      <p class="line">Threshold &middot; October 14 &middot; 9am PT</p>
+      <a href="#" class="btn btn-primary btn-xl">Register Now</a>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       20 — FTC Disclaimer
+       ===================================================================== -->
+  <section class="ftc">
+    <span class="section-marker">20 — FTC disclaimer</span>
+    <div class="container">
+      <h2>FTC Disclaimer</h2>
+      <div class="reading">
+        <p>The information provided by Lena Hartwell through Lena Hartwell and the Inner Practice Library is for educational and personal-development purposes only. It is not intended or implied to be a substitute for professional medical, psychological, or financial advice, diagnosis, or treatment. All testimonials shared are genuine and from individuals who have engaged with Lena Hartwell's programs or services. Individual results may vary, and we cannot guarantee that you will experience similar outcomes or any results at all.</p>
+        <p>The programs and services offered by Lena Hartwell and the Inner Practice Library are not intended to diagnose, treat, cure, or prevent any health or mental-health condition, nor are they a substitute for professional care. If you have any health concerns or issues, please consult with a qualified healthcare professional.</p>
+        <p>Participation in any programs or services implies that you understand and agree to hold harmless Lena Hartwell, Lena Hartwell, the Inner Practice Library, and their affiliates against any perceived or actual harm, loss, or damage resulting from their use. These offerings are for educational purposes only, and it remains your responsibility to seek appropriate medical or psychological treatment if needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       21 — Footer
+       ===================================================================== -->
+  <footer>
+    <span class="section-marker">21 — Footer</span>
+    <div class="container">
+      <div>
+        <div class="brand">Lena Hartwell</div>
+        <div class="copy">© 2026 Lena Hartwell · Inner Practice Library | All Rights Reserved</div>
+      </div>
+      <div class="right">
+        <div class="links">
+          <a href="#">Privacy</a>
+          <a href="#">Terms of Use</a>
+        </div>
+        <a href="#" class="btn btn-primary">Register Now</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* Sticky bar reveal on scroll past hero */
+    (function () {
+      var bar = document.getElementById('stickyBar');
+      var hero = document.getElementById('hero');
+      if (!bar || !hero) return;
+      function update() {
+        var heroBottom = hero.getBoundingClientRect().bottom;
+        if (heroBottom < 80) bar.classList.add('is-visible');
+        else bar.classList.remove('is-visible');
+      }
+      window.addEventListener('scroll', update, { passive: true });
+      update();
+    })();
+
+    /* FAQ accordion (multi-open allowed, per spec) */
+    document.querySelectorAll('.faq-question').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var item = btn.closest('.faq-item');
+        var isOpen = item.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+    });
+  </script>
+  <script src="funnel-nav.js"></script>
+</body>
+</html>

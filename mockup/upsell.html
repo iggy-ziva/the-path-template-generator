@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>One-Time Offer — Threshold · Lena Hartwell</title>
+  <meta name="description" content="A one-time offer for Threshold registrants. Add The Integration Bundle to your order." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* =====================================================================
+       Upsell page — page-specific styles
+       ===================================================================== */
+    body { background: var(--surface-canvas); }
+
+    /* Progress indicator */
+    .progress-bar {
+      background: var(--surface-raised);
+      border-bottom: 1px solid var(--border-subtle);
+      padding-block: var(--s-4);
+    }
+    .progress-bar .inner {
+      max-width: 720px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s-4);
+    }
+    @media (max-width: 768px) {
+      .progress-bar .inner { padding-inline: var(--s-5); }
+    }
+    .progress-logo {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--text-primary);
+    }
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      gap: var(--s-3);
+    }
+    .progress-step {
+      display: flex;
+      align-items: center;
+      gap: var(--s-2);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .step-number {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .step-done .step-number {
+      background: var(--success);
+      color: #fff;
+    }
+    .step-current .step-number {
+      background: var(--accent-primary);
+      color: #fff;
+    }
+    .step-pending .step-number {
+      background: var(--border-subtle);
+      color: var(--text-tertiary);
+    }
+    .step-done .step-label { color: var(--text-tertiary); }
+    .step-current .step-label { color: var(--text-primary); font-weight: 600; }
+    .step-pending .step-label { color: var(--text-tertiary); }
+    .step-divider {
+      width: 24px; height: 1px;
+      background: var(--border-subtle);
+    }
+    @media (max-width: 480px) {
+      .step-label { display: none; }
+    }
+
+    /* Confirmation banner */
+    .confirm-banner {
+      background: var(--success);
+      color: #fff;
+      padding: var(--s-3) var(--s-7);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--s-2);
+    }
+    .confirm-banner svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* Page layout */
+    .upsell-page {
+      max-width: 680px;
+      margin-inline: auto;
+      padding: var(--s-9) var(--s-7) var(--s-10);
+    }
+    @media (max-width: 768px) {
+      .upsell-page { padding: var(--s-7) var(--s-5) var(--s-9); }
+    }
+
+    /* Offer eyebrow */
+    .offer-eyebrow {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-primary);
+      margin-bottom: var(--s-4);
+    }
+
+    /* Offer headline */
+    .offer-headline {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      text-align: center;
+      color: var(--text-primary);
+      margin: 0 0 var(--s-5);
+      text-wrap: balance;
+    }
+
+    /* Offer description */
+    .offer-desc {
+      text-align: center;
+      font-size: 18px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      margin-bottom: var(--s-7);
+      max-width: 52ch;
+      margin-inline: auto;
+    }
+
+    /* Divider */
+    .offer-divider {
+      border: none;
+      border-top: 1px solid var(--border-subtle);
+      margin: var(--s-7) 0;
+    }
+
+    /* Included items */
+    .included-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin: 0 0 var(--s-5);
+    }
+    .included-list {
+      display: grid;
+      gap: var(--s-5);
+      margin-bottom: var(--s-7);
+    }
+    .included-item {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: var(--s-4);
+      align-items: start;
+    }
+    .included-icon {
+      width: 48px; height: 48px;
+      border-radius: var(--r-md);
+      background: var(--surface-sunken);
+      color: var(--accent-primary);
+      display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+    .included-icon svg { width: 24px; height: 24px; }
+    .included-item h3 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--text-primary);
+      margin: 0 0 var(--s-1);
+      letter-spacing: -0.005em;
+    }
+    .included-item p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    /* Price presentation */
+    .price-block {
+      background: var(--surface-sunken);
+      border-radius: var(--r-lg);
+      padding: var(--s-6);
+      text-align: center;
+      margin-bottom: var(--s-6);
+    }
+    .price-was {
+      font-size: 15px;
+      color: var(--text-tertiary);
+      margin-bottom: var(--s-2);
+    }
+    .price-was s { color: var(--text-tertiary); }
+    .price-now {
+      font-family: var(--font-display);
+      font-size: clamp(40px, 6vw, 56px);
+      font-weight: 400;
+      color: var(--accent-primary);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: var(--s-3);
+    }
+    .price-saving {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s-2);
+      padding: 4px 12px;
+      background: rgba(92, 122, 79, 0.12);
+      border-radius: var(--r-full);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--success);
+    }
+    .price-saving svg { width: 14px; height: 14px; }
+    .price-note {
+      margin-top: var(--s-4);
+      font-size: 13px;
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+    .price-note strong { color: var(--text-secondary); }
+
+    /* CTAs */
+    .yes-btn {
+      display: block;
+      width: 100%;
+      padding: 20px;
+      background: var(--accent-primary);
+      color: var(--text-inverse);
+      border: none;
+      border-radius: var(--r-md);
+      font-family: var(--font-body);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: background 200ms ease, transform 200ms ease;
+      margin-bottom: var(--s-4);
+    }
+    .yes-btn:hover {
+      background: var(--accent-primary-hover);
+      transform: translateY(-1px);
+    }
+    .yes-btn-sub {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-bottom: var(--s-5);
+    }
+    .no-link {
+      display: block;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-tertiary);
+      text-decoration: underline;
+      cursor: pointer;
+      padding: var(--s-3);
+      transition: color 200ms ease;
+    }
+    .no-link:hover { color: var(--text-secondary); }
+
+    /* Testimonial pull-quote */
+    .offer-quote {
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      padding: var(--s-6);
+      margin: var(--s-7) 0;
+    }
+    .offer-quote .quote-glyph {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 64px;
+      line-height: 0.5;
+      color: var(--accent-primary);
+      opacity: 0.4;
+      margin-bottom: var(--s-4);
+      display: block;
+    }
+    .offer-quote blockquote {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-style: italic;
+      line-height: 1.45;
+      color: var(--text-primary);
+      letter-spacing: -0.005em;
+    }
+    .offer-quote cite {
+      display: block;
+      margin-top: var(--s-4);
+      font-style: normal;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+    .offer-quote cite strong { color: var(--text-secondary); }
+
+    /* Footer */
+    .upsell-footer {
+      background: var(--surface-inverse);
+      color: var(--text-inverse);
+      padding-block: var(--s-6);
+    }
+    .upsell-footer .inner {
+      max-width: 720px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s-4);
+      flex-wrap: wrap;
+    }
+    @media (max-width: 768px) {
+      .upsell-footer .inner { padding-inline: var(--s-5); flex-direction: column; text-align: center; }
+    }
+    .upsell-footer .copy { font-size: 13px; color: rgba(245,241,234,0.5); }
+    .upsell-footer .links { display: flex; gap: var(--s-5); font-size: 13px; color: rgba(245,241,234,0.6); }
+    .upsell-footer .links a:hover { color: var(--text-inverse); }
+  </style>
+</head>
+<body>
+
+  <!-- =====================================================================
+       01 — Progress Indicator
+       ===================================================================== -->
+  <header class="progress-bar">
+    <div class="inner">
+      <div class="progress-logo">Lena Hartwell</div>
+      <div class="progress-steps">
+        <div class="progress-step step-done">
+          <div class="step-number">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span class="step-label">Registration</span>
+        </div>
+        <div class="step-divider"></div>
+        <div class="progress-step step-current">
+          <div class="step-number">2</div>
+          <span class="step-label">Special offer</span>
+        </div>
+        <div class="step-divider"></div>
+        <div class="progress-step step-pending">
+          <div class="step-number">3</div>
+          <span class="step-label">Confirmation</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       02 — Confirmation Banner
+       ===================================================================== -->
+  <div class="confirm-banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    Your spot for Threshold is confirmed — one more thing before you go.
+  </div>
+
+  <!-- =====================================================================
+       03–08 — Offer page body
+       ===================================================================== -->
+  <main class="upsell-page">
+
+    <!-- Eyebrow -->
+    <div class="offer-eyebrow">One-time offer &middot; Step 2 of 2</div>
+
+    <!-- Headline -->
+    <h1 class="offer-headline">Take the work deeper with The Integration Bundle.</h1>
+
+    <!-- Description -->
+    <p class="offer-desc">
+      Threshold gives you the four-hour experience. The Integration Bundle gives you the structure to keep it alive. Three tools, used together, for the six weeks following the session.
+    </p>
+
+    <hr class="offer-divider">
+
+    <!-- What's included -->
+    <div class="included-title">What's in the bundle</div>
+    <div class="included-list">
+      <div class="included-item">
+        <div class="included-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+        </div>
+        <div>
+          <h3>Six-week inquiry journal</h3>
+          <p>A structured PDF workbook with three prompts per week, each one designed to deepen a specific protocol from the session. Printable and fillable.</p>
+        </div>
+      </div>
+      <div class="included-item">
+        <div class="included-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4z"/></svg>
+        </div>
+        <div>
+          <h3>Three additional audio practices</h3>
+          <p>Shorter versions of the three main protocols — 10, 12, and 15 minutes — recorded by Lena. For mornings, transitions, and difficult days.</p>
+        </div>
+      </div>
+      <div class="included-item">
+        <div class="included-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div>
+          <h3>Private integration session</h3>
+          <p>A 45-minute one-on-one call with Lena, scheduled any time in the six weeks following Threshold. For the question that didn't fully resolve in the room.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Testimonial -->
+    <div class="offer-quote">
+      <span class="quote-glyph">"</span>
+      <blockquote>The journal kept me in the work long after the session ended. Week four was when something I hadn't even named in October finally surfaced. I didn't expect that.</blockquote>
+      <cite><strong>Adaeze O.</strong> &middot; Lagos &middot; Threshold, March 2026</cite>
+    </div>
+
+    <!-- Price block -->
+    <div class="price-block">
+      <p class="price-was">Regular value: <s>$297</s></p>
+      <div class="price-now">$97</div>
+      <div class="price-saving">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        Save $200 — today only
+      </div>
+      <p class="price-note">This offer is available once, right now. It will not be available after you leave this page. <strong>Added to your existing payment method — no second checkout.</strong></p>
+    </div>
+
+    <!-- Yes CTA -->
+    <a href="/thank-you" class="yes-btn">
+      Yes — add The Integration Bundle to my order
+    </a>
+    <p class="yes-btn-sub">Charged to the same card. No extra form to fill.</p>
+
+    <!-- No link -->
+    <a href="/thank-you" class="no-link">No thanks — I'll pass on the Integration Bundle and go to my confirmation.</a>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="upsell-footer">
+    <div class="inner">
+      <span class="copy">&copy; 2026 Lena Hartwell &middot; Inner Practice Library</span>
+      <nav class="links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms of Use</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="funnel-nav.js"></script>
+</body>
+</html>

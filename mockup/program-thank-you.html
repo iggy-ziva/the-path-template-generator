@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>You're In — The Presence Collective · Lena Hartwell</title>
+  <meta name="description" content="Your enrolment in The Presence Collective is confirmed. Here's everything you need to know before November 4." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* =====================================================================
+       Program Thank You — page-specific styles
+       ===================================================================== */
+    body { background: var(--surface-canvas); }
+
+    /* =====================================================================
+       01 — Confirmation hero (dark, full-bleed, celebratory)
+       ===================================================================== */
+    .ty-hero {
+      background: var(--surface-inverse);
+      color: var(--text-inverse);
+      padding: var(--s-12) 0 var(--s-11);
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .ty-hero::before {
+      content: "";
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 55% at 50% -10%, rgba(212,168,120,0.22) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 50% at 80% 60%, rgba(58,74,63,0.35) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 40% at 10% 80%, rgba(31,42,42,0.5) 0%, transparent 60%),
+        linear-gradient(180deg, #16130e 0%, #0F0E0C 100%);
+      z-index: -1;
+    }
+    .ty-hero::after {
+      content: "";
+      position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 4px 4px;
+      opacity: 0.6;
+      z-index: -1;
+    }
+    @media (max-width: 768px) {
+      .ty-hero { padding: var(--s-10) 0 var(--s-9); }
+    }
+
+    .ty-hero .inner {
+      max-width: 720px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+      text-align: center;
+    }
+    @media (max-width: 768px) {
+      .ty-hero .inner { padding-inline: var(--s-5); }
+    }
+
+    /* Celebration mark */
+    .ty-celebration {
+      position: relative;
+      width: 80px; height: 80px;
+      margin: 0 auto var(--s-7);
+      display: grid;
+      place-items: center;
+    }
+    .ty-celebration-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1.5px solid rgba(212,168,120,0.4);
+      animation: ringExpand 2.4s ease-out infinite;
+    }
+    .ty-celebration-ring:nth-child(2) { animation-delay: 0.8s; }
+    .ty-celebration-ring:nth-child(3) { animation-delay: 1.6s; }
+    @keyframes ringExpand {
+      0%   { transform: scale(0.85); opacity: 0; }
+      30%  { opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+    .ty-celebration-check {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: rgba(212,168,120,0.12);
+      border: 1.5px solid rgba(212,168,120,0.35);
+      display: grid;
+      place-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    .ty-celebration-check svg {
+      width: 32px; height: 32px;
+      color: #D4A878;
+    }
+
+    .ty-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #D4A878;
+      margin-bottom: var(--s-4);
+    }
+
+    .ty-headline {
+      font-family: var(--font-display);
+      font-size: clamp(52px, 8vw, 88px);
+      font-weight: 400;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      color: var(--text-inverse);
+      margin: 0 0 var(--s-5);
+    }
+
+    .ty-subheadline {
+      font-family: var(--font-display);
+      font-size: clamp(20px, 2.8vw, 30px);
+      font-weight: 400;
+      font-style: italic;
+      line-height: 1.3;
+      color: rgba(245,241,234,0.75);
+      margin: 0 0 var(--s-7);
+      letter-spacing: -0.01em;
+      text-wrap: balance;
+    }
+
+    /* Meta chips */
+    .ty-chips {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: var(--s-2) var(--s-4);
+      margin-bottom: var(--s-7);
+    }
+    .ty-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(245,241,234,0.07);
+      border: 1px solid rgba(245,241,234,0.1);
+      border-radius: var(--r-full);
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(245,241,234,0.7);
+    }
+    .ty-chip svg { width: 13px; height: 13px; opacity: 0.6; }
+    .ty-chip.gold {
+      background: rgba(212,168,120,0.1);
+      border-color: rgba(212,168,120,0.25);
+      color: #D4A878;
+    }
+    .ty-chip.gold svg { opacity: 1; color: #D4A878; }
+
+    /* Email note */
+    .ty-email-note {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s-3);
+      padding: var(--s-4) var(--s-5);
+      background: rgba(245,241,234,0.05);
+      border: 1px solid rgba(245,241,234,0.09);
+      border-radius: var(--r-md);
+      font-size: 14px;
+      color: rgba(245,241,234,0.6);
+      line-height: 1.5;
+      text-align: left;
+      flex-wrap: wrap;
+    }
+    .ty-email-note svg { width: 18px; height: 18px; color: #D4A878; flex-shrink: 0; }
+    .ty-email-note strong { color: var(--text-inverse); }
+
+    /* =====================================================================
+       Page content wrapper
+       ===================================================================== */
+    .ty-content {
+      max-width: 720px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+    }
+    @media (max-width: 768px) { .ty-content { padding-inline: var(--s-5); } }
+
+    .ty-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin: 0 0 var(--s-6);
+    }
+
+    /* =====================================================================
+       02 — What happens next
+       ===================================================================== */
+    .next-section {
+      padding-block: var(--s-10);
+    }
+    @media (max-width: 768px) { .next-section { padding-block: var(--s-8); } }
+
+    .next-headline {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3.5vw, 40px);
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: -0.015em;
+      margin: 0 0 var(--s-8);
+      text-wrap: balance;
+    }
+
+    .steps-list {
+      display: grid;
+      gap: 0;
+    }
+    .step-item {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: var(--s-6);
+      align-items: start;
+      padding-bottom: var(--s-8);
+      position: relative;
+    }
+    .step-item:last-child { padding-bottom: 0; }
+    .step-item:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 25px;
+      top: 52px;
+      bottom: 0;
+      width: 1px;
+      background: var(--border-subtle);
+    }
+    .step-num {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--surface-canvas);
+      border: 2px solid var(--border-subtle);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-mono);
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--accent-primary);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .step-content {
+      padding-top: var(--s-3);
+    }
+    .step-content h3 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--text-primary);
+      margin: 0 0 var(--s-3);
+      letter-spacing: -0.01em;
+    }
+    .step-content p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      margin: 0;
+    }
+    .step-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: var(--s-3);
+      padding: 4px 10px;
+      background: rgba(122,74,40,0.07);
+      border: 1px solid rgba(122,74,40,0.15);
+      border-radius: var(--r-full);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-primary);
+      letter-spacing: 0.02em;
+    }
+
+    /* =====================================================================
+       03 — Schedule preview
+       ===================================================================== */
+    .schedule-section {
+      padding-block: var(--s-9);
+      border-top: 1px solid var(--border-subtle);
+    }
+    @media (max-width: 768px) { .schedule-section { padding-block: var(--s-8); } }
+
+    .schedule-intro {
+      margin-bottom: var(--s-7);
+    }
+    .schedule-headline {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 3vw, 34px);
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      margin: 0 0 var(--s-3);
+      text-wrap: balance;
+    }
+    .schedule-sub {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .schedule-grid {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      background: var(--surface-raised);
+    }
+    .schedule-header {
+      display: grid;
+      grid-template-columns: 80px 1fr 1fr;
+      gap: var(--s-4);
+      padding: var(--s-4) var(--s-5);
+      background: var(--surface-sunken);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+    @media (max-width: 600px) {
+      .schedule-header { grid-template-columns: 60px 1fr; }
+      .schedule-header .col-protocol { display: none; }
+      .schedule-row .col-protocol { display: none; }
+    }
+    .schedule-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 1fr;
+      gap: var(--s-4);
+      padding: var(--s-4) var(--s-5);
+      border-bottom: 1px solid var(--border-subtle);
+      align-items: baseline;
+    }
+    .schedule-row:last-child { border-bottom: none; }
+    @media (max-width: 600px) {
+      .schedule-row { grid-template-columns: 60px 1fr; }
+    }
+    .schedule-row.upcoming {
+      background: rgba(122,74,40,0.03);
+    }
+    .col-week {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+    }
+    .col-title {
+      font-size: 15px;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+    .col-protocol {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .schedule-row.locked .col-title,
+    .schedule-row.locked .col-protocol {
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+    .schedule-week-date {
+      display: block;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+    .schedule-dates {
+      margin-top: var(--s-5);
+      display: flex;
+      align-items: center;
+      gap: var(--s-3);
+      flex-wrap: wrap;
+    }
+    .schedule-dates-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .schedule-dates-item svg { width: 14px; height: 14px; color: var(--accent-primary); }
+
+    /* =====================================================================
+       04 — Personal note from Lena
+       ===================================================================== */
+    .note-section {
+      padding-block: var(--s-10);
+      background: var(--surface-sunken);
+    }
+    @media (max-width: 768px) { .note-section { padding-block: var(--s-8); } }
+    .note-section .ty-content { text-align: left; }
+
+    .note-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-primary);
+      margin-bottom: var(--s-6);
+    }
+
+    .note-body {
+      font-family: var(--font-display);
+      font-size: clamp(19px, 2.2vw, 24px);
+      font-style: italic;
+      font-weight: 300;
+      line-height: 1.6;
+      color: var(--text-primary);
+      letter-spacing: -0.005em;
+      border-left: 2px solid var(--accent-primary);
+      padding-left: var(--s-6);
+    }
+    .note-body p { margin: 0 0 var(--s-6); }
+    .note-body p:last-child { margin-bottom: 0; }
+
+    .note-signature {
+      margin-top: var(--s-7);
+      padding-left: var(--s-6);
+    }
+    .note-signature-name {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-style: italic;
+      color: var(--text-primary);
+      font-weight: 400;
+    }
+    .note-signature-title {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-top: var(--s-1);
+    }
+
+    /* =====================================================================
+       05 — What you committed to
+       ===================================================================== */
+    .commitment-section {
+      padding-block: var(--s-10);
+      border-top: 1px solid var(--border-subtle);
+    }
+    @media (max-width: 768px) { .commitment-section { padding-block: var(--s-8); } }
+
+    .commitment-headline {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 3vw, 34px);
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      margin: 0 0 var(--s-7);
+      text-wrap: balance;
+    }
+
+    .commitment-list {
+      display: grid;
+      gap: var(--s-5);
+    }
+    .commitment-item {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: var(--s-4);
+      align-items: flex-start;
+    }
+    .commitment-marker {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: rgba(122,74,40,0.08);
+      border: 1px solid rgba(122,74,40,0.2);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .commitment-marker svg { width: 10px; height: 10px; color: var(--accent-primary); }
+    .commitment-item-text {
+      font-family: var(--font-display);
+      font-size: clamp(16px, 1.8vw, 19px);
+      font-style: italic;
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--text-primary);
+    }
+
+    /* =====================================================================
+       06 — Access card
+       ===================================================================== */
+    .access-section {
+      padding-block: var(--s-9);
+      border-top: 1px solid var(--border-subtle);
+    }
+    @media (max-width: 768px) { .access-section { padding-block: var(--s-7); } }
+
+    .access-card {
+      background: var(--surface-inverse);
+      color: var(--text-inverse);
+      border-radius: var(--r-xl);
+      padding: var(--s-8) var(--s-7);
+      position: relative;
+      overflow: hidden;
+    }
+    .access-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(60% 55% at 80% 20%, rgba(212,168,120,0.15), transparent 60%);
+    }
+    @media (max-width: 768px) {
+      .access-card { padding: var(--s-6) var(--s-5); }
+    }
+    .access-card-inner { position: relative; }
+    .access-card-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(212,168,120,0.8);
+      margin-bottom: var(--s-4);
+    }
+    .access-card-headline {
+      font-family: var(--font-display);
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 400;
+      color: var(--text-inverse);
+      letter-spacing: -0.01em;
+      margin: 0 0 var(--s-5);
+    }
+    .access-details {
+      display: grid;
+      gap: var(--s-3);
+      margin-bottom: var(--s-6);
+    }
+    .access-detail-row {
+      display: flex;
+      gap: var(--s-4);
+      align-items: baseline;
+      font-size: 15px;
+    }
+    .access-detail-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.35);
+      min-width: 100px;
+      flex-shrink: 0;
+    }
+    .access-detail-value {
+      color: rgba(245,241,234,0.85);
+    }
+    .access-detail-value strong { color: var(--text-inverse); font-weight: 500; }
+
+    .access-note {
+      padding: var(--s-4) var(--s-5);
+      background: rgba(245,241,234,0.05);
+      border: 1px solid rgba(245,241,234,0.09);
+      border-radius: var(--r-md);
+      font-size: 14px;
+      color: rgba(245,241,234,0.6);
+      line-height: 1.6;
+    }
+    .access-note strong { color: rgba(245,241,234,0.9); }
+
+    /* =====================================================================
+       Footer
+       ===================================================================== */
+    .ty-footer {
+      background: var(--surface-inverse);
+      color: var(--text-inverse);
+      padding-block: var(--s-7);
+    }
+    .ty-footer .inner {
+      max-width: 720px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s-5);
+      flex-wrap: wrap;
+    }
+    @media (max-width: 768px) {
+      .ty-footer .inner { padding-inline: var(--s-5); flex-direction: column; text-align: center; }
+    }
+    .ty-footer-brand {
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: rgba(245,241,234,0.7);
+    }
+    .ty-footer-links {
+      display: flex;
+      gap: var(--s-5);
+      font-size: 13px;
+      color: rgba(245,241,234,0.4);
+    }
+    .ty-footer-links a:hover { color: rgba(245,241,234,0.8); }
+    .ty-footer-copy {
+      font-size: 13px;
+      color: rgba(245,241,234,0.3);
+    }
+
+    /* =====================================================================
+       Animations
+       ===================================================================== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .ty-hero .inner > * {
+      animation: fadeUp 600ms ease both;
+    }
+    .ty-hero .inner > *:nth-child(1) { animation-delay: 100ms; }
+    .ty-hero .inner > *:nth-child(2) { animation-delay: 200ms; }
+    .ty-hero .inner > *:nth-child(3) { animation-delay: 300ms; }
+    .ty-hero .inner > *:nth-child(4) { animation-delay: 400ms; }
+    .ty-hero .inner > *:nth-child(5) { animation-delay: 500ms; }
+    .ty-hero .inner > *:nth-child(6) { animation-delay: 600ms; }
+  </style>
+</head>
+<body>
+
+  <!-- =====================================================================
+       01 — Confirmation hero
+       ===================================================================== -->
+  <section class="ty-hero">
+    <div class="inner">
+
+      <div class="ty-celebration">
+        <div class="ty-celebration-ring"></div>
+        <div class="ty-celebration-ring"></div>
+        <div class="ty-celebration-ring"></div>
+        <div class="ty-celebration-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+      </div>
+
+      <p class="ty-label">Enrolment confirmed</p>
+
+      <h1 class="ty-headline">You're in.</h1>
+
+      <p class="ty-subheadline">Welcome to The Presence Collective. Eight weeks begins November 4.</p>
+
+      <div class="ty-chips">
+        <span class="ty-chip gold">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Starts November 4
+        </span>
+        <span class="ty-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          8 weeks
+        </span>
+        <span class="ty-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          16 live sessions
+        </span>
+      </div>
+
+      <div class="ty-email-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>Your receipt and portal access details are on their way to <strong>your inbox</strong>. Check your spam folder if you don't see anything within the hour.</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       02 — What happens next
+       ===================================================================== -->
+  <section class="next-section">
+    <div class="ty-content">
+
+      <p class="ty-section-label">What happens next</p>
+      <h2 class="next-headline">Four things before November 4.</h2>
+
+      <div class="steps-list">
+
+        <div class="step-item">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h3>Check your email</h3>
+            <p>Within the next hour you'll receive a receipt and a link to your member portal. The portal is where you'll find all session recordings, the practice library, and your onboarding materials.</p>
+            <span class="step-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Arrives within 1 hour
+            </span>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h3>Complete your welcome intake</h3>
+            <p>You'll find a short written intake form in your portal — it takes about ten minutes. It's not an assessment. It helps Lena understand where you are right now so she can meet you there in Week 1.</p>
+            <span class="step-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              In your member portal
+            </span>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h3>Block your calendar</h3>
+            <p>Sessions run every Tuesday and Thursday at 6PM EST from November 4 through January 15. Attendance isn't mandatory — all sessions are recorded — but showing up live is where most of the integration happens.</p>
+            <span class="step-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Tues &amp; Thurs, 6PM EST
+            </span>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <h3>First session: Week 1 — The Attention Anchor</h3>
+            <p>November 4 is orientation and the first protocol. This is where the practice begins. You don't need to prepare anything. Come as you are. The only requirement is that you show up.</p>
+            <span class="step-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+              November 4 · 6PM EST
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       03 — Schedule preview
+       ===================================================================== -->
+  <section class="schedule-section">
+    <div class="ty-content">
+
+      <div class="schedule-intro">
+        <p class="ty-section-label">Your schedule</p>
+        <h2 class="schedule-headline">Eight weeks. Here's where you're going.</h2>
+        <p class="schedule-sub">The first three weeks are shown in full. The remaining weeks are revealed as you move through the program — each one builds on the last.</p>
+      </div>
+
+      <div class="schedule-grid">
+        <div class="schedule-header">
+          <div>Week</div>
+          <div>Focus</div>
+          <div class="col-protocol">Dates</div>
+        </div>
+        <div class="schedule-row upcoming">
+          <div class="col-week">01</div>
+          <div class="col-title">
+            Orientation &amp; Protocol 1 — The Attention Anchor
+          </div>
+          <div class="col-protocol">Nov 4 &amp; 6</div>
+        </div>
+        <div class="schedule-row">
+          <div class="col-week">02</div>
+          <div class="col-title">
+            Protocol 1 Deepening — Working With Resistance
+          </div>
+          <div class="col-protocol">Nov 11 &amp; 13</div>
+        </div>
+        <div class="schedule-row">
+          <div class="col-week">03</div>
+          <div class="col-title">
+            Protocol 2 — The Decision Protocol
+          </div>
+          <div class="col-protocol">Nov 18 &amp; 20</div>
+        </div>
+        <div class="schedule-row locked">
+          <div class="col-week">04</div>
+          <div class="col-title">Revealed in program</div>
+          <div class="col-protocol">Nov 25 &amp; Dec 2</div>
+        </div>
+        <div class="schedule-row locked">
+          <div class="col-week">05</div>
+          <div class="col-title">Revealed in program</div>
+          <div class="col-protocol">Dec 9 &amp; 11</div>
+        </div>
+        <div class="schedule-row locked">
+          <div class="col-week">06</div>
+          <div class="col-title">Revealed in program</div>
+          <div class="col-protocol">Dec 16 &amp; 18</div>
+        </div>
+        <div class="schedule-row locked">
+          <div class="col-week">07</div>
+          <div class="col-title">Revealed in program</div>
+          <div class="col-protocol">Jan 6 &amp; 8</div>
+        </div>
+        <div class="schedule-row locked">
+          <div class="col-week">08</div>
+          <div class="col-title">Integration &amp; What Comes Next</div>
+          <div class="col-protocol">Jan 13 &amp; 15</div>
+        </div>
+      </div>
+
+      <div class="schedule-dates">
+        <div class="schedule-dates-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          All sessions 6PM EST
+        </div>
+        <div class="schedule-dates-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Recordings within 24 hours
+        </div>
+        <div class="schedule-dates-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          No session Dec 23–Jan 1 (holiday break)
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       04 — Personal note from Lena
+       ===================================================================== -->
+  <section class="note-section">
+    <div class="ty-content">
+
+      <p class="note-eyebrow">A note from Lena</p>
+
+      <div class="note-body">
+        <p>You've done the kind of work that most people only think about doing. The fact that you're here — enrolled, committed, reading this — means something. Not as flattery. As observation.</p>
+        <p>The Presence Collective will ask things of you that the initial experience didn't. The protocols are more demanding. The community will hold you accountable in ways you may not expect. There will be a week — probably week six — where it gets harder before it gets clearer.</p>
+        <p>That's the week the practice becomes yours. Not a technique you're trying. Not a framework you're learning. A thing you actually do, because you've proven to yourself that you can sustain it.</p>
+        <p>I'll see you on November 4. Come as you are.</p>
+      </div>
+
+      <div class="note-signature">
+        <div class="note-signature-name">Lena Hartwell</div>
+        <div class="note-signature-title">Founder, Lena Hartwell · Creator of The Presence Collective</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       05 — What you committed to
+       ===================================================================== -->
+  <section class="commitment-section">
+    <div class="ty-content">
+
+      <p class="ty-section-label">What this builds</p>
+      <h2 class="commitment-headline">Eight weeks from now, here's what's different.</h2>
+
+      <div class="commitment-list">
+        <div class="commitment-item">
+          <div class="commitment-marker">
+            <svg viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p class="commitment-item-text">A daily practice that holds — not because you're disciplined, but because it's finally built around your actual life.</p>
+        </div>
+        <div class="commitment-item">
+          <div class="commitment-marker">
+            <svg viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p class="commitment-item-text">A quieter relationship with distraction — not absence of it, but a clear, practiced response to it that you can access in an ordinary moment.</p>
+        </div>
+        <div class="commitment-item">
+          <div class="commitment-marker">
+            <svg viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p class="commitment-item-text">The kind of clarity that comes from repetition, not revelation — a reliable return to yourself that doesn't require ideal conditions.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       06 — Access card (program details)
+       ===================================================================== -->
+  <section class="access-section">
+    <div class="ty-content">
+
+      <div class="access-card">
+        <div class="access-card-inner">
+          <p class="access-card-eyebrow">Your program details</p>
+          <h3 class="access-card-headline">The Presence Collective</h3>
+          <div class="access-details">
+            <div class="access-detail-row">
+              <span class="access-detail-label">Format</span>
+              <span class="access-detail-value"><strong>Live online</strong> via Zoom · All sessions recorded</span>
+            </div>
+            <div class="access-detail-row">
+              <span class="access-detail-label">Schedule</span>
+              <span class="access-detail-value"><strong>Tuesdays &amp; Thursdays</strong> · 6PM EST</span>
+            </div>
+            <div class="access-detail-row">
+              <span class="access-detail-label">Duration</span>
+              <span class="access-detail-value"><strong>8 weeks</strong> · Nov 4 – Jan 15 (with holiday break)</span>
+            </div>
+            <div class="access-detail-row">
+              <span class="access-detail-label">Access</span>
+              <span class="access-detail-value">Portal link arrives in your email within <strong>1 hour</strong></span>
+            </div>
+            <div class="access-detail-row">
+              <span class="access-detail-label">Questions</span>
+              <span class="access-detail-value"><a href="mailto:hello@hartwellstudio.com" style="color:#D4A878;text-decoration:underline;text-underline-offset:2px;">hello@hartwellstudio.com</a></span>
+            </div>
+          </div>
+          <div class="access-note">
+            <strong>No Zoom link yet — that's normal.</strong> Session links are sent 48 hours before each session and are also available in your member portal once you've completed the welcome intake.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       Footer
+       ===================================================================== -->
+  <footer class="ty-footer">
+    <div class="inner">
+      <div class="ty-footer-brand">Lena Hartwell</div>
+      <nav class="ty-footer-links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Contact</a>
+      </nav>
+      <span class="ty-footer-copy">&copy; 2026 Lena Hartwell</span>
+    </div>
+  </footer>
+
+  <script src="funnel-nav.js"></script>
+</body>
+</html>

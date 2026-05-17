@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enrol — The Presence Collective · Lena Hartwell</title>
+  <meta name="description" content="Secure enrolment for The Presence Collective — an 8-week live program with Lena Hartwell." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* =====================================================================
+       Program Checkout — page-specific styles
+       Dark canvas; light box floats on it
+       ===================================================================== */
+    body {
+      background: var(--surface-inverse);
+      color: var(--text-inverse);
+    }
+
+    /* =====================================================================
+       Header
+       ===================================================================== */
+    .co-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(15,14,12,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(245,241,234,0.07);
+      padding-block: var(--s-4);
+    }
+    .co-header .inner {
+      max-width: 1160px;
+      margin-inline: auto;
+      padding-inline: var(--s-7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s-5);
+    }
+    @media (max-width: 768px) { .co-header .inner { padding-inline: var(--s-5); } }
+    .co-logo {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--text-inverse);
+      letter-spacing: 0.005em;
+    }
+    .co-trust {
+      display: flex;
+      align-items: center;
+      gap: var(--s-5);
+    }
+    .co-trust-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(245,241,234,0.45);
+      letter-spacing: 0.02em;
+    }
+    .co-trust-item svg { width: 14px; height: 14px; color: #9CC48A; flex-shrink: 0; }
+    @media (max-width: 600px) {
+      .co-trust { gap: var(--s-3); }
+      .co-trust-item span { display: none; }
+    }
+    .co-secure-lock {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(245,241,234,0.3);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .co-secure-lock svg { width: 12px; height: 12px; }
+
+    /* =====================================================================
+       Main layout
+       ===================================================================== */
+    .co-wrap {
+      max-width: 1160px;
+      margin-inline: auto;
+      padding: var(--s-9) var(--s-7) var(--s-12);
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: var(--s-10);
+      align-items: start;
+    }
+    @media (max-width: 1024px) {
+      .co-wrap { grid-template-columns: 1fr 360px; gap: var(--s-8); }
+    }
+    @media (max-width: 860px) {
+      .co-wrap {
+        grid-template-columns: 1fr;
+        padding: var(--s-6) var(--s-5) var(--s-10);
+        gap: var(--s-7);
+      }
+    }
+
+    /* =====================================================================
+       Left: light form box
+       ===================================================================== */
+    .form-box {
+      background: var(--surface-canvas);
+      color: var(--text-primary);
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.45), 0 8px 24px rgba(0,0,0,0.2);
+    }
+
+    .form-section {
+      padding: var(--s-6) var(--s-7);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .form-section:last-child { border-bottom: none; }
+    @media (max-width: 480px) {
+      .form-section { padding: var(--s-5); }
+    }
+
+    .form-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin: 0 0 var(--s-5);
+    }
+
+    /* Fields */
+    .field-grid {
+      display: grid;
+      gap: var(--s-4);
+    }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--s-4);
+    }
+    @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--s-2);
+    }
+    .field label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+    }
+    .field input {
+      padding: 12px var(--s-4);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--text-primary);
+      background: var(--surface-canvas);
+      outline: none;
+      transition: border-color 200ms ease, box-shadow 200ms ease;
+    }
+    .field input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(122,74,40,0.1);
+    }
+    .field input::placeholder { color: var(--text-tertiary); }
+
+    /* =====================================================================
+       Plan card selector (3-column, matches program modal)
+       ===================================================================== */
+    .plan-card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--s-3);
+      margin-bottom: var(--s-5);
+    }
+    @media (max-width: 480px) {
+      .plan-card-grid { grid-template-columns: 1fr; }
+    }
+    .plan-card {
+      border: 2px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: var(--s-4) var(--s-3) var(--s-3);
+      background: var(--surface-canvas);
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-family: var(--font-body);
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+    .plan-card:hover { border-color: rgba(122,74,40,0.35); }
+    .plan-card.selected {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 1px var(--accent-primary);
+    }
+    .plan-card-featured {
+      background: var(--surface-inverse);
+      border-color: transparent;
+    }
+    .plan-card-featured:hover { border-color: rgba(212,168,120,0.4); }
+    .plan-card-featured.selected {
+      border-color: #D4A878;
+      box-shadow: 0 0 0 1px #D4A878;
+    }
+    .plan-card-badge {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: rgba(212,168,120,0.2);
+      color: #D4A878;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      margin-bottom: 2px;
+    }
+    .plan-card-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+    .plan-card-featured .plan-card-label { color: rgba(245,241,234,0.45); }
+    .plan-card-price {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1;
+      margin: var(--s-1) 0;
+    }
+    .plan-card-price sup { font-size: 13px; vertical-align: super; line-height: 0; }
+    .plan-card-featured .plan-card-price { color: var(--text-inverse); }
+    .plan-card-cadence {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+    .plan-card-featured .plan-card-cadence { color: rgba(245,241,234,0.4); }
+    .plan-card-saving {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--accent-secondary);
+      margin-top: 2px;
+    }
+    .plan-card-selector {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--border-subtle);
+      display: grid;
+      place-items: center;
+      margin-top: var(--s-2);
+      flex-shrink: 0;
+      transition: border-color 150ms ease, background 150ms ease;
+    }
+    .plan-card-featured .plan-card-selector { border-color: rgba(245,241,234,0.2); }
+    .plan-card.selected .plan-card-selector {
+      border-color: var(--accent-primary);
+      background: var(--accent-primary);
+    }
+    .plan-card-featured.selected .plan-card-selector {
+      border-color: #D4A878;
+      background: #D4A878;
+    }
+    .plan-card-selector svg { width: 10px; height: 10px; color: white; opacity: 0; transition: opacity 150ms ease; }
+    .plan-card.selected .plan-card-selector svg { opacity: 1; }
+
+    /* =====================================================================
+       Card fields
+       ===================================================================== */
+    .card-icons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 5px;
+      align-items: center;
+      margin-top: var(--s-2);
+    }
+    .card-chip {
+      width: 30px; height: 19px;
+      border-radius: 3px;
+      background: var(--surface-sunken);
+      border: 1px solid var(--border-subtle);
+      display: grid;
+      place-items: center;
+      font-size: 7px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: var(--text-tertiary);
+    }
+    .card-chip.visa { color: #1A1F71; background: #f0f2ff; border-color: #c8cde0; }
+    .card-chip.mc { background: #f5f0ee; border-color: #ddd; color: #EB001B; }
+    .card-chip.amex { background: #f0f5ff; border-color: #ccd8ee; color: #2E77BC; }
+
+    /* Stripe placeholder rows */
+    .stripe-field {
+      padding: 12px var(--s-4);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      font-size: 15px;
+      color: var(--text-tertiary);
+      background: var(--surface-canvas);
+      font-family: var(--font-body);
+      display: flex;
+      align-items: center;
+      gap: var(--s-3);
+      user-select: none;
+    }
+    .stripe-field svg { width: 16px; height: 16px; opacity: 0.4; flex-shrink: 0; }
+    .stripe-field-label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .stripe-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: rgba(122,74,40,0.6);
+      background: rgba(122,74,40,0.07);
+      padding: 2px 7px;
+      border-radius: 99px;
+    }
+    .stripe-branding {
+      display: flex;
+      align-items: center;
+      gap: var(--s-2);
+      margin-top: var(--s-3);
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    .stripe-branding svg { width: 38px; height: auto; opacity: 0.5; }
+
+    /* PayPal option */
+    .payment-divider {
+      display: flex;
+      align-items: center;
+      gap: var(--s-4);
+      margin: var(--s-4) 0 var(--s-4);
+      color: var(--text-tertiary);
+      font-size: 12px;
+    }
+    .payment-divider::before,
+    .payment-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-subtle);
+    }
+    .paypal-btn {
+      width: 100%;
+      padding: 12px var(--s-5);
+      background: #FFC439;
+      border: none;
+      border-radius: var(--r-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 700;
+      color: #003087;
+      letter-spacing: 0.01em;
+      transition: background 150ms ease, transform 100ms ease;
+    }
+    .paypal-btn:hover { background: #FFD060; transform: translateY(-1px); }
+    .paypal-btn + .submit-security { margin-top: var(--s-5); }
+
+    /* =====================================================================
+       Submit section
+       ===================================================================== */
+    .submit-section {
+      padding: var(--s-6) var(--s-7) var(--s-7);
+    }
+    @media (max-width: 480px) { .submit-section { padding: var(--s-5); } }
+
+    .submit-btn {
+      display: block;
+      width: 100%;
+      padding: 19px var(--s-6);
+      background: var(--accent-primary);
+      color: var(--text-inverse);
+      border: none;
+      border-radius: var(--r-md);
+      font-family: var(--font-body);
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      text-align: center;
+      transition: background 200ms ease, transform 150ms ease;
+      margin-bottom: var(--s-4);
+    }
+    .submit-btn:hover {
+      background: var(--accent-primary-hover);
+      transform: translateY(-1px);
+    }
+    .submit-security {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--s-3);
+      flex-wrap: wrap;
+    }
+    .submit-security-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    .submit-security-item svg { width: 12px; height: 12px; color: #9CC48A; }
+    .submit-security-sep {
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: var(--border-subtle);
+    }
+
+    /* =====================================================================
+       Right: order column (dark, unboxed)
+       ===================================================================== */
+    .order-col {
+      position: sticky;
+      top: 80px;
+      color: var(--text-inverse);
+    }
+    @media (max-width: 860px) {
+      .order-col { position: static; }
+    }
+
+    .order-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #D4A878;
+      margin-bottom: var(--s-3);
+    }
+    .order-program-name {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3.5vw, 38px);
+      font-weight: 400;
+      color: var(--text-inverse);
+      letter-spacing: -0.015em;
+      line-height: 1.1;
+      margin: 0 0 var(--s-4);
+    }
+    .order-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--s-2) var(--s-4);
+      margin-bottom: var(--s-7);
+    }
+    .order-meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(245,241,234,0.55);
+    }
+    .order-meta-chip svg { width: 12px; height: 12px; opacity: 0.5; }
+
+    /* Order summary box (light border on dark) */
+    .order-summary {
+      background: rgba(245,241,234,0.04);
+      border: 1px solid rgba(245,241,234,0.1);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      margin-bottom: var(--s-6);
+    }
+    .order-summary-header {
+      padding: var(--s-4) var(--s-5);
+      border-bottom: 1px solid rgba(245,241,234,0.08);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.35);
+    }
+    .order-line {
+      padding: var(--s-4) var(--s-5);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--s-4);
+      border-bottom: 1px solid rgba(245,241,234,0.06);
+    }
+    .order-line:last-child { border-bottom: none; }
+    .order-line-label {
+      font-size: 14px;
+      color: rgba(245,241,234,0.65);
+      line-height: 1.4;
+    }
+    .order-line-label .sub {
+      display: block;
+      font-size: 12px;
+      color: rgba(245,241,234,0.35);
+      margin-top: 2px;
+    }
+    .order-line-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-inverse);
+      white-space: nowrap;
+    }
+    .order-total {
+      padding: var(--s-5);
+      border-top: 1px solid rgba(245,241,234,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      background: rgba(245,241,234,0.03);
+    }
+    .order-total-label {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.5);
+    }
+    .order-total-value {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 400;
+      color: #D4A878;
+      letter-spacing: -0.01em;
+    }
+
+    /* Payment plan schedule */
+    .plan-schedule {
+      margin-top: var(--s-2);
+      padding: var(--s-4) var(--s-5);
+      border-top: 1px solid rgba(245,241,234,0.08);
+    }
+    .plan-schedule-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.35);
+      margin-bottom: var(--s-3);
+    }
+    .plan-schedule-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: var(--s-2) 0;
+      border-bottom: 1px solid rgba(245,241,234,0.05);
+    }
+    .plan-schedule-row:last-child { border-bottom: none; }
+    .plan-schedule-date { color: rgba(245,241,234,0.5); }
+    .plan-schedule-amount { color: rgba(245,241,234,0.8); font-weight: 500; }
+    .plan-schedule-amount.today { color: #D4A878; font-weight: 600; }
+    .plan-schedule-note {
+      font-size: 12px;
+      color: rgba(245,241,234,0.3);
+      margin-top: var(--s-3);
+      line-height: 1.5;
+    }
+
+    /* Benefits */
+    .order-benefits {
+      margin-bottom: var(--s-6);
+    }
+    .order-benefits-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.3);
+      margin-bottom: var(--s-4);
+    }
+    .order-benefit {
+      display: flex;
+      gap: var(--s-3);
+      align-items: flex-start;
+      margin-bottom: var(--s-3);
+      font-size: 14px;
+      color: rgba(245,241,234,0.7);
+      line-height: 1.5;
+    }
+    .order-benefit:last-child { margin-bottom: 0; }
+    .order-benefit svg {
+      width: 15px; height: 15px;
+      color: #D4A878;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .order-benefit strong { color: var(--text-inverse); font-weight: 600; }
+
+    /* Guarantee */
+    .order-guarantee {
+      display: flex;
+      gap: var(--s-4);
+      align-items: flex-start;
+      padding: var(--s-5);
+      background: rgba(245,241,234,0.04);
+      border: 1px solid rgba(245,241,234,0.08);
+      border-radius: var(--r-md);
+      margin-bottom: var(--s-5);
+    }
+    .guarantee-icon {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(156,196,138,0.15);
+      border: 1px solid rgba(156,196,138,0.25);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .guarantee-icon svg { width: 18px; height: 18px; color: #9CC48A; }
+    .guarantee-text h4 {
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-inverse);
+      margin: 0 0 var(--s-1);
+    }
+    .guarantee-text p {
+      font-size: 13px;
+      color: rgba(245,241,234,0.55);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .order-attribution {
+      font-size: 13px;
+      color: rgba(245,241,234,0.35);
+      line-height: 1.6;
+      font-style: italic;
+    }
+    .order-attribution strong {
+      color: rgba(245,241,234,0.6);
+      font-style: normal;
+      font-weight: 600;
+    }
+
+    /* =====================================================================
+       Plan switching JS states — default: spread selected
+       ===================================================================== */
+    .state-full     { display: none; }
+    .state-spread   { display: block; }
+    .state-extended { display: none; }
+    body.plan-full .state-full       { display: block; }
+    body.plan-full .state-spread     { display: none; }
+    body.plan-full .state-extended   { display: none; }
+    body.plan-extended .state-full     { display: none; }
+    body.plan-extended .state-spread   { display: none; }
+    body.plan-extended .state-extended { display: block; }
+
+    /* =====================================================================
+       FTC / footer
+       ===================================================================== */
+    .co-ftc {
+      max-width: 1160px;
+      margin-inline: auto;
+      padding: var(--s-7) var(--s-7) 0;
+      border-top: 1px solid rgba(245,241,234,0.07);
+    }
+    @media (max-width: 768px) { .co-ftc { padding-inline: var(--s-5); } }
+    .co-ftc h2 {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(245,241,234,0.25);
+      margin: 0 0 var(--s-3);
+    }
+    .co-ftc p {
+      font-size: 13px;
+      line-height: 1.65;
+      color: rgba(245,241,234,0.3);
+      max-width: 860px;
+      margin: 0;
+    }
+    .co-footer {
+      max-width: 1160px;
+      margin-inline: auto;
+      padding: var(--s-7) var(--s-7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s-5);
+      flex-wrap: wrap;
+    }
+    @media (max-width: 768px) {
+      .co-footer { padding-inline: var(--s-5); flex-direction: column; text-align: center; }
+    }
+    .co-footer-copy { font-size: 13px; color: rgba(245,241,234,0.25); }
+    .co-footer-links {
+      display: flex;
+      gap: var(--s-5);
+      font-size: 13px;
+      color: rgba(245,241,234,0.35);
+    }
+    .co-footer-links a:hover { color: rgba(245,241,234,0.7); }
+
+    /* =====================================================================
+       Animations
+       ===================================================================== */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =====================================================================
+       Header
+       ===================================================================== -->
+  <header class="co-header">
+    <div class="inner">
+      <div class="co-logo">Lena Hartwell</div>
+      <div class="co-trust">
+        <div class="co-trust-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Secure checkout</span>
+        </div>
+        <div class="co-trust-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>SSL encrypted</span>
+        </div>
+        <div class="co-trust-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Instant access</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       Main layout
+       ===================================================================== -->
+  <main class="co-wrap">
+
+    <!-- ===== LEFT: FORM BOX ===== -->
+    <div class="form-box">
+
+      <!-- Contact details -->
+      <div class="form-section">
+        <p class="form-section-title">Your details</p>
+        <div class="field-grid">
+          <div class="field-row">
+            <div class="field">
+              <label for="fname">First name</label>
+              <input type="text" id="fname" placeholder="Miriam" autocomplete="given-name" />
+            </div>
+            <div class="field">
+              <label for="lname">Last name</label>
+              <input type="text" id="lname" placeholder="Kessler" autocomplete="family-name" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="email">Email address</label>
+            <input type="email" id="email" placeholder="miriam@example.com" autocomplete="email" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment plan selector -->
+      <div class="form-section">
+        <p class="form-section-title">Choose your payment option</p>
+        <div class="plan-card-grid">
+
+          <!-- Extended -->
+          <button class="plan-card" id="planExtended" onclick="selectPlan('extended')" aria-pressed="false">
+            <span class="plan-card-label">Extended</span>
+            <span class="plan-card-price"><sup>$</sup>197</span>
+            <span class="plan-card-cadence">× 12 monthly<br>Total $2,364</span>
+            <span class="plan-card-selector">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="2 6 5 9 10 3"/></svg>
+            </span>
+          </button>
+
+          <!-- Spread — Most popular -->
+          <button class="plan-card plan-card-featured selected" id="planSpread" onclick="selectPlan('spread')" aria-pressed="true">
+            <span class="plan-card-badge">Most popular</span>
+            <span class="plan-card-label">Spread</span>
+            <span class="plan-card-price"><sup>$</sup>749</span>
+            <span class="plan-card-cadence">× 3 monthly<br>Total $2,247</span>
+            <span class="plan-card-selector">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="2 6 5 9 10 3"/></svg>
+            </span>
+          </button>
+
+          <!-- Pay in Full -->
+          <button class="plan-card" id="planFull" onclick="selectPlan('full')" aria-pressed="false">
+            <span class="plan-card-label">Pay in full</span>
+            <span class="plan-card-price"><sup>$</sup>1,997</span>
+            <span class="plan-card-cadence">One payment<br>Save $250</span>
+            <span class="plan-card-saving">+ 1:1 onboarding call</span>
+            <span class="plan-card-selector">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="2 6 5 9 10 3"/></svg>
+            </span>
+          </button>
+
+        </div>
+
+        <!-- Contextual note per plan -->
+        <p class="state-full" style="font-size:13px;color:var(--text-tertiary);margin:0;">
+          A single charge of <strong style="color:var(--text-primary);">$1,997</strong> to your card today. No further charges. Includes a 1:1 onboarding call with Lena.
+        </p>
+        <p class="state-spread" style="font-size:13px;color:var(--text-tertiary);margin:0;">
+          Your first charge is <strong style="color:var(--text-primary);">$749 today</strong>, then $749 on the 4th of each month for two more months.
+        </p>
+        <p class="state-extended" style="font-size:13px;color:var(--text-tertiary);margin:0;">
+          Your first charge is <strong style="color:var(--text-primary);">$197 today</strong>, then $197 on the 4th of each month for eleven more months.
+        </p>
+      </div>
+
+      <!-- Card details -->
+      <div class="form-section">
+        <p class="form-section-title">Card details</p>
+        <div style="display:grid;gap:var(--s-4);">
+          <div class="field">
+            <label>Card number</label>
+            <div class="stripe-field">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              <span class="stripe-field-label">Card number</span>
+              <span class="stripe-pill">STRIPE</span>
+            </div>
+            <div class="card-icons">
+              <div class="card-chip visa">VISA</div>
+              <div class="card-chip mc">MC</div>
+              <div class="card-chip amex">AMEX</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Expiry date</label>
+              <div class="stripe-field">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span class="stripe-field-label">MM / YY</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Security code</label>
+              <div class="stripe-field">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span class="stripe-field-label">CVC</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="stripe-branding">
+          <svg viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="0" y="18" font-family="sans-serif" font-size="14" font-weight="600" fill="currentColor">stripe</text></svg>
+          <span style="font-size:12px;color:var(--text-tertiary);">Payments processed securely by Stripe</span>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="submit-section">
+        <button class="submit-btn" id="submitBtn" onclick="window.location.href='program-thank-you.html'">
+          <span class="state-full">Enrol now — $1,997</span>
+          <span class="state-spread">Start with $749 today</span>
+          <span class="state-extended">Start with $197 today</span>
+        </button>
+        <div class="payment-divider">or pay with</div>
+        <button class="paypal-btn" type="button">
+          <svg height="20" viewBox="0 0 101 32" xmlns="http://www.w3.org/2000/svg" aria-label="PayPal">
+            <path fill="#003087" d="M12.237 2.8C11.4 2.8 10.679 3.388 10.542 4.22L7.328 23.485c-.1.617.374 1.178 1 1.178h4.34c.837 0 1.558-.588 1.695-1.42l.875-5.55a1.72 1.72 0 0 1 1.695-1.42h2.764c4.836 0 8.468-2.34 9.548-7.198.424-1.875.018-3.354-.933-4.41-1.048-1.16-2.896-1.785-5.222-1.785H12.237z"/>
+            <path fill="#009cde" d="M38.805 9.65c-.49 0-.963.046-1.415.131l-.002.013c-2.138.42-3.668 1.677-4.32 3.882-.779 2.644.48 4.612 2.957 5.348 1.1.325 2.27.348 3.354.09 1.586-.383 2.785-1.334 3.353-2.81.56-1.46.363-3.088-.482-4.27-.74-1.038-2.028-2.384-3.445-2.384z"/>
+            <path fill="#003087" d="M56.7 9.85c-1.03 0-1.933.705-2.123 1.72l-2.124 11.73c-.126.694.41 1.338 1.114 1.338h3.897c.72 0 1.338-.514 1.453-1.224l.626-3.888h2.467c4.254 0 7.476-2.075 8.44-6.378.376-1.664.016-2.975-.826-3.914-.924-1.026-2.552-1.584-4.612-1.584H56.7z"/>
+          </svg>
+          <span>Pay with PayPal</span>
+        </button>
+        <div class="submit-security">
+          <div class="submit-security-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Secure checkout</span>
+          </div>
+          <div class="submit-security-sep"></div>
+          <div class="submit-security-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>30-day money-back guarantee</span>
+          </div>
+          <div class="submit-security-sep"></div>
+          <div class="submit-security-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>SSL encrypted</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /form-box -->
+
+    <!-- ===== RIGHT: ORDER SUMMARY (unboxed, dark) ===== -->
+    <aside class="order-col">
+
+      <p class="order-eyebrow">A program by Lena Hartwell</p>
+      <h2 class="order-program-name">The Presence<br>Collective</h2>
+      <div class="order-meta">
+        <span class="order-meta-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          8 weeks
+        </span>
+        <span class="order-meta-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Starts November 4
+        </span>
+        <span class="order-meta-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Live online · 2 sessions/week
+        </span>
+      </div>
+
+      <!-- Order summary — Pay in full -->
+      <div class="order-summary state-full">
+        <div class="order-summary-header">Order summary — Pay in full</div>
+        <div class="order-line">
+          <div class="order-line-label">
+            The Presence Collective
+            <span class="sub">8 weeks · 16 live sessions · All recordings</span>
+          </div>
+          <div class="order-line-value">$1,997</div>
+        </div>
+        <div class="order-line">
+          <div class="order-line-label">The Complete Practice Library</div>
+          <div class="order-line-value" style="color:rgba(156,196,138,0.9);font-size:13px;">Included</div>
+        </div>
+        <div class="order-line">
+          <div class="order-line-label">1:1 onboarding call with Lena</div>
+          <div class="order-line-value" style="color:rgba(156,196,138,0.9);font-size:13px;">Included</div>
+        </div>
+        <div class="order-total">
+          <span class="order-total-label">Due today</span>
+          <span class="order-total-value">$1,997</span>
+        </div>
+      </div>
+
+      <!-- Order summary — Spread (3 payments) -->
+      <div class="order-summary state-spread">
+        <div class="order-summary-header">Order summary — Spread plan</div>
+        <div class="order-line">
+          <div class="order-line-label">
+            The Presence Collective
+            <span class="sub">8 weeks · 16 live sessions · All recordings</span>
+          </div>
+          <div class="order-line-value">$2,247</div>
+        </div>
+        <div class="order-line">
+          <div class="order-line-label">The Complete Practice Library</div>
+          <div class="order-line-value" style="color:rgba(156,196,138,0.9);font-size:13px;">Included</div>
+        </div>
+        <div class="order-total">
+          <span class="order-total-label">Due today</span>
+          <span class="order-total-value">$749</span>
+        </div>
+        <div class="plan-schedule">
+          <p class="plan-schedule-title">Payment schedule</p>
+          <div class="plan-schedule-row">
+            <span class="plan-schedule-date">Today (November 4)</span>
+            <span class="plan-schedule-amount today">$749</span>
+          </div>
+          <div class="plan-schedule-row">
+            <span class="plan-schedule-date">December 4</span>
+            <span class="plan-schedule-amount">$749</span>
+          </div>
+          <div class="plan-schedule-row">
+            <span class="plan-schedule-date">January 4</span>
+            <span class="plan-schedule-amount">$749</span>
+          </div>
+          <p class="plan-schedule-note">Same program access regardless of payment choice. Charged automatically to your card.</p>
+        </div>
+      </div>
+
+      <!-- Order summary — Extended (12 payments) -->
+      <div class="order-summary state-extended">
+        <div class="order-summary-header">Order summary — Extended plan</div>
+        <div class="order-line">
+          <div class="order-line-label">
+            The Presence Collective
+            <span class="sub">8 weeks · 16 live sessions · All recordings</span>
+          </div>
+          <div class="order-line-value">$2,364</div>
+        </div>
+        <div class="order-line">
+          <div class="order-line-label">The Complete Practice Library</div>
+          <div class="order-line-value" style="color:rgba(156,196,138,0.9);font-size:13px;">Included</div>
+        </div>
+        <div class="order-total">
+          <span class="order-total-label">Due today</span>
+          <span class="order-total-value">$197</span>
+        </div>
+        <div class="plan-schedule">
+          <p class="plan-schedule-title">Payment schedule</p>
+          <div class="plan-schedule-row">
+            <span class="plan-schedule-date">Today (November 4)</span>
+            <span class="plan-schedule-amount today">$197</span>
+          </div>
+          <div class="plan-schedule-row">
+            <span class="plan-schedule-date">December 4</span>
+            <span class="plan-schedule-amount">$197</span>
+          </div>
+          <div class="plan-schedule-row">
+            <span class="plan-schedule-date">January 4</span>
+            <span class="plan-schedule-amount">$197</span>
+          </div>
+          <p class="plan-schedule-note">× 9 further monthly payments of $197. Same program access. Charged automatically each month.</p>
+        </div>
+      </div>
+
+      <!-- What's included -->
+      <div class="order-benefits">
+        <p class="order-benefits-title">Everything included</p>
+        <div class="order-benefit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span><strong>16 live sessions</strong> — Tuesdays &amp; Thursdays, 6PM EST</span>
+        </div>
+        <div class="order-benefit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span><strong>All recordings</strong> available within 24 hours</span>
+        </div>
+        <div class="order-benefit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span><strong>The Complete Practice Library</strong> — three full protocols, field notes, and a 28-day integration guide</span>
+        </div>
+        <div class="order-benefit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span><strong>8-week inquiry journal</strong> — structured PDF workbook with three prompts per week</span>
+        </div>
+        <div class="order-benefit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span><strong>Private integration session</strong> — 45 minutes with Lena, any time in the 6 weeks after the program</span>
+        </div>
+      </div>
+
+      <!-- Guarantee -->
+      <div class="order-guarantee">
+        <div class="guarantee-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="guarantee-text">
+          <h4>30-day money-back guarantee</h4>
+          <p>Attend the first two weeks. If the program isn't right for you, email us for a full refund — no questions, no conditions.</p>
+        </div>
+      </div>
+
+      <p class="order-attribution">
+        Designed and led by <strong>Lena Hartwell</strong>. Eight weeks of practice built around your actual life — not around inspiration.
+      </p>
+
+    </aside>
+
+  </main>
+
+  <!-- =====================================================================
+       FTC disclosure
+       ===================================================================== -->
+  <div class="co-ftc">
+    <h2>Earnings &amp; results disclaimer</h2>
+    <p>The Presence Collective is a live practice program. Results depend on your participation, consistency, and personal circumstances. Testimonials reflect individual experiences and are not guarantees. The 30-day refund window applies to full-price and payment-plan enrolments (for plan customers, only the first payment is refundable after week two).</p>
+  </div>
+
+  <!-- =====================================================================
+       Footer
+       ===================================================================== -->
+  <footer class="co-footer">
+    <span class="co-footer-copy">&copy; 2026 Lena Hartwell</span>
+    <nav class="co-footer-links">
+      <a href="#">Privacy policy</a>
+      <a href="#">Terms of use</a>
+      <a href="#">Contact</a>
+    </nav>
+  </footer>
+
+  <script src="funnel-nav.js"></script>
+  <script>
+    function selectPlan(type) {
+      document.body.classList.remove('plan-full', 'plan-extended');
+      if (type === 'full')     document.body.classList.add('plan-full');
+      if (type === 'extended') document.body.classList.add('plan-extended');
+      ['planExtended', 'planSpread', 'planFull'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('selected');
+        el.setAttribute('aria-pressed', 'false');
+      });
+      var active = document.getElementById('plan' + type.charAt(0).toUpperCase() + type.slice(1));
+      if (active) {
+        active.classList.add('selected');
+        active.setAttribute('aria-pressed', 'true');
+      }
+    }
+  </script>
+
+</body>
+</html>
