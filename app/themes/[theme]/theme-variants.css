@@ -28,7 +28,6 @@
 .theme-sacred .hero-meta               { color: rgba(237, 232, 255, 0.65); }
 .theme-sacred .hero-meta .label        { color: rgba(185, 168, 232, 0.45); }
 .theme-sacred .hero-host-badge         { color: rgba(237, 232, 255, 0.70); }
-.theme-sacred .hero-host-badge::before { background: rgba(155, 111, 245, 0.35); }
 
 /* — Hero gradient — midnight purple with amethyst radial glow — */
 .theme-sacred .hero::before {
@@ -225,7 +224,6 @@
 .theme-highperf .hero-meta             { color: rgba(232, 238, 248, 0.60); }
 .theme-highperf .hero-meta .label      { color: rgba(160, 176, 204, 0.45); }
 .theme-highperf .hero-host-badge       { color: rgba(232, 238, 248, 0.65); }
-.theme-highperf .hero-host-badge::before { background: rgba(0, 102, 255, 0.35); }
 
 /* — Hero gradient — ultra-dark with electric blue pulse — */
 .theme-highperf .hero::before {
