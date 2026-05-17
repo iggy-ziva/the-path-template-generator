@@ -211,7 +211,7 @@ export default function HomePage() {
             >
               <div
                 style={{
-                  background: theme.colors.canvas,
+                  background: theme.colors.surfaceCanvas,
                   borderRadius: "16px",
                   overflow: "hidden",
                   border: "1px solid rgba(255,255,255,0.05)",
@@ -227,11 +227,10 @@ export default function HomePage() {
                   (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
                 }}
               >
-                {/* Color band */}
                 <div
                   style={{
                     height: "6px",
-                    background: `linear-gradient(90deg, ${theme.colors.accent}, ${theme.colors.highlight})`,
+                    background: `linear-gradient(90deg, ${theme.colors.accentPrimary}, ${theme.colors.accentHighlight})`,
                   }}
                 />
                 <div style={{ padding: "28px" }}>
@@ -241,7 +240,7 @@ export default function HomePage() {
                         width: "36px",
                         height: "36px",
                         borderRadius: "50%",
-                        background: theme.colors.accent,
+                        background: theme.colors.accentPrimary,
                         flexShrink: 0,
                       }}
                     />
@@ -252,7 +251,7 @@ export default function HomePage() {
                           fontWeight: 700,
                           letterSpacing: "0.1em",
                           textTransform: "uppercase",
-                          color: theme.colors.accent,
+                          color: theme.colors.accentPrimary,
                           fontFamily: theme.fonts.bodyFamily,
                         }}
                       >
@@ -262,7 +261,7 @@ export default function HomePage() {
                         style={{
                           fontSize: "15px",
                           fontWeight: 700,
-                          color: theme.colors.text,
+                          color: theme.colors.textPrimary,
                           fontFamily: theme.fonts.displayFamily,
                         }}
                       >
@@ -274,7 +273,7 @@ export default function HomePage() {
                     style={{
                       fontSize: "18px",
                       fontWeight: 700,
-                      color: theme.colors.text,
+                      color: theme.colors.textPrimary,
                       fontFamily: theme.fonts.displayFamily,
                       lineHeight: 1.3,
                       marginBottom: "12px",
@@ -285,7 +284,7 @@ export default function HomePage() {
                   <div
                     style={{
                       fontSize: "13px",
-                      color: theme.colors.text,
+                      color: theme.colors.textPrimary,
                       opacity: 0.6,
                       fontFamily: theme.fonts.bodyFamily,
                       lineHeight: 1.5,
@@ -299,7 +298,7 @@ export default function HomePage() {
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "6px",
-                      background: theme.colors.accent,
+                      background: theme.colors.accentPrimary,
                       color: "#fff",
                       padding: "8px 16px",
                       borderRadius: "100px",
