@@ -30,3 +30,39 @@ body {
   white-space: nowrap;
   border: 0;
 }
+
+/* Prevent orphaned words on all headings */
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
+/* ─── Ziva Marketing — landing page only ─────────────────────────────────── */
+
+@keyframes ziva-gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.ziva-gradient-text {
+  background: linear-gradient(90deg, #8C369F, #FA2A45, #FF007E, #F5530C, #8C369F);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: ziva-gradient-shift 5s ease infinite;
+}
+
+.ziva-gradient-btn {
+  background: linear-gradient(135deg, #FF007E 0%, #FA2A45 55%, #FD1562 100%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.ziva-gradient-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(250, 42, 69, 0.35);
+}

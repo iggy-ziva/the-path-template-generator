@@ -413,4 +413,6 @@ export interface ThemeConfig {
   fonts: ThemeFonts;
   colors: ThemeColors;
   content: ThemeContent;
+  /** Filename in the Supabase `figma-files` private bucket, e.g. "threshold.fig" */
+  figmaStoragePath?: string;
 }

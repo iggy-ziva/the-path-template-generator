@@ -27,6 +27,7 @@ interface ThemeSpec {
   fonts: ThemeFonts;
   colors: ThemeColors;
   overrides?: DeepPartial<ThemeContent>;
+  figmaStoragePath?: string;
 }
 
 function makeTheme(s: ThemeSpec): ThemeConfig {
@@ -45,6 +46,7 @@ function makeTheme(s: ThemeSpec): ThemeConfig {
     fonts: s.fonts,
     colors: s.colors,
     content,
+    figmaStoragePath: s.figmaStoragePath,
   };
 }
 
@@ -56,6 +58,7 @@ const threshold = makeTheme({
   label: "Threshold",
   descriptor: "Contemplative · Spacious",
   swatch: "#7A4A28",
+  figmaStoragePath: "threshold.fig",
   host: {
     name: "Lena Hartwell",
     shortName: "Lena",

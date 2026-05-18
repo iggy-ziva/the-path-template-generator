@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
+import { sendDesignServiceNotification, sendHostingNotification } from "@/lib/resend";
 import Stripe from "stripe";
 
 async function getServiceClient() {
@@ -30,19 +31,33 @@ export async function POST(req: NextRequest) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const email = session.customer_email ?? session.metadata?.user_email;
+    const orderType = session.metadata?.order_type;
 
     if (email && session.payment_status === "paid") {
-      const supabase = await getServiceClient();
-      await supabase
-        .from("users")
-        .upsert(
-          {
-            email: email.toLowerCase(),
-            has_paid: true,
-            stripe_customer_id: session.customer as string | null,
-          },
-          { onConflict: "email" }
-        );
+      if (orderType === "design_service") {
+        await sendDesignServiceNotification({
+          customerEmail: email,
+          themeLabel: session.metadata?.theme_label ?? session.metadata?.theme_slug ?? "Unknown",
+        }).catch((err) => console.error("Design service notification error:", err));
+      } else if (orderType === "hosting") {
+        await sendHostingNotification({
+          customerEmail: email,
+          funnelId: session.metadata?.funnel_id ?? "",
+        }).catch((err) => console.error("Hosting notification error:", err));
+      } else {
+        // Standard template purchase — grant access in Supabase
+        const supabase = await getServiceClient();
+        await supabase
+          .from("users")
+          .upsert(
+            {
+              email: email.toLowerCase(),
+              has_paid: true,
+              stripe_customer_id: session.customer as string | null,
+            },
+            { onConflict: "email" }
+          );
+      }
     }
   }
 

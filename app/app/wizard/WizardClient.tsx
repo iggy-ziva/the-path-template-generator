@@ -419,7 +419,7 @@ export default function WizardClient({ userEmail }: Props) {
           {stepMeta.subtitle}
         </p>
 
-        <StepComponent data={data} onChange={updateData} onNext={goNext} />
+        <StepComponent data={data} onChange={updateData} onNext={goNext} submissionId={submissionId} />
       </div>
 
       {/* ── Nav buttons ─────────────────────────────────────────────────── */}

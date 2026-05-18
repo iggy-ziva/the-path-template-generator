@@ -20,10 +20,24 @@ export async function POST(req: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const supabase = await getServiceClient();
+
+    // Gate: only allow sign-in if a paid purchase exists for this email
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("has_paid")
+      .eq("email", normalizedEmail)
+      .single();
+
+    if (!existingUser || !existingUser.has_paid) {
+      return NextResponse.json(
+        { error: "no_purchase", message: "No purchase found for this email address." },
+        { status: 403 }
+      );
+    }
+
     const code = generateOTP();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-
-    const supabase = await getServiceClient();
 
     // Invalidate any existing codes for this email
     await supabase
@@ -42,8 +56,8 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error;
 
-    // Send email (skip in dev if RESEND_API_KEY not set)
-    if (process.env.RESEND_API_KEY) {
+    // Send email (skip in dev if POSTMARK_API_KEY not set)
+    if (process.env.POSTMARK_API_KEY) {
       await sendVerificationEmail(normalizedEmail, code);
     } else {
       console.log(`[DEV] Verification code for ${normalizedEmail}: ${code}`);

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import type { WizardData } from "@/lib/wizard-types";
 import { THEME_LIST_FOR_WIZARD } from "../wizard-constants";
 
-interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; }
+interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; submissionId?: string | null; }
 
 function ReviewRow({ label, value, missing }: { label: string; value?: string | number | boolean | unknown[]; missing?: boolean }) {
   const isEmpty = value === undefined || value === null || value === "" ||
@@ -37,7 +37,7 @@ const REQUIRED_FIELDS: Array<{ key: keyof WizardData; label: string }> = [
   { key: "transformationPromise", label: "Transformation promise" },
 ];
 
-export default function Step10({ data }: Props) {
+export default function Step10({ data, submissionId }: Props) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -60,14 +60,14 @@ export default function Step10({ data }: Props) {
       const res = await fetch("/api/wizard/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wizardData: data }),
+        body: JSON.stringify({ wizardData: data, submissionId }),
       });
       if (!res.ok) {
         const json = await res.json();
         throw new Error(json.error ?? "Generation failed");
       }
       const { funnelId } = await res.json();
-      router.push(`/app/dashboard?funnel=${funnelId}`);
+      router.push(`/app/preview/${funnelId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed — please try again");
       setGenerating(false);

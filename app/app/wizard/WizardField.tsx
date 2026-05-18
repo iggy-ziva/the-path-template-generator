@@ -2,17 +2,31 @@
 
 import { useState } from "react";
 
-const fieldStyle: React.CSSProperties = {
+const Z = {
+  cream:    "#FCFAF6",
+  creamMid: "#FCF8EF",
+  creamDeep:"#F5EEE0",
+  charcoal: "#2E2E2E",
+  muted:    "#8A7A6A",
+  faint:    "#C8B8A4",
+  pink:     "#FF007E",
+  coral:    "#FA2A45",
+  white:    "#FFFFFF",
+  font:     'var(--font-barlow), -apple-system, sans-serif',
+};
+
+const fieldBase: React.CSSProperties = {
   width: "100%",
-  padding: "12px 14px",
-  background: "#1a1917",
-  border: "1px solid #2a2926",
-  borderRadius: "10px",
-  color: "#f5f1ea",
-  fontSize: "14px",
+  padding: "13px 16px",
+  background: Z.white,
+  border: "1.5px solid #C8B8A4",
+  borderRadius: 10,
+  color: Z.charcoal,
+  fontSize: 14,
+  fontFamily: Z.font,
   outline: "none",
   boxSizing: "border-box",
-  fontFamily: "inherit",
+  transition: "border-color 0.15s, box-shadow 0.15s",
 };
 
 export function Field({
@@ -27,12 +41,28 @@ export function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ marginBottom: "24px" }}>
-      <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#aaa", marginBottom: "8px" }}>
-        {label} {required && <span style={{ color: "#D4A878" }}>*</span>}
+    <div style={{ marginBottom: 24 }}>
+      <label
+        style={{
+          display: "block",
+          fontFamily: Z.font,
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: Z.charcoal,
+          marginBottom: 8,
+        }}
+      >
+        {label}{" "}
+        {required && <span style={{ color: Z.pink }}>*</span>}
       </label>
       {children}
-      {hint && <p style={{ margin: "6px 0 0", fontSize: "12px", color: "#555", lineHeight: 1.4 }}>{hint}</p>}
+      {hint && (
+        <p style={{ margin: "6px 0 0", fontFamily: Z.font, fontSize: 12, color: Z.faint, lineHeight: 1.5 }}>
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
@@ -54,7 +84,9 @@ export function TextInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      style={fieldStyle}
+      style={fieldBase}
+      onFocus={(e) => { const el = e.target as HTMLInputElement; el.style.borderColor = Z.pink; el.style.boxShadow = "0 0 0 3px rgba(255,0,126,0.1)"; }}
+      onBlur={(e)  => { const el = e.target as HTMLInputElement; el.style.borderColor = "#C8B8A4"; el.style.boxShadow = "none"; }}
     />
   );
 }
@@ -76,7 +108,9 @@ export function Textarea({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      style={{ ...fieldStyle, resize: "vertical", lineHeight: 1.6 }}
+      style={{ ...fieldBase, resize: "vertical", lineHeight: 1.65 }}
+      onFocus={(e) => { const el = e.target as HTMLTextAreaElement; el.style.borderColor = Z.pink; el.style.boxShadow = "0 0 0 3px rgba(255,0,126,0.1)"; }}
+      onBlur={(e)  => { const el = e.target as HTMLTextAreaElement; el.style.borderColor = "#C8B8A4"; el.style.boxShadow = "none"; }}
     />
   );
 }
@@ -91,7 +125,13 @@ export function Select({
   options: string[];
 }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} style={{ ...fieldStyle, cursor: "pointer" }}>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      style={{ ...fieldBase, cursor: "pointer" }}
+      onFocus={(e) => { const el = e.target as HTMLSelectElement; el.style.borderColor = Z.pink; el.style.boxShadow = "0 0 0 3px rgba(255,0,126,0.1)"; }}
+      onBlur={(e)  => { const el = e.target as HTMLSelectElement; el.style.borderColor = "#C8B8A4"; el.style.boxShadow = "none"; }}
+    >
       <option value="">Select…</option>
       {options.map((o) => <option key={o} value={o}>{o}</option>)}
     </select>
@@ -100,7 +140,7 @@ export function Select({
 
 export function Grid({ children, cols = 2 }: { children: React.ReactNode; cols?: number }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: "20px" }}>
+    <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 20 }}>
       {children}
     </div>
   );
@@ -108,8 +148,20 @@ export function Grid({ children, cols = 2 }: { children: React.ReactNode; cols?:
 
 export function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: "40px" }}>
-      <h3 style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#D4A878", marginBottom: "20px", paddingBottom: "12px", borderBottom: "1px solid #1a1917" }}>
+    <div style={{ marginBottom: 40 }}>
+      <h3
+        style={{
+          fontFamily: Z.font,
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: Z.pink,
+          marginBottom: 20,
+          paddingBottom: 12,
+          borderBottom: `1px solid ${Z.creamDeep}`,
+        }}
+      >
         {title}
       </h3>
       {children}
@@ -155,26 +207,49 @@ export function FileUpload({
 
   return (
     <div>
-      <label style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        padding: "14px 16px",
-        background: "#1a1917",
-        border: "1px dashed #2a2926",
-        borderRadius: "10px",
-        cursor: "pointer",
-        fontSize: "14px",
-        color: "#888",
-      }}>
-        <span style={{ fontSize: "20px" }}>↑</span>
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          padding: "16px 18px",
+          background: Z.white,
+          border: "1.5px dashed #C8B8A4",
+          borderRadius: 12,
+          cursor: uploading ? "not-allowed" : "pointer",
+          fontFamily: Z.font,
+          transition: "border-color 0.15s",
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLLabelElement).style.borderColor = Z.pink; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLLabelElement).style.borderColor = "#C8B8A4"; }}
+      >
+        <span style={{ fontSize: 22, opacity: 0.5 }}>↑</span>
         <div>
-          <div style={{ fontWeight: 600, color: "#f5f1ea" }}>{uploading ? "Uploading…" : label}</div>
-          {currentUrl && !uploading && <div style={{ fontSize: "12px", color: "#D4A878", marginTop: "2px" }}>✓ File uploaded</div>}
+          <div style={{ fontWeight: 700, fontSize: 14, color: Z.charcoal }}>
+            {uploading ? "Uploading…" : label}
+          </div>
+          {currentUrl && !uploading && (
+            <div style={{ fontSize: 12, color: Z.pink, marginTop: 2, fontWeight: 600 }}>
+              ✓ File uploaded
+            </div>
+          )}
+          {!currentUrl && !uploading && (
+            <div style={{ fontSize: 12, color: Z.faint, marginTop: 2 }}>
+              Click to browse
+            </div>
+          )}
         </div>
-        <input type="file" accept={accept} onChange={handleFile} style={{ display: "none" }} disabled={uploading} />
+        <input
+          type="file"
+          accept={accept}
+          onChange={handleFile}
+          style={{ display: "none" }}
+          disabled={uploading}
+        />
       </label>
-      {error && <p style={{ color: "#ff8a8a", fontSize: "12px", marginTop: "6px" }}>{error}</p>}
+      {error && (
+        <p style={{ color: Z.coral, fontFamily: Z.font, fontSize: 12, marginTop: 6 }}>{error}</p>
+      )}
     </div>
   );
 }
@@ -218,23 +293,66 @@ export function MultipleFileUpload({
   return (
     <div>
       {currentUrls.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
           {currentUrls.map((url) => (
-            <div key={url} style={{ display: "flex", alignItems: "center", gap: "6px", background: "#1a1917", borderRadius: "8px", padding: "6px 12px", fontSize: "12px" }}>
-              <span style={{ color: "#D4A878" }}>✓</span>
-              <span style={{ color: "#888", maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{url.split("/").pop()}</span>
-              <button onClick={() => remove(url)} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "14px" }}>×</button>
+            <div
+              key={url}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                background: Z.creamMid,
+                border: `1px solid ${Z.creamDeep}`,
+                borderRadius: 8,
+                padding: "5px 10px",
+                fontFamily: Z.font,
+                fontSize: 12,
+              }}
+            >
+              <span style={{ color: Z.pink, fontWeight: 700 }}>✓</span>
+              <span style={{ color: Z.muted, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {url.split("/").pop()}
+              </span>
+              <button
+                onClick={() => remove(url)}
+                style={{ background: "none", border: "none", color: Z.faint, cursor: "pointer", fontSize: 16, padding: 0, lineHeight: 1 }}
+              >
+                ×
+              </button>
             </div>
           ))}
         </div>
       )}
-      <label style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px", background: "#1a1917", border: "1px dashed #2a2926", borderRadius: "10px", cursor: "pointer", fontSize: "14px", color: "#888" }}>
-        <span style={{ fontSize: "20px" }}>↑</span>
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          padding: "16px 18px",
+          background: Z.white,
+          border: "1.5px dashed #C8B8A4",
+          borderRadius: 12,
+          cursor: uploading ? "not-allowed" : "pointer",
+          fontFamily: Z.font,
+        }}
+      >
+        <span style={{ fontSize: 22, opacity: 0.5 }}>↑</span>
         <div>
-          <div style={{ fontWeight: 600, color: "#f5f1ea" }}>{uploading ? "Uploading…" : label}</div>
-          <div style={{ fontSize: "12px", marginTop: "2px" }}>Click to add files ({currentUrls.length} uploaded)</div>
+          <div style={{ fontWeight: 700, fontSize: 14, color: Z.charcoal }}>
+            {uploading ? "Uploading…" : label}
+          </div>
+          <div style={{ fontSize: 12, color: Z.faint, marginTop: 2 }}>
+            {currentUrls.length} file{currentUrls.length !== 1 ? "s" : ""} uploaded · click to add more
+          </div>
         </div>
-        <input type="file" accept={accept} multiple onChange={handleFiles} style={{ display: "none" }} disabled={uploading} />
+        <input
+          type="file"
+          accept={accept}
+          multiple
+          onChange={handleFiles}
+          style={{ display: "none" }}
+          disabled={uploading}
+        />
       </label>
     </div>
   );
@@ -268,28 +386,78 @@ export function UrlListInput({
   }
 
   return (
-    <div style={{ marginBottom: "24px" }}>
-      <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#aaa", marginBottom: "8px" }}>{label}</label>
-      <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+    <div style={{ marginBottom: 24 }}>
+      <label
+        style={{
+          display: "block",
+          fontFamily: Z.font,
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: Z.charcoal,
+          marginBottom: 8,
+        }}
+      >
+        {label}
+      </label>
+      <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
         <input
           type="url"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())}
           placeholder={placeholder ?? "https://…"}
-          style={{ ...fieldStyle, flex: 1 }}
+          style={{ ...fieldBase, flex: 1 }}
+          onFocus={(e) => { const el = e.target as HTMLInputElement; el.style.borderColor = Z.pink; el.style.boxShadow = "0 0 0 3px rgba(255,0,126,0.1)"; }}
+          onBlur={(e)  => { const el = e.target as HTMLInputElement; el.style.borderColor = "#C8B8A4"; el.style.boxShadow = "none"; }}
         />
-        <button onClick={add} style={{ padding: "12px 16px", background: "#D4A878", color: "#0f0e0c", border: "none", borderRadius: "10px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+        <button
+          onClick={add}
+          style={{
+            padding: "12px 18px",
+            background: `linear-gradient(135deg, ${Z.pink}, ${Z.coral})`,
+            color: Z.white,
+            border: "none",
+            borderRadius: 10,
+            fontFamily: Z.font,
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            boxShadow: "0 2px 8px rgba(250,42,69,0.2)",
+          }}
+        >
           + Add
         </button>
       </div>
       {value.map((url) => (
-        <div key={url} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#1a1917", borderRadius: "8px", marginBottom: "6px" }}>
-          <span style={{ fontSize: "13px", color: "#D4A878", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{url}</span>
-          <button onClick={() => remove(url)} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "16px", flexShrink: 0, marginLeft: "8px" }}>×</button>
+        <div
+          key={url}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "9px 14px",
+            background: Z.creamMid,
+            border: `1px solid ${Z.creamDeep}`,
+            borderRadius: 8,
+            marginBottom: 6,
+            fontFamily: Z.font,
+          }}
+        >
+          <span style={{ fontSize: 13, color: Z.pink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, fontWeight: 600 }}>
+            {url}
+          </span>
+          <button
+            onClick={() => remove(url)}
+            style={{ background: "none", border: "none", color: Z.faint, cursor: "pointer", fontSize: 18, flexShrink: 0, marginLeft: 8, lineHeight: 1 }}
+          >
+            ×
+          </button>
         </div>
       ))}
-      {hint && <p style={{ margin: "6px 0 0", fontSize: "12px", color: "#555" }}>{hint}</p>}
+      {hint && <p style={{ margin: "6px 0 0", fontFamily: Z.font, fontSize: 12, color: Z.faint }}>{hint}</p>}
     </div>
   );
 }

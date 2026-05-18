@@ -24,13 +24,29 @@ export default function StickyBar({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    let lastY = window.scrollY;
+
     function onScroll() {
+      const currentY = window.scrollY;
+      const delta = currentY - lastY;
+      lastY = currentY;
+
       const hero = document.getElementById("hero");
-      if (!hero) return;
-      setVisible(hero.getBoundingClientRect().bottom < 80);
+      const heroPassed = hero ? hero.getBoundingClientRect().bottom < 80 : currentY > 200;
+
+      if (!heroPassed) {
+        // Above hero — always hidden
+        setVisible(false);
+      } else if (delta > 0) {
+        // Scrolling down past hero — show
+        setVisible(true);
+      } else if (delta < -4) {
+        // Scrolling up (with small threshold to avoid jitter) — hide
+        setVisible(false);
+      }
     }
+
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 

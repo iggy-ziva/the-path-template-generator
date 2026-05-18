@@ -4,6 +4,20 @@ import { useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
+const Z = {
+  cream:      "#FCFAF6",
+  creamMid:   "#FCF8EF",
+  creamDeep:  "#F5EEE0",
+  charcoal:   "#2E2E2E",
+  muted:      "#8A7A6A",
+  faint:      "#C8B8A4",
+  pink:       "#FF007E",
+  coral:      "#FA2A45",
+  white:      "#FFFFFF",
+  fontDisplay:'"kudryashev-d-contrast", serif',
+  fontBody:   'var(--font-barlow), -apple-system, sans-serif',
+};
+
 export default function VerifyForm() {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -45,7 +59,7 @@ export default function VerifyForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Invalid code");
-      router.push(data.hasPaid ? next : "/pricing");
+      router.push(data.hasPaid ? next : "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
@@ -55,42 +69,184 @@ export default function VerifyForm() {
   async function resendCode() {
     setResending(true);
     try {
-      await fetch("/api/auth/send-code", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+      await fetch("/api/auth/send-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
       setResent(true);
       setTimeout(() => setResent(false), 5000);
-    } finally { setResending(false); }
+    } finally {
+      setResending(false);
+    }
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0f0e0c", color: "#f5f1ea", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', -apple-system, sans-serif", padding: "40px 20px" }}>
-      <div style={{ width: "100%", maxWidth: "420px" }}>
-        <Link href="/" style={{ display: "block", marginBottom: "40px", textAlign: "center", color: "#D4A878", textDecoration: "none", fontSize: "13px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+    <main
+      style={{
+        minHeight: "100vh",
+        background: Z.cream,
+        color: Z.charcoal,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: Z.fontBody,
+        padding: "40px 20px",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* Ambient blob */}
+      <div aria-hidden="true" style={{
+        position: "absolute", top: "-15%", left: "-10%",
+        width: "60vw", height: "60vw", maxWidth: 700,
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(245,83,12,0.07) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ width: "100%", maxWidth: 420, position: "relative", zIndex: 1 }}>
+
+        {/* Back link */}
+        <Link
+          href="/"
+          style={{
+            display: "block",
+            marginBottom: 40,
+            textAlign: "center",
+            fontFamily: Z.fontBody,
+            color: Z.muted,
+            textDecoration: "none",
+            fontSize: 13,
+            fontWeight: 700,
+            letterSpacing: "0.06em",
+          }}
+        >
           ← The Path
         </Link>
-        <div style={{ background: "#1a1917", borderRadius: "20px", padding: "40px", border: "1px solid #2a2926" }}>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: "8px", letterSpacing: "-0.02em" }}>Check your email</h1>
-          <p style={{ color: "#888", marginBottom: "32px", lineHeight: 1.5 }}>
-            We sent a 6-digit code to <span style={{ color: "#f5f1ea", fontWeight: 600 }}>{email}</span>. It expires in 15 minutes.
+
+        {/* Card */}
+        <div
+          style={{
+            background: Z.white,
+            borderRadius: 20,
+            padding: "40px 36px",
+            border: `1px solid ${Z.creamDeep}`,
+            boxShadow: "0 4px 32px rgba(245,83,12,0.07), 0 1px 6px rgba(0,0,0,0.04)",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          {/* Top accent */}
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0, height: 3,
+            background: `linear-gradient(90deg, ${Z.pink}, ${Z.coral})`,
+            borderRadius: "20px 20px 0 0",
+          }} />
+
+          <h1
+            style={{
+              fontFamily: Z.fontDisplay,
+              fontSize: "2rem",
+              fontWeight: 400,
+              letterSpacing: "0.02em",
+              color: Z.charcoal,
+              marginBottom: 8,
+            }}
+          >
+            Check your email
+          </h1>
+          <p style={{ fontFamily: Z.fontBody, color: Z.muted, marginBottom: 32, lineHeight: 1.6, fontSize: 14 }}>
+            We sent a 6-digit code to{" "}
+            <span style={{ color: Z.charcoal, fontWeight: 700 }}>{email}</span>.
+            It expires in 15 minutes.
           </p>
-          <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginBottom: "24px" }} onPaste={handlePaste}>
+
+          {/* Code inputs */}
+          <div
+            style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 24 }}
+            onPaste={handlePaste}
+          >
             {code.map((digit, i) => (
-              <input key={i} ref={(el) => { inputRefs.current[i] = el; }} type="text" inputMode="numeric" maxLength={1} value={digit}
-                onChange={(e) => handleDigit(i, e.target.value)} onKeyDown={(e) => handleKeyDown(i, e)} disabled={loading}
-                style={{ width: "48px", height: "60px", textAlign: "center", fontSize: "24px", fontWeight: 700, background: "#0f0e0c", border: digit ? "2px solid #D4A878" : "1px solid #2a2926", borderRadius: "10px", color: "#f5f1ea", outline: "none" }}
+              <input
+                key={i}
+                ref={(el) => { inputRefs.current[i] = el; }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleDigit(i, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(i, e)}
+                disabled={loading}
+                style={{
+                  width: 48,
+                  height: 60,
+                  textAlign: "center",
+                  fontFamily: Z.fontBody,
+                  fontSize: 24,
+                  fontWeight: 700,
+                  background: digit ? Z.creamMid : Z.cream,
+                  border: digit
+                    ? `2px solid ${Z.pink}`
+                    : `1px solid ${Z.creamDeep}`,
+                  borderRadius: 10,
+                  color: Z.charcoal,
+                  outline: "none",
+                  transition: "border-color 0.15s",
+                }}
               />
             ))}
           </div>
-          {error && <div style={{ background: "#3a1a1a", border: "1px solid #5a2a2a", borderRadius: "8px", padding: "12px 16px", marginBottom: "16px", fontSize: "13px", color: "#ff8a8a" }}>{error}</div>}
-          {loading && <div style={{ textAlign: "center", color: "#888", fontSize: "13px", marginBottom: "16px" }}>Verifying…</div>}
-          <div style={{ textAlign: "center", fontSize: "13px", color: "#555" }}>
-            Didn't receive it?{" "}
-            <button onClick={resendCode} disabled={resending} style={{ background: "none", border: "none", color: resent ? "#4ade80" : "#D4A878", cursor: "pointer", fontWeight: 600, fontSize: "13px" }}>
+
+          {error && (
+            <div
+              style={{
+                background: "#FFF0F3",
+                border: `1px solid rgba(250,42,69,0.2)`,
+                borderRadius: 10,
+                padding: "12px 16px",
+                marginBottom: 16,
+                fontFamily: Z.fontBody,
+                fontSize: 13,
+                color: Z.coral,
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          {loading && (
+            <div style={{ textAlign: "center", fontFamily: Z.fontBody, color: Z.muted, fontSize: 13, marginBottom: 16 }}>
+              Verifying…
+            </div>
+          )}
+
+          <div style={{ textAlign: "center", fontFamily: Z.fontBody, fontSize: 13, color: Z.faint }}>
+            Didn&rsquo;t receive it?{" "}
+            <button
+              onClick={resendCode}
+              disabled={resending}
+              style={{
+                background: "none",
+                border: "none",
+                color: resent ? "#22c55e" : Z.pink,
+                cursor: "pointer",
+                fontWeight: 700,
+                fontSize: 13,
+                fontFamily: Z.fontBody,
+                padding: 0,
+              }}
+            >
               {resent ? "Sent!" : resending ? "Sending…" : "Resend code"}
             </button>
           </div>
         </div>
-        <p style={{ textAlign: "center", marginTop: "24px", fontSize: "14px", color: "#555" }}>
-          Wrong email? <Link href="/login" style={{ color: "#D4A878", textDecoration: "none", fontWeight: 600 }}>Go back</Link>
+
+        <p style={{ textAlign: "center", marginTop: 24, fontFamily: Z.fontBody, fontSize: 14, color: Z.muted }}>
+          Wrong email?{" "}
+          <Link href="/login" style={{ color: Z.pink, textDecoration: "none", fontWeight: 700 }}>
+            Go back
+          </Link>
         </p>
       </div>
     </main>
