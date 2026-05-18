@@ -50,9 +50,10 @@ export async function GET(
   zip.file("styles.css", globalCss());
   zip.file("README.txt", readme());
 
-  const buffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+  const uint8 = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
+  const arrayBuffer = uint8.buffer.slice(uint8.byteOffset, uint8.byteOffset + uint8.byteLength);
 
-  return new NextResponse(buffer, {
+  return new NextResponse(arrayBuffer as ArrayBuffer, {
     headers: {
       "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="funnel-${funnelId.slice(0, 8)}.zip"`,
