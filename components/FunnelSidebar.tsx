@@ -247,8 +247,8 @@ export default function FunnelSidebar({
                     <span style={{ fontFamily: Z.font, fontSize: 11, fontWeight: 600, color: statusColor(funnel.status) }}>
                       {statusLabel(funnel.status)}
                     </span>
-                    <span style={{ color: Z.faint, fontSize: 11 }}>·</span>
-                    <span style={{ fontFamily: Z.font, fontSize: 11, color: Z.faint }}>
+                    <span style={{ color: Z.muted, fontSize: 11 }}>·</span>
+                    <span style={{ fontFamily: Z.font, fontSize: 11, color: Z.muted }}>
                       {relativeTime(funnel.updated_at)}
                     </span>
                   </div>
@@ -256,10 +256,10 @@ export default function FunnelSidebar({
                   {/* Progress bar */}
                   <div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontFamily: Z.font, fontSize: 10, color: Z.faint }}>
+                      <span style={{ fontFamily: Z.font, fontSize: 10, color: Z.muted }}>
                         Step {funnel.current_step} of 10
                       </span>
-                      <span style={{ fontFamily: Z.font, fontSize: 10, color: isActive ? Z.pink : Z.faint, fontWeight: 600 }}>
+                      <span style={{ fontFamily: Z.font, fontSize: 10, color: isActive ? Z.pink : Z.muted, fontWeight: 600 }}>
                         {pct}%
                       </span>
                     </div>

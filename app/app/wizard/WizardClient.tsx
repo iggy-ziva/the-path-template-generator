@@ -368,15 +368,15 @@ export default function WizardClient({ userEmail }: Props) {
                 style={{
                   padding: "5px 12px",
                   borderRadius: 100,
-                  border: isCurrent ? "none" : `1px solid ${isComplete ? Z.creamDeep : Z.creamDeep}`,
+                  border: isCurrent ? "none" : `1px solid ${Z.creamDeep}`,
                   background: isCurrent
                     ? `linear-gradient(135deg, ${Z.pink}, ${Z.coral})`
                     : isComplete
                     ? Z.creamMid
                     : Z.white,
-                  color: isCurrent ? Z.white : isComplete ? Z.muted : Z.faint,
+                  color: isCurrent ? Z.white : isComplete ? Z.charcoal : Z.muted,
                   fontSize: 11,
-                  fontWeight: isCurrent ? 700 : isComplete ? 600 : 400,
+                  fontWeight: isCurrent ? 700 : isComplete ? 600 : 500,
                   fontFamily: 'var(--font-barlow), sans-serif',
                   cursor: "pointer",
                   whiteSpace: "nowrap",
