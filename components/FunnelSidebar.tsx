@@ -225,7 +225,7 @@ export default function FunnelSidebar({
                           setRenameValue(funnel.name || "");
                         }}
                         title="Rename"
-                        style={{ background: "none", border: "none", cursor: "pointer", color: Z.faint, padding: 2, fontSize: 13, lineHeight: 1 }}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: Z.muted, padding: 2, fontSize: 13, lineHeight: 1 }}
                       >
                         ✎
                       </button>
@@ -235,7 +235,7 @@ export default function FunnelSidebar({
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteFunnel(funnel.id); }}
                         title="Delete"
-                        style={{ background: "none", border: "none", cursor: "pointer", color: Z.faint, padding: 2, fontSize: 13, lineHeight: 1 }}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: Z.muted, padding: 2, fontSize: 13, lineHeight: 1 }}
                       >
                         ✕
                       </button>
