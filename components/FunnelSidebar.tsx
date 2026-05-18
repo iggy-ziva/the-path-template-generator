@@ -100,7 +100,7 @@ export default function FunnelSidebar({
     onDelete(id);
   }
 
-  const statusColor = (s: string) => s === "complete" ? "#5C7A4F" : s === "generating" ? "#C9A84C" : Z.faint;
+  const statusColor = (s: string) => s === "complete" ? "#3D6B30" : s === "generating" ? "#9A6E00" : Z.muted;
   const statusLabel = (s: string) => s === "complete" ? "Complete" : s === "generating" ? "Generating…" : "Draft";
 
   if (!open) return null;
@@ -247,8 +247,8 @@ export default function FunnelSidebar({
                     <span style={{ fontFamily: Z.font, fontSize: 11, fontWeight: 600, color: statusColor(funnel.status) }}>
                       {statusLabel(funnel.status)}
                     </span>
-                    <span style={{ color: Z.muted, fontSize: 11 }}>·</span>
-                    <span style={{ fontFamily: Z.font, fontSize: 11, color: Z.muted }}>
+                    <span style={{ color: Z.charcoal, fontSize: 11 }}>·</span>
+                    <span style={{ fontFamily: Z.font, fontSize: 11, color: Z.charcoal }}>
                       {relativeTime(funnel.updated_at)}
                     </span>
                   </div>
@@ -256,10 +256,10 @@ export default function FunnelSidebar({
                   {/* Progress bar */}
                   <div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontFamily: Z.font, fontSize: 10, color: Z.muted }}>
+                      <span style={{ fontFamily: Z.font, fontSize: 10, color: Z.charcoal }}>
                         Step {funnel.current_step} of 10
                       </span>
-                      <span style={{ fontFamily: Z.font, fontSize: 10, color: isActive ? Z.pink : Z.muted, fontWeight: 600 }}>
+                      <span style={{ fontFamily: Z.font, fontSize: 10, color: isActive ? Z.pink : Z.charcoal, fontWeight: 600 }}>
                         {pct}%
                       </span>
                     </div>

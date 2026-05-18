@@ -374,7 +374,7 @@ export default function WizardClient({ userEmail }: Props) {
                     : isComplete
                     ? Z.creamMid
                     : Z.white,
-                  color: isCurrent ? Z.white : isComplete ? Z.charcoal : Z.muted,
+                  color: isCurrent ? Z.white : Z.charcoal,
                   fontSize: 11,
                   fontWeight: isCurrent ? 700 : isComplete ? 600 : 500,
                   fontFamily: 'var(--font-barlow), sans-serif',
