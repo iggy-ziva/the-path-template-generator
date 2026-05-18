@@ -48,6 +48,22 @@ export async function POST(req: NextRequest) {
 
     if (userError || !user) throw userError ?? new Error("User upsert failed");
 
+    // Ensure the user has at least one wizard funnel
+    const { count } = await supabase
+      .from("wizard_submissions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    if (!count || count === 0) {
+      await supabase.from("wizard_submissions").insert({
+        user_id: user.id,
+        name: "Untitled Funnel",
+        step_data: {},
+        current_step: 1,
+        status: "draft",
+      });
+    }
+
     // Create session cookie
     await createSession({
       userId: user.id,

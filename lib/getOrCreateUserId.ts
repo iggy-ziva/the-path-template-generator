@@ -2,9 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SessionPayload } from "./session";
 
 /**
- * Returns a guaranteed user UUID.
- * If session.userId is missing (old session cookie), looks the user up by email.
- * If the user row doesn't exist yet, creates it.
+ * Returns the user's UUID from the session.
+ * If session.userId is missing (old session cookie), falls back to a SELECT by email.
  */
 export async function getOrCreateUserId(
   session: SessionPayload,
@@ -12,15 +11,15 @@ export async function getOrCreateUserId(
 ): Promise<string | null> {
   if (session.userId) return session.userId;
 
-  // Fallback: look up by email
+  // Fallback for old session cookies that predate userId being stored in the JWT
   const { data, error } = await supabase
     .from("users")
-    .upsert({ email: session.email }, { onConflict: "email" })
     .select("id")
+    .eq("email", session.email)
     .single();
 
   if (error || !data) {
-    console.error("getOrCreateUserId error:", error);
+    console.error("getOrCreateUserId: could not resolve userId for", session.email, error);
     return null;
   }
   return data.id;
