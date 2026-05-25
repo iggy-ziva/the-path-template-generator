@@ -1,6 +1,6 @@
 "use client";
 import type { WizardData } from "@/lib/wizard-types";
-import { Field, TextInput, Textarea, Select, Grid, Section } from "../WizardField";
+import { Field, TextInput, Textarea, Select, Grid, Section, DatePicker, TimePicker } from "../WizardField";
 import { TIMEZONE_OPTIONS, PLATFORM_OPTIONS } from "../wizard-constants";
 
 interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; }
@@ -19,11 +19,11 @@ export default function Step3({ data, onChange }: Props) {
 
       <Section title="Date and time">
         <Grid>
-          <Field label="Event date" required hint="e.g. Saturday, 14 June 2025">
-            <TextInput value={data.eventDate ?? ""} onChange={(v) => onChange({ eventDate: v })} placeholder="Saturday, 14 June 2025" />
+          <Field label="Event date" required>
+            <DatePicker value={data.eventDate ?? ""} onChange={(v) => onChange({ eventDate: v })} />
           </Field>
           <Field label="Start time" required>
-            <TextInput value={data.eventTime ?? ""} onChange={(v) => onChange({ eventTime: v })} placeholder="e.g. 10:00 AM" />
+            <TimePicker value={data.eventTime ?? ""} onChange={(v) => onChange({ eventTime: v })} />
           </Field>
         </Grid>
         <Grid>
@@ -80,8 +80,21 @@ export default function Step3({ data, onChange }: Props) {
       </Section>
 
       <Section title="Additional details">
+        <Field label="Event video URL (optional)" hint="YouTube or Vimeo link — embedded on the registration page. Leave blank and the video section will be skipped in the generated funnel.">
+          <TextInput
+            type="url"
+            value={data.eventVideoUrl ?? ""}
+            onChange={(v) => onChange({ eventVideoUrl: v })}
+            placeholder="https://youtube.com/watch?v=..."
+          />
+        </Field>
         <Field label="Recording policy" hint="Do attendees get a recording? For how long?">
-          <Textarea value={data.eventRecordingPolicy ?? ""} onChange={(v) => onChange({ eventRecordingPolicy: v })} placeholder="e.g. All registered participants receive the full recording within 24 hours of the live event." rows={3} />
+          <Textarea
+            value={data.eventRecordingPolicy ?? "All registered participants receive the full recording within 24 hours of the live event."}
+            onChange={(v) => onChange({ eventRecordingPolicy: v })}
+            placeholder="e.g. All registered participants receive the full recording within 24 hours of the live event."
+            rows={3}
+          />
         </Field>
       </Section>
     </div>

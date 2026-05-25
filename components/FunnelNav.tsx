@@ -20,6 +20,13 @@ export default function FunnelNav({ slug }: { slug: ThemeSlug }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
+  // Note: figma-export routes are stripped of chrome (this component
+  // included) server-side in `app/themes/[theme]/layout.tsx`, so this
+  // belt-and-braces check is mostly redundant — but it remains as a
+  // safety net in case the component is ever mounted outside that
+  // layout for any reason.
+  if (pathname?.includes("/figma-export")) return null;
+
   return (
     <div
       style={{

@@ -23,7 +23,8 @@ export async function PATCH(
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (typeof body.name === "string") updates.name = body.name;
-  if (typeof body.theme_slug === "string") updates.theme_slug = body.theme_slug;
+  if (typeof body.current_step === "number") updates.current_step = body.current_step;
+  if (typeof body.status === "string") updates.status = body.status;
 
   const supabase = await getServiceClient();
   const userId = await getOrCreateUserId(session, supabase);
@@ -34,7 +35,7 @@ export async function PATCH(
     .update(updates)
     .eq("id", id)
     .eq("user_id", userId)
-    .select("id, name, current_step, status, theme_slug, updated_at")
+    .select("id, name, current_step, status, updated_at")
     .single();
 
   if (error) {

@@ -43,6 +43,20 @@ export default async function LandingPage({
               <h1 className="display-hero">{event.name}</h1>
               <p className="subtitle">{c.heroSubtitle}</p>
 
+              <div className="price-line">
+                <span className="price-label">{c.heroPriceLabel}</span>
+                <span className="price-value">{c.heroPriceValue}</span>
+              </div>
+
+              <div className="hero-cta-row">
+                <a href={checkoutHref} className="btn btn-primary btn-xl">
+                  {event.ctaText}
+                </a>
+                <span className="meta" style={{ color: "rgba(245,241,234,0.55)" }}>
+                  {c.heroCtaMicrocopy}
+                </span>
+              </div>
+
               <div
                 className="hero-host-badge"
                 dangerouslySetInnerHTML={{ __html: c.heroHostBadge }}
@@ -61,20 +75,6 @@ export default async function LandingPage({
                     <strong>{event.dayOfWeek} {event.time}</strong> {event.timezone}
                   </span>
                 </div>
-              </div>
-
-              <div className="price-line">
-                <span className="price-label">{c.heroPriceLabel}</span>
-                <span className="price-value">{c.heroPriceValue}</span>
-              </div>
-
-              <div className="hero-cta-row">
-                <a href={checkoutHref} className="btn btn-primary btn-xl">
-                  {event.ctaText}
-                </a>
-                <span className="meta" style={{ color: "rgba(245,241,234,0.55)" }}>
-                  {c.heroCtaMicrocopy}
-                </span>
               </div>
             </div>
 

@@ -13,11 +13,6 @@ body {
   padding: 0;
 }
 
-/* Theme page offset for fixed ThemeSwitcher bar */
-.theme-page {
-  padding-top: 52px;
-}
-
 /* Utility: visually hidden */
 .sr-only {
   position: absolute;

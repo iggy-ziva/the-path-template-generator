@@ -1,107 +1,85 @@
 "use client";
 import type { WizardData } from "@/lib/wizard-types";
-import { Field, TextInput, Section } from "../WizardField";
-import { TONE_DESCRIPTORS, THEME_LIST_FOR_WIZARD } from "../wizard-constants";
+import { Field, Section, MultipleFileUpload } from "../WizardField";
 
 interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; }
 
 export default function Step9({ data, onChange }: Props) {
-  const selected = data.toneDescriptors ?? [];
-
-  function toggleDescriptor(d: string) {
-    if (selected.includes(d)) {
-      onChange({ toneDescriptors: selected.filter((x) => x !== d) });
-    } else if (selected.length < 3) {
-      onChange({ toneDescriptors: [...selected, d] });
-    }
-  }
-
   return (
     <div>
-      <Section title="Choose your 3 tone descriptors">
-        <p style={{ fontSize: "13px", color: "#666", marginBottom: "20px", lineHeight: 1.6 }}>
-          Select exactly 3 words that describe how you naturally communicate. The AI uses these to calibrate the voice of every page it writes.
-          {selected.length > 0 && <span style={{ color: "#D4A878", fontWeight: 700 }}> {selected.length}/3 selected.</span>}
+      <div style={{ background: "#1a1917", border: "1px solid #D4A87840", borderRadius: "12px", padding: "20px", marginBottom: "32px", fontSize: 13, lineHeight: 1.7, color: "#aaa" }}>
+        <p style={{ margin: "0 0 12px 0" }}>
+          Upload as many images as you have across each section below — the AI will suggest the best placement for each one based on the content it generates. JPEG, PNG, or WebP accepted.
         </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-          {TONE_DESCRIPTORS.map((d) => {
-            const isSelected = selected.includes(d);
-            const isDisabled = !isSelected && selected.length >= 3;
-            return (
-              <button
-                key={d}
-                onClick={() => toggleDescriptor(d)}
-                disabled={isDisabled}
-                style={{
-                  padding: "10px 18px",
-                  borderRadius: "100px",
-                  border: isSelected ? "2px solid #D4A878" : "1px solid #2a2926",
-                  background: isSelected ? "#D4A87825" : "#1a1917",
-                  color: isSelected ? "#D4A878" : isDisabled ? "#333" : "#888",
-                  cursor: isDisabled ? "not-allowed" : "pointer",
-                  fontSize: "14px",
-                  fontWeight: isSelected ? 700 : 400,
-                  transition: "all 0.1s",
-                }}
-              >
-                {isSelected && "✓ "}{d}
-              </button>
-            );
-          })}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <div style={{ background: "#12110f", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ fontWeight: 600, color: "#D4A878", marginBottom: 4 }}>Hero / background images</div>
+            <div style={{ color: "#888" }}>
+              These span the full screen width. <strong style={{ color: "#C8A060" }}>Minimum 2560 px wide</strong> — anything smaller will look pixelated on large displays. Landscape orientation preferred. Don&apos;t compress before uploading; large files are fine.
+            </div>
+          </div>
+          <div style={{ background: "#12110f", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ fontWeight: 600, color: "#D4A878", marginBottom: 4 }}>Lifestyle &amp; mood images</div>
+            <div style={{ color: "#888" }}>
+              Used in section backgrounds, value prop blocks, and atmosphere panels. <strong style={{ color: "#C8A060" }}>Minimum 1200 px wide.</strong> Portrait or landscape both work here.
+            </div>
+          </div>
+          <div style={{ background: "#12110f", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ fontWeight: 600, color: "#D4A878", marginBottom: 4 }}>Icons &amp; badges</div>
+            <div style={{ color: "#888" }}>
+              Small transparent PNGs or SVGs — certifications, award badges, feature icons, trust signals. <strong style={{ color: "#C8A060" }}>Transparent background preferred.</strong> No minimum size, but vector SVG is ideal.
+            </div>
+          </div>
         </div>
-      </Section>
-
-      <Section title="Choose a reference theme (optional)">
-        <p style={{ fontSize: "13px", color: "#666", marginBottom: "20px", lineHeight: 1.6 }}>
-          Pick the demo theme whose visual and copy style feels closest to yours. The AI uses this as a stylistic anchor — not a template to copy from, but a reference point for aesthetic calibration.
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px" }}>
-          {THEME_LIST_FOR_WIZARD.map((theme) => {
-            const isSelected = data.referenceTheme === theme.slug;
-            return (
-              <button
-                key={theme.slug}
-                onClick={() => onChange({ referenceTheme: isSelected ? undefined : theme.slug })}
-                style={{
-                  padding: "16px 20px",
-                  borderRadius: "12px",
-                  border: isSelected ? `2px solid ${theme.swatch}` : "1px solid #2a2926",
-                  background: isSelected ? `${theme.swatch}15` : "#1a1917",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "14px",
-                }}
-              >
-                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: theme.swatch, flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontWeight: 700, color: isSelected ? theme.swatch : "#f5f1ea", fontSize: "14px" }}>{theme.label}</div>
-                  <div style={{ fontSize: "12px", color: "#666", marginTop: "2px" }}>{theme.descriptor}</div>
-                </div>
-              </button>
-            );
-          })}
+        <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 12, padding: "10px 12px", background: "#2a1f0e", borderRadius: 8, color: "#C8A060" }}>
+          <span style={{ flexShrink: 0 }}>⚠️</span>
+          <span>We cannot sharpen a blurry or low-resolution source file. If the image isn&apos;t high quality going in, it won&apos;t be high quality in the funnel.</span>
         </div>
-      </Section>
+        <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 8, padding: "10px 12px", background: "#111", borderRadius: 8, color: "#aaa" }}>
+          <span style={{ flexShrink: 0 }}>💡</span>
+          <span>
+            <strong style={{ color: "#D4A878" }}>More images = better output.</strong>{" "}
+            The AI chooses the best image for each section of your funnel — but it can only work with what you give it. Upload everything you have: different angles, settings, moods, closeups, wide shots. Ten images will always produce a better funnel than two. Don&apos;t curate — give us the full library and let the AI decide.
+          </span>
+        </div>
+      </div>
 
-      <Section title="Copy references (optional)">
-        <Field label="A URL to copy you love" hint="Paste a link to a sales page, email, or landing page whose writing style resonates with you. Claude will analyse the language and incorporate those patterns.">
-          <TextInput
-            type="url"
-            value={data.copyLoveUrl ?? ""}
-            onChange={(v) => onChange({ copyLoveUrl: v })}
-            placeholder="https://…"
-          />
-        </Field>
-        <Field label="Describe copy you want to avoid" hint="e.g. 'Overly salesy. Lots of ALL CAPS. Fake urgency. Bro-marketing vibes.' — this helps the AI know what NOT to write.">
-          <TextInput
-            value={data.copyHateDescription ?? ""}
-            onChange={(v) => onChange({ copyHateDescription: v })}
-            placeholder="I hate copy that feels…"
+      <Section title="Hero / banner images">
+        <Field label="Primary hero images" hint="Full-width images for the top of your landing page and programme LP. Portrait or landscape. Of you in action, in ceremony, or lifestyle.">
+          <MultipleFileUpload
+            label="Upload hero images"
+            accept="image/jpeg,image/png,image/webp"
+            currentUrls={data.heroImageUrls ?? []}
+            onUpload={(urls) => onChange({ heroImageUrls: urls })}
           />
         </Field>
       </Section>
+
+      <Section title="Lifestyle and mood images">
+        <Field label="Supporting imagery" hint="Images used throughout the funnel — for value prop sections, testimonial backgrounds, programme page atmosphere. Can be of you, your workspace, nature, or anything that captures your vibe.">
+          <MultipleFileUpload
+            label="Upload lifestyle images"
+            accept="image/jpeg,image/png,image/webp"
+            currentUrls={data.lifestyleImageUrls ?? []}
+            onUpload={(urls) => onChange({ lifestyleImageUrls: urls })}
+          />
+        </Field>
+      </Section>
+
+      <Section title="Icons & badges (optional)">
+        <Field label="Icons and badge images" hint="Small transparent PNG or SVG icons used in feature lists, benefit bullets, trust badges, and section dividers. Ideally on a transparent background. Examples: certifications, award badges, custom bullet icons, programme module icons.">
+          <MultipleFileUpload
+            label="Upload icons & badges"
+            accept="image/png,image/svg+xml,image/webp"
+            currentUrls={data.additionalImageUrls ?? []}
+            onUpload={(urls) => onChange({ additionalImageUrls: urls })}
+          />
+        </Field>
+      </Section>
+
+      <div style={{ background: "#1a1917", borderRadius: "12px", padding: "20px", textAlign: "center", color: "#888", fontSize: "13px" }}>
+        <p style={{ margin: 0 }}>No images yet? That's fine. The AI will generate your copy first — you can add and place images afterwards.</p>
+      </div>
     </div>
   );
 }

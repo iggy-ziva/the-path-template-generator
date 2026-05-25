@@ -29,6 +29,11 @@ export default function ThemeSwitcher({ currentSlug }: { currentSlug?: ThemeSlug
       .catch(() => {});
   }, []);
 
+  // Note: the figma-export "chrome-free" mode is now handled server-side
+  // in `app/themes/[theme]/layout.tsx` — that layout doesn't render this
+  // component (or FunnelNav) at all and drops the `.theme-page` class so
+  // no 52px top spacer is reserved. This component therefore only needs
+  // to handle the in-app preview case.
   const currentTheme = currentSlug ? THEMES[currentSlug] : null;
   const hasFigma = !!currentTheme?.figmaStoragePath;
 

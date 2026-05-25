@@ -20,6 +20,10 @@ const ALLOWED_TYPES = [
   "text/plain",
   "text/rtf",
   "application/rtf",
+  "font/woff",
+  "font/woff2",
+  "application/font-woff",
+  "application/font-woff2",
 ];
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20 MB
@@ -53,13 +57,20 @@ export async function POST(req: NextRequest) {
         upsert: false,
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase storage upload error:", error);
+      return NextResponse.json(
+        { error: error.message ?? "Storage upload failed" },
+        { status: 500 }
+      );
+    }
 
     const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(path);
 
     return NextResponse.json({ url: publicUrl, path });
   } catch (err) {
-    console.error("upload error:", err);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Upload failed";
+    console.error("upload error:", message, err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

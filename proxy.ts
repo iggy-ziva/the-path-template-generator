@@ -9,6 +9,16 @@ const secret = new TextEncoder().encode(
 const PROTECTED_PATHS = ["/app"];
 const AUTH_PATHS = ["/login", "/verify"];
 
+// Build a `NextResponse.next()` that forwards the current pathname to
+// server components via the `x-pathname` request header. Server
+// components can then call `headers()` and branch on the URL — used by
+// `app/themes/[theme]/layout.tsx` to omit chrome on figma-export routes.
+function nextWithPathname(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -46,9 +56,11 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return nextWithPathname(request);
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/login", "/verify"],
+  // Run on app routes, auth routes, and theme routes (so the theme
+  // layout can detect figma-export sub-paths via the x-pathname header).
+  matcher: ["/app/:path*", "/login", "/verify", "/themes/:path*"],
 };

@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
   if (specificId) {
     const { data } = await supabase
       .from("wizard_submissions")
-      .select("id, name, step_data, current_step, status, theme_slug")
+      .select("id, name, step_data, current_step, status, updated_at, created_at")
       .eq("id", specificId)
       .eq("user_id", userId)
       .single();
@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
 
   const { data } = await supabase
     .from("wizard_submissions")
-    .select("id, name, step_data, current_step, status, theme_slug")
+    .select("id, name, step_data, current_step, status, updated_at, created_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false })
     .limit(1)

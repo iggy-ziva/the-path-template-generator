@@ -62,11 +62,11 @@ export function tokeniseDeep<T>(value: T, ctx: TokenContext): T {
    ============================================================ */
 export const BASE_CONTENT: ThemeContent = {
   landing: {
-    heroEyebrow: "Live Online",
+    heroEyebrow: "LIVE ONLINE",
     heroSubtitle:
       "A live online gathering for those standing at a pivotal turning point — and ready to cross it.",
     heroHostBadge:
-      "With <strong>{{host.name}}</strong> — <br class=\"mob-br\">{{host.title}}",
+      "<div class=\"hero-host-name\">With <strong>{{host.name}}</strong></div><span class=\"hero-host-title\">{{host.title}}</span>",
     heroPriceLabel: "Choose your price",
     heroPriceValue: "{{event.priceDisplay}}",
     heroCtaMicrocopy: "No prerequisites · Recording included",

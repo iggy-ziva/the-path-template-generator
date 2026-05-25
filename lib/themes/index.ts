@@ -368,7 +368,7 @@ const sacred = makeTheme({
   },
   overrides: {
     landing: {
-      heroEyebrow: "Live Online Ceremony",
+      heroEyebrow: "LIVE ONLINE",
       heroSubtitle:
         "A live online ceremony for those who feel something ancient and patient asking to be heard — and ready to listen.",
       videoHeadline: "Your soul has been speaking. This is the room where you finally hear it.",
@@ -492,7 +492,7 @@ const executive = makeTheme({
   },
   overrides: {
     landing: {
-      heroEyebrow: "Live · Invitation Only",
+      heroEyebrow: "LIVE ONLINE",
       heroSubtitle:
         "A live strategy session for leaders operating near the top — and quietly aware that the next level is one of presence, not productivity.",
       videoEyebrow: "A briefing from Marcus",
@@ -630,7 +630,7 @@ const highperf = makeTheme({
   },
   overrides: {
     landing: {
-      heroEyebrow: "Live Lab · 02 Hours",
+      heroEyebrow: "LIVE ONLINE",
       heroSubtitle:
         "A live working session for operators who treat their brain as infrastructure — and have decided to stop neglecting it.",
       heroVisualDescription:
@@ -797,7 +797,7 @@ const abundance = makeTheme({
   },
   overrides: {
     landing: {
-      heroEyebrow: "Live Transmission",
+      heroEyebrow: "LIVE ONLINE",
       heroSubtitle:
         "A live energetic transmission and strategy session for the woman who is ready to stop performing scarcity and start receiving in proportion to her gifts.",
       videoEyebrow: "A love note from Zoe",
@@ -922,7 +922,7 @@ const earth = makeTheme({
   },
   overrides: {
     landing: {
-      heroEyebrow: "Live Online Ceremony",
+      heroEyebrow: "LIVE ONLINE",
       heroSubtitle:
         "A live online ceremony for those who feel the line that runs through them asking for tending — and who are ready to listen.",
       videoEyebrow: "From the fire — a word from River",

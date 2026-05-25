@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { getTheme } from "@/lib/themes";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import FunnelNav from "@/components/FunnelNav";
@@ -16,6 +17,14 @@ export default async function ThemeLayout({
   const { theme: themeSlug } = await params;
   const theme = getTheme(themeSlug);
   if (!theme) notFound();
+
+  // Detect figma-export routes server-side via the `x-pathname` header
+  // set by middleware. On these routes we strip the in-app chrome
+  // (ThemeSwitcher, FunnelNav, section markers) and drop the
+  // `.theme-page` class so no 52px top padding is reserved.
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") ?? "";
+  const isFigmaExport = pathname.includes("/figma-export");
 
   const c = theme.colors;
   const f = theme.fonts;
@@ -47,6 +56,10 @@ export default async function ThemeLayout({
     ["--font-mono" as never]: f.monoFamily ?? "ui-monospace, monospace",
   };
 
+  const rootClassName = isFigmaExport
+    ? `theme-root theme-${theme.slug}`
+    : `theme-root theme-page theme-${theme.slug}`;
+
   return (
     <>
       <style
@@ -55,11 +68,19 @@ export default async function ThemeLayout({
           __html: `@import url('${theme.fonts.googleFontsUrl}');`,
         }}
       />
-      <ThemeSwitcher currentSlug={theme.slug as ThemeSlug} />
-      <div className={`theme-root theme-page theme-${theme.slug}`} style={cssVars}>
+      {isFigmaExport && (
+        <style
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{
+            __html: `.section-marker { display: none !important; }`,
+          }}
+        />
+      )}
+      {!isFigmaExport && <ThemeSwitcher currentSlug={theme.slug as ThemeSlug} />}
+      <div className={rootClassName} style={cssVars}>
         {children}
       </div>
-      <FunnelNav slug={theme.slug as ThemeSlug} />
+      {!isFigmaExport && <FunnelNav slug={theme.slug as ThemeSlug} />}
     </>
   );
 }

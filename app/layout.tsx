@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Barlow, Caveat } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 // Self-hosted via next/font — zero render-blocking network request
@@ -31,13 +32,19 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${barlow.variable} ${caveat.variable}`}>
       <head>
-        {/* Typekit — preconnect first so the request starts immediately */}
         <link rel="preconnect" href="https://use.typekit.net" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://p.typekit.net" crossOrigin="anonymous" />
-        {/* Load Typekit non-blocking via JS — avoids React's string-onLoad warning */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://use.typekit.net/xnp4dyt.css';l.media='print';l.onload=function(){l.media='all'};document.head.appendChild(l);}())` }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Script
+          id="typekit-load"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://use.typekit.net/xnp4dyt.css';l.media='print';l.onload=function(){l.media='all'};document.head.appendChild(l);}())`,
+          }}
+        />
+      </body>
     </html>
   );
 }

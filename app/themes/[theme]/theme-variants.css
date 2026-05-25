@@ -458,8 +458,26 @@
    Other themes let the canvas show (split light-form / dark-order).
    ================================================================ */
 
-/* Threshold: full dark canvas for program-checkout */
-.theme-threshold .co-wrap    { background: var(--surface-inverse); border-radius: var(--r-lg); }
+/* Threshold: full dark canvas for program-checkout.
+   co-header + co-wrap + the 52px area above the header all share
+   the EXACT same solid color so there's no visible seam between
+   them. We deliberately override co-header's color-mix/transparency
+   + backdrop-filter from threshold.css here. */
+.theme-threshold .co-wrap   { background: var(--surface-inverse); border-radius: 0; }
+.theme-threshold .co-header {
+  background: var(--surface-inverse);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: none;
+  /* Paint the 52px ThemeSwitcher reserve above the header the same
+     dark color, only when that reserve is actually present. */
+  box-shadow: 0 -52px 0 0 var(--surface-inverse);
+}
+/* On figma-export routes .theme-page is absent so there is no 52px
+   reserve to fill — drop the upward shadow. */
+.theme-threshold:not(.theme-page) .co-header {
+  box-shadow: none;
+}
 
 /* Rounded order-col per theme (overrides base r-lg) */
 .theme-sacred .order-col     { border-radius: 0; }

@@ -10,7 +10,9 @@ async function getServiceClient() {
   );
 }
 
-/** List all funnels for the logged-in user */
+const GENERATION_LIMIT = 10;
+
+/** List all funnels for the logged-in user, plus generation usage */
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -19,18 +21,49 @@ export async function GET() {
   const userId = await getOrCreateUserId(session, supabase);
   if (!userId) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  const { data, error } = await supabase
-    .from("wizard_submissions")
-    .select("id, name, current_step, status, theme_slug, updated_at, created_at")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false });
+  const [submissionsResult, generatedResult] = await Promise.all([
+    supabase
+      .from("wizard_submissions")
+      .select("id, name, current_step, status, updated_at, created_at")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("generated_funnels")
+      .select("id, submission_id, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false }),
+  ]);
 
-  if (error) {
-    console.error("funnels list error:", error);
+  if (submissionsResult.error) {
+    console.error("funnels list error:", submissionsResult.error);
     return NextResponse.json({ error: "Failed to load funnels" }, { status: 500 });
   }
 
-  return NextResponse.json({ funnels: data ?? [] });
+  // Build a map: submission_id → most recent generated_funnel id
+  const generatedMap: Record<string, string> = {};
+  for (const gf of (generatedResult.data ?? [])) {
+    if (gf.submission_id && !generatedMap[gf.submission_id]) {
+      generatedMap[gf.submission_id] = gf.id;
+    }
+  }
+
+  // Count generations in the last 30 days
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+  const generationsUsed = (generatedResult.data ?? []).filter(
+    (gf) => new Date(gf.created_at) >= since
+  ).length;
+
+  const funnels = (submissionsResult.data ?? []).map((f) => ({
+    ...f,
+    generated_funnel_id: generatedMap[f.id] ?? null,
+  }));
+
+  return NextResponse.json({
+    funnels,
+    generationsUsed,
+    generationLimit: GENERATION_LIMIT,
+  });
 }
 
 /** Create a new blank funnel */
@@ -49,12 +82,12 @@ export async function POST(req: NextRequest) {
     .from("wizard_submissions")
     .insert({
       user_id: userId,
-      name,
+      name: name ?? "Untitled Funnel",
       step_data: {},
       current_step: 1,
       status: "draft",
     })
-    .select("id, name, current_step, status, theme_slug, updated_at, created_at")
+    .select("id, name, current_step, status, updated_at, created_at")
     .single();
 
   if (error) {

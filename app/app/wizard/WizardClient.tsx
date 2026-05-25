@@ -6,16 +6,17 @@ import type { WizardData } from "@/lib/wizard-types";
 import { WIZARD_STEPS } from "./wizard-constants";
 import FunnelSidebar, { type FunnelSummary } from "@/components/FunnelSidebar";
 import FunnelNameModal from "@/components/FunnelNameModal";
-import WizardStep1 from "./steps/Step1";
-import WizardStep2 from "./steps/Step2";
-import WizardStep3 from "./steps/Step3";
-import WizardStep4 from "./steps/Step4";
-import WizardStep5 from "./steps/Step5";
-import WizardStep6 from "./steps/Step6";
-import WizardStep7 from "./steps/Step7";
-import WizardStep8 from "./steps/Step8";
-import WizardStep9 from "./steps/Step9";
-import WizardStep10 from "./steps/Step10";
+import WizardStep1  from "./steps/Step1";
+import WizardStep2  from "./steps/Step2";
+import WizardStep3  from "./steps/Step3";
+import WizardStep4  from "./steps/Step4";   // Upsell Offer
+import WizardStep5  from "./steps/Step5";   // Programme
+import WizardStep6  from "./steps/Step6";   // Curriculum & Content
+import WizardStep7  from "./steps/Step7";   // Your Story
+import WizardStep8  from "./steps/Step8";   // Testimonials
+import WizardStep9  from "./steps/Step9";   // Images
+import WizardStep10 from "./steps/Step10";  // Tone & Voice
+import WizardStep11 from "./steps/Step11";  // Review & Generate
 
 const Z = {
   cream:      "#FCFAF6",
@@ -33,7 +34,7 @@ interface Props { userEmail: string; }
 
 const STEP_COMPONENTS = [
   WizardStep1, WizardStep2, WizardStep3, WizardStep4, WizardStep5,
-  WizardStep6, WizardStep7, WizardStep8, WizardStep9, WizardStep10,
+  WizardStep6, WizardStep7, WizardStep8, WizardStep9, WizardStep10, WizardStep11,
 ];
 
 export default function WizardClient({ userEmail }: Props) {
@@ -49,13 +50,19 @@ export default function WizardClient({ userEmail }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [nameModalOpen, setNameModalOpen] = useState(false);
   const [funnels, setFunnels] = useState<FunnelSummary[]>([]);
+  const [generationsUsed, setGenerationsUsed] = useState(0);
+  const [generationLimit, setGenerationLimit] = useState(10);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetch the sidebar funnel list
   function refreshFunnels() {
     fetch("/api/wizard/funnels")
       .then((r) => r.json())
-      .then(({ funnels: f }) => { if (Array.isArray(f)) setFunnels(f); })
+      .then(({ funnels: f, generationsUsed: used, generationLimit: limit }) => {
+        if (Array.isArray(f)) setFunnels(f);
+        if (typeof used === "number") setGenerationsUsed(used);
+        if (typeof limit === "number") setGenerationLimit(limit);
+      })
       .catch(() => {});
   }
 
@@ -180,7 +187,16 @@ export default function WizardClient({ userEmail }: Props) {
         });
         const json = await res.json();
         if (json.submissionId && !submissionId) setSubmissionId(json.submissionId);
-        setLastSaved(new Date());
+        const now = new Date();
+        setLastSaved(now);
+        // Keep sidebar timestamp in sync
+        setFunnels((prev) =>
+          prev.map((f) =>
+            f.id === (submissionId ?? json.submissionId)
+              ? { ...f, updated_at: now.toISOString() }
+              : f
+          )
+        );
       } catch {
         // silent — local state is source of truth
       } finally {
@@ -202,21 +218,35 @@ export default function WizardClient({ userEmail }: Props) {
     [currentStep, saveToServer]
   );
 
+  function syncFunnelStep(step: number) {
+    if (!submissionId) return;
+    setFunnels((prev) =>
+      prev.map((f) =>
+        f.id === submissionId
+          ? { ...f, current_step: step, updated_at: new Date().toISOString() }
+          : f
+      )
+    );
+  }
+
   function goNext() {
-    const nextStep = Math.min(currentStep + 1, 10);
+    const nextStep = Math.min(currentStep + 1, 11);
     setCurrentStep(nextStep);
+    syncFunnelStep(nextStep);
     saveToServer(data, nextStep);
     window.scrollTo(0, 0);
   }
 
   function goPrev() {
-    setCurrentStep((s) => Math.max(s - 1, 1));
+    const prevStep = Math.max(currentStep - 1, 1);
+    setCurrentStep(prevStep);
+    syncFunnelStep(prevStep);
     window.scrollTo(0, 0);
   }
 
   const StepComponent = STEP_COMPONENTS[currentStep - 1];
   const stepMeta = WIZARD_STEPS[currentStep - 1];
-  const progressPct = ((currentStep - 1) / 9) * 100;
+  const progressPct = ((currentStep - 1) / 10) * 100;
 
   // suppress unused warning
   void userEmail;
@@ -231,6 +261,8 @@ export default function WizardClient({ userEmail }: Props) {
         onFunnelsChange={setFunnels}
         onSwitch={handleSwitchFunnel}
         onDelete={handleDeleteFunnel}
+        generationsUsed={generationsUsed}
+        generationLimit={generationLimit}
       />
 
       {nameModalOpen && (
@@ -318,7 +350,7 @@ export default function WizardClient({ userEmail }: Props) {
               textTransform: "uppercase",
             }}
           >
-            Step {currentStep} of 10
+            Step {currentStep} of 11
           </span>
           <span style={{ fontSize: 12, color: Z.faint, fontWeight: 600 }}>
             {saving
@@ -364,7 +396,7 @@ export default function WizardClient({ userEmail }: Props) {
             return (
               <button
                 key={s.id}
-                onClick={() => { setCurrentStep(s.id); window.scrollTo(0, 0); }}
+                onClick={() => { setCurrentStep(s.id); syncFunnelStep(s.id); window.scrollTo(0, 0); }}
                 style={{
                   padding: "5px 12px",
                   borderRadius: 100,
@@ -423,7 +455,7 @@ export default function WizardClient({ userEmail }: Props) {
       </div>
 
       {/* ── Nav buttons ─────────────────────────────────────────────────── */}
-      {currentStep < 10 && (
+      {currentStep < 11 && (
         <div
           style={{
             display: "flex",

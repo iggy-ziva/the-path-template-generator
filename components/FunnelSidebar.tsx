@@ -21,6 +21,7 @@ export interface FunnelSummary {
   status: string;
   theme_slug: string | null;
   updated_at: string;
+  generated_funnel_id?: string | null;
 }
 
 interface Props {
@@ -31,6 +32,8 @@ interface Props {
   onFunnelsChange: (funnels: FunnelSummary[]) => void;
   onSwitch: (funnel: FunnelSummary) => void;
   onDelete: (id: string) => void;
+  generationsUsed?: number;
+  generationLimit?: number;
 }
 
 function relativeTime(iso: string): string {
@@ -51,6 +54,8 @@ export default function FunnelSidebar({
   onFunnelsChange,
   onSwitch,
   onDelete,
+  generationsUsed = 0,
+  generationLimit = 10,
 }: Props) {
   const [creating, setCreating] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -130,12 +135,12 @@ export default function FunnelSidebar({
         }}
       >
         {/* Header */}
-        <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${Z.creamDeep}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${Z.creamDeep}`, display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
             <p style={{ fontFamily: Z.font, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: Z.pink, marginBottom: 2 }}>My Funnels</p>
-            <p style={{ fontFamily: Z.font, fontSize: 13, color: Z.muted }}>{funnels.length} funnel{funnels.length !== 1 ? "s" : ""}</p>
+            <p style={{ fontFamily: Z.font, fontSize: 13, color: Z.muted, marginBottom: 8 }}>{funnels.length} funnel{funnels.length !== 1 ? "s" : ""}</p>
           </div>
-          <button onClick={onClose} style={{ background: Z.creamDeep, border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: 16, color: Z.muted, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+          <button onClick={onClose} style={{ background: Z.creamDeep, border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: 16, color: Z.muted, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>
         </div>
 
         {/* New funnel button */}
@@ -170,7 +175,8 @@ export default function FunnelSidebar({
             funnels.map((funnel) => {
               const isActive = funnel.id === activeFunnelId;
               const isRenaming = renamingId === funnel.id;
-              const pct = Math.round(((funnel.current_step - 1) / 9) * 100);
+              const TOTAL_STEPS = 11;
+              const pct = Math.min(100, Math.round(((funnel.current_step - 1) / (TOTAL_STEPS - 1)) * 100));
               return (
                 <div
                   key={funnel.id}
@@ -243,7 +249,7 @@ export default function FunnelSidebar({
                   </div>
 
                   {/* Meta row */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: funnel.generated_funnel_id ? 8 : 8 }}>
                     <span style={{ fontFamily: Z.font, fontSize: 11, fontWeight: 600, color: statusColor(funnel.status) }}>
                       {statusLabel(funnel.status)}
                     </span>
@@ -251,13 +257,34 @@ export default function FunnelSidebar({
                     <span style={{ fontFamily: Z.font, fontSize: 11, color: Z.charcoal }}>
                       {relativeTime(funnel.updated_at)}
                     </span>
+                    {funnel.generated_funnel_id && (
+                      <>
+                        <span style={{ color: Z.charcoal, fontSize: 11 }}>·</span>
+                        <a
+                          href={`/app/preview/${funnel.generated_funnel_id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            fontFamily: Z.font,
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: Z.pink,
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 3,
+                          }}
+                        >
+                          View →
+                        </a>
+                      </>
+                    )}
                   </div>
 
                   {/* Progress bar */}
                   <div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                       <span style={{ fontFamily: Z.font, fontSize: 10, color: Z.charcoal }}>
-                        Step {funnel.current_step} of 10
+                        Step {funnel.current_step} of {TOTAL_STEPS}
                       </span>
                       <span style={{ fontFamily: Z.font, fontSize: 10, color: isActive ? Z.pink : Z.charcoal, fontWeight: 600 }}>
                         {pct}%

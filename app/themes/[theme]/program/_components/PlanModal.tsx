@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 interface Plan {
   label: string;
@@ -26,7 +27,13 @@ export function openPlans() {
 }
 
 export default function PlanModal({ plans, hostEmail }: Props) {
-  const [open, setOpen] = useState(false);
+  // On the dedicated `/figma-export/modal` route the modal seeds itself open
+  // so html.to.design captures the natural "modal opened" state. On every
+  // other route it starts closed and is opened via PlanButton/openPlans().
+  const pathname = usePathname();
+  const [open, setOpen] = useState(
+    pathname?.endsWith("/figma-export/modal") ?? false
+  );
   useEffect(() => {
     opener = () => setOpen(true);
     return () => {
