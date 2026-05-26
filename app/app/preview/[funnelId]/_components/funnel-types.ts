@@ -23,6 +23,8 @@ export interface WizardSnapshot {
   logoUrl?: string;
   contactEmail?: string;
   websiteUrl?: string;
+  privacyPolicyUrl?: string;
+  termsOfUseUrl?: string;
   instagramUrl?: string;
   linkedinUrl?: string;
   facebookUrl?: string;
