@@ -102,6 +102,7 @@
   font-weight: 400;
   line-height: 1.05;
   letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 .theme-root .display-section {
   font-family: var(--font-display);
@@ -109,6 +110,7 @@
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: -0.015em;
+  text-wrap: balance;
 }
 .theme-root .display-sub {
   font-family: var(--font-display);
@@ -2241,6 +2243,7 @@
   letter-spacing: -0.025em;
   color: var(--text-inverse);
   margin: 0 0 var(--s-5);
+  text-wrap: balance;
 }
 .theme-root .ty-event-name {
   font-family: var(--font-display);
@@ -2249,6 +2252,7 @@
   color: var(--accent-highlight);
   letter-spacing: -0.01em;
   margin: 0 0 var(--s-4);
+  text-wrap: balance;
 }
 .theme-root .ty-event-details {
   display: inline-flex;
@@ -2635,6 +2639,7 @@
   line-height: 1.05;
   color: var(--text-primary);
   margin-bottom: var(--s-4);
+  text-wrap: balance;
 }
 .theme-root .replay-subtitle {
   font-family: var(--font-body);
@@ -3194,6 +3199,7 @@
   line-height: 1.0;
   color: var(--text-inverse);
   margin-bottom: var(--s-5);
+  text-wrap: balance;
 }
 .theme-root .prog-hero-sub {
   font-family: var(--font-display);

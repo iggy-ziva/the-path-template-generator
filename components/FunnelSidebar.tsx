@@ -22,7 +22,11 @@ export interface FunnelSummary {
   theme_slug: string | null;
   updated_at: string;
   generated_funnel_id?: string | null;
+  /** Wizard completeness 0–100, computed server-side from step_data. */
+  completion_pct?: number;
 }
+
+const GENERATE_THRESHOLD = 80;
 
 interface Props {
   open: boolean;
@@ -175,8 +179,16 @@ export default function FunnelSidebar({
             funnels.map((funnel) => {
               const isActive = funnel.id === activeFunnelId;
               const isRenaming = renamingId === funnel.id;
+              // Use the server-computed completeness if present; fall back to
+              // a step-derived approximation for any older API responses.
               const TOTAL_STEPS = 11;
-              const pct = Math.min(100, Math.round(((funnel.current_step - 1) / (TOTAL_STEPS - 1)) * 100));
+              const pct = Math.min(
+                100,
+                typeof funnel.completion_pct === "number"
+                  ? funnel.completion_pct
+                  : Math.round(((funnel.current_step - 1) / (TOTAL_STEPS - 1)) * 100)
+              );
+              const readyToGenerate = pct >= GENERATE_THRESHOLD;
               return (
                 <div
                   key={funnel.id}
@@ -280,18 +292,48 @@ export default function FunnelSidebar({
                     )}
                   </div>
 
-                  {/* Progress bar */}
+                  {/* Progress bar — reflects field completeness, not the tab the user happens to be on */}
                   <div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                       <span style={{ fontFamily: Z.font, fontSize: 10, color: Z.charcoal }}>
-                        Step {funnel.current_step} of {TOTAL_STEPS}
+                        {readyToGenerate ? "Ready to generate" : `${pct}% complete`}
                       </span>
-                      <span style={{ fontFamily: Z.font, fontSize: 10, color: isActive ? Z.pink : Z.charcoal, fontWeight: 600 }}>
+                      <span style={{
+                        fontFamily: Z.font,
+                        fontSize: 10,
+                        color: readyToGenerate ? "#16a34a" : isActive ? Z.pink : Z.charcoal,
+                        fontWeight: 600,
+                      }}>
                         {pct}%
                       </span>
                     </div>
-                    <div style={{ height: 4, background: "#F5EEE0", borderRadius: 2, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${pct}%`, background: isActive ? `linear-gradient(90deg, #FF007E, #FA2A45)` : Z.faint, borderRadius: 2, transition: "width 0.3s ease" }} />
+                    <div style={{ position: "relative", height: 4, background: "#F5EEE0", borderRadius: 2, overflow: "hidden" }}>
+                      <div style={{
+                        height: "100%",
+                        width: `${pct}%`,
+                        background: readyToGenerate
+                          ? "linear-gradient(90deg, #16a34a, #22c55e)"
+                          : isActive
+                            ? "linear-gradient(90deg, #FF007E, #FA2A45)"
+                            : Z.faint,
+                        borderRadius: 2,
+                        transition: "width 0.3s ease, background 0.3s ease",
+                      }} />
+                      {/* Threshold tick */}
+                      {!readyToGenerate && (
+                        <div
+                          aria-hidden
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            bottom: 0,
+                            left: `${GENERATE_THRESHOLD}%`,
+                            width: 1,
+                            background: Z.muted,
+                            opacity: 0.55,
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>

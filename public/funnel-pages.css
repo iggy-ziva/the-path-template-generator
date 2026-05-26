@@ -1129,6 +1129,7 @@
       letter-spacing: -0.025em;
       color: var(--text-inverse);
       margin: 0 0 var(--s-5);
+      text-wrap: balance;
     }
     .ty-event-name {
       font-family: var(--font-display);
@@ -1137,6 +1138,7 @@
       color: var(--accent-secondary-on-dark);
       letter-spacing: -0.01em;
       margin: 0 0 var(--s-4);
+      text-wrap: balance;
     }
     .ty-event-details {
       display: inline-flex;
@@ -1709,6 +1711,7 @@
       line-height: 1.05;
       color: var(--text-primary);
       margin-bottom: var(--s-4);
+      text-wrap: balance;
     }
     .replay-subtitle {
       font-family: var(--font-body);
@@ -2422,6 +2425,7 @@
       line-height: 1.0;
       color: var(--text-inverse);
       margin-bottom: var(--s-5);
+      text-wrap: balance;
     }
     .prog-hero-sub {
       font-family: var(--font-display);

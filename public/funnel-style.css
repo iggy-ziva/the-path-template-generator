@@ -101,6 +101,7 @@ h1, h2, h3, h4, h5, h6 { margin: 0; text-wrap: balance; }
   font-weight: 400;
   line-height: 1.05;
   letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 .display-section {
   font-family: var(--font-display);
@@ -108,6 +109,7 @@ h1, h2, h3, h4, h5, h6 { margin: 0; text-wrap: balance; }
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: -0.015em;
+  text-wrap: balance;
 }
 .display-sub {
   font-family: var(--font-display);

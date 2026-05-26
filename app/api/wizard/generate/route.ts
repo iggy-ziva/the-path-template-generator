@@ -180,54 +180,64 @@ function colorBrightness(hex: string): "BRIGHT" | "DARK" {
   return hexLuminance(hex) > 0.18 ? "BRIGHT" : "DARK";
 }
 
-/** Build a human-readable colour contrast profile for Claude */
+/** Build a human-readable colour brightness profile that informs Claude's section-theme decisions */
 function buildColorProfile(d: WizardData): string {
   const sg = d.styleGuide;
   const primary   = sg?.brandColors?.primary   ?? "#2B4EAA";
   const secondary = sg?.brandColors?.secondary ?? "#445566";
   const tertiary  = sg?.brandColors?.tertiary  ?? "#6699BB";
 
-  function profile(name: string, hex: string): string {
-    const brightness = colorBrightness(hex);
-    const lum = hexLuminance(hex).toFixed(3);
-    const useSurface = brightness === "BRIGHT" ? "dark surfaces (surface-inverse, hero sections, dark bars)" : "light surfaces (surface-canvas, surface-raised, card backgrounds)";
-    const avoidSurface = brightness === "BRIGHT" ? "light backgrounds — it will appear washed out" : "dark backgrounds — it will be invisible";
-    const textOnTop = hexLuminance(hex) > 0.35 ? "dark text (--text-primary)" : "light text (--text-inverse)";
-    const cssOnDark = `--accent-${name.toLowerCase()}-on-dark`;
-    const cssOnLight = `--accent-${name.toLowerCase()}-on-light`;
-    const cssTextOn = `--text-on-${name.toLowerCase()}`;
-    return `${name} (${hex}) — luminance: ${lum} → ${brightness}
-  Best on: ${useSurface}
-  Avoid on: ${avoidSurface}
-  Text on top of ${name} as BG: ${textOnTop}
-  CSS tokens to use:
-    On dark surfaces: var(${cssOnDark})
-    On light surfaces: var(${cssOnLight})
-    Text on ${name} BG: var(${cssTextOn})`;
+  function tag(hex: string): string {
+    const lum = hexLuminance(hex);
+    if (lum < 0.18) return "VERY DARK (near-black, dramatic)";
+    if (lum < 0.35) return "DARK (moody, grounding)";
+    if (lum < 0.60) return "MID (balanced, versatile)";
+    if (lum < 0.80) return "BRIGHT (lifted, energetic)";
+    return "VERY BRIGHT (luminous, attention-grabbing)";
   }
 
-  return `=== COLOUR CONTRAST PROFILE ===
-Every colour from the wizard has been analysed for luminance. Use this profile to
-make ALL colour decisions in your generated content. NEVER guess — always use the
-appropriate CSS token from this profile.
+  const primaryTag   = tag(primary);
+  const secondaryTag = tag(secondary);
+  const tertiaryTag  = tag(tertiary);
 
-${profile("primary", primary)}
+  // Derive an overall brand mood from the primary colour
+  const primaryLum = hexLuminance(primary);
+  let brandMood: string;
+  let darkSectionRecommendation: string;
+  if (primaryLum < 0.25) {
+    brandMood = "GROUNDED & EARTHED — this brand reads as serious, premium, and weighty. Dark sections will feel coherent with the identity. Light sections create breathing room.";
+    darkSectionRecommendation = "Lean into dark sections for hero, CTAs, and emotional moments. Use light sections for breathing space and content density.";
+  } else if (primaryLum < 0.50) {
+    brandMood = "WARM & PROFESSIONAL — this brand reads as established and considered. Balanced section rhythm works best.";
+    darkSectionRecommendation = "Alternate dark and light sections in roughly equal measure. Reserve dark sections for high-drama CTAs and final closes.";
+  } else {
+    brandMood = "LUMINOUS & ENERGETIC — this brand reads as bright, hopeful, expansive. Light-heavy sections will feel native. Dark sections become the dramatic contrast.";
+    darkSectionRecommendation = "Default to light sections. Use dark sections sparingly — only for hero, final CTA, and one mid-page moment of contrast.";
+  }
 
-${profile("secondary", secondary)}
+  return `=== BRAND COLOUR PROFILE ===
+The wizard captured (or auto-detected) three brand colours. Their RELATIVE BRIGHTNESS
+informs every section-theme decision you make below.
 
-${profile("tertiary", tertiary)}
+Primary   — ${primary} → ${primaryTag}
+Secondary — ${secondary} → ${secondaryTag}
+Tertiary  — ${tertiary} → ${tertiaryTag}
 
-RULE — ALWAYS use contrast-safe tokens:
-- For text/icons/borders on dark sections (hero, bars, footers): use var(--accent-X-on-dark)
-- For text/icons/borders on light sections (cards, forms, content): use var(--accent-X-on-light)
-- For text ON TOP of a coloured background: use var(--text-on-X)
-- For CTA buttons (always on dark BG): use var(--accent-light) — it is pre-lifted for contrast
-- For text ON the CTA button: use var(--text-on-accent)
-- NEVER use the raw var(--accent-primary/secondary/tertiary) directly in a coloured element
+BRAND MOOD: ${brandMood}
 
-SURFACE BRIGHTNESS REFERENCE:
-- DARK surfaces: --surface-inverse → use -on-dark variants and --text-inverse for body text
-- LIGHT surfaces: --surface-canvas, --surface-raised → use -on-light variants and --text-primary for body text`;
+SECTION-THEME GUIDANCE (for fields like encourageNTheme, alreadyTriedTheme, finalCtaTheme):
+${darkSectionRecommendation}
+
+WHY THIS MATTERS FOR YOUR COPY:
+- Match the emotional weight of the section theme to your word choice
+- DARK sections: short sentences, bold nouns, dramatic verbs. Read like a manifesto.
+- ACCENT sections: medium energy, declarative, slightly more colour in the language.
+- LIGHT sections: warmer, more conversational, sentence variety, room for nuance.
+
+NOTE ON CONTRAST: The template's CSS already pre-computes contrast-safe variants of every
+brand colour for both dark and light backgrounds — you do NOT need to think about specific
+hex values or CSS variables. Focus entirely on writing copy that matches the BRAND MOOD
+above. The visual system handles the colour application automatically.`;
 }
 
 // ── Shared brand context block ───────────────────────────────────────────
@@ -240,116 +250,147 @@ function buildBrandContext(d: WizardData): string {
 
   const colorInfo = sg?.brandColors
     ? Object.entries(sg.brandColors).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(", ")
-    : "Not analysed — infer from tone and industry";
+    : "Not auto-detected — neutral fallbacks will be applied";
 
   const pressLogos = (d.pressLogos ?? []);
   const pressText = pressLogos.length
-    ? pressLogos.map(l => l.logoUrl ? `${l.name} (has logo)` : `${l.name || l.websiteUrl} (text-only)`).join(", ")
-    : "None provided";
+    ? pressLogos.map(l => l.logoUrl ? `${l.name} (logo file uploaded)` : `${l.name || l.websiteUrl} (text-only mention)`).join(", ")
+    : "None provided — leave press logo section empty; do not invent press mentions";
 
   const testimonialText = (d.testimonials ?? []).length
     ? (d.testimonials ?? []).map((t, i) => `[${i + 1}] "${t.quote}" — ${t.name}${t.location ? `, ${t.location}` : ""}${t.context ? ` (${t.context})` : ""}`).join("\n")
-    : "None provided — generate believable composite testimonials that reflect the transformation promise.";
+    : "NONE PROVIDED — for credibility quote fields (credibilityQuote1/2/3, credibilityQuote, vpPullQuote), output null. Do NOT fabricate fake testimonials with made-up names.";
 
-  const paymentPlans = (d.programPaymentPlans ?? []).length
-    ? (d.programPaymentPlans ?? []).map(p => `${p.installments}× $${p.amountPerInstallment} ${p.cadence}`).join("; ")
-    : d.programPricePlan1 ?? "No payment plans set";
+  const videoTestimonialsText = (d.videoTestimonialUrls ?? []).length
+    ? `${(d.videoTestimonialUrls ?? []).length} video testimonial URLs provided — the ProgrammeLanding video-testimonials section will render these.`
+    : "None — the video testimonials section will fall back to text quotes from the testimonials list above.";
+
+  const paymentPlansText = (d.programPaymentPlans ?? []).length
+    ? (d.programPaymentPlans ?? []).map(p => `${p.installments}× $${p.amountPerInstallment} ${p.cadence} (total $${p.installments * p.amountPerInstallment})`).join("; ")
+    : "No payment plans set — pay-in-full only";
 
   const themeEntry = THEME_LIST.find(t => t.slug === (d.referenceTheme ?? "threshold")) ?? THEME_LIST[0];
 
-  return `=== BRAND & BUSINESS ===
-Host name: ${d.hostName ?? ""}
-Host title / credentials: ${d.hostTitle ?? ""}
-Host tagline: ${d.hostTagline ?? ""}
-Host bio: ${d.hostBio ?? ""}
-Business name: ${d.businessName ?? ""}
-Contact / support email: ${d.contactEmail ?? ""}
-Website: ${d.websiteUrl ?? ""}
-Privacy Policy URL: ${d.privacyPolicyUrl ?? "NOT PROVIDED"}
-Terms of Use URL: ${d.termsOfUseUrl ?? "NOT PROVIDED"}
-Instagram: ${d.instagramUrl ?? ""} | LinkedIn: ${d.linkedinUrl ?? ""} | Facebook: ${d.facebookUrl ?? ""} | TikTok: ${d.tiktokUrl ?? ""} | YouTube: ${d.youtubeUrl ?? ""}
+  // ── Tone descriptor → concrete writing guidance ─────────────────────────
+  const toneDescriptors = d.toneDescriptors ?? [];
+  const toneGuidance = toneDescriptors.length
+    ? toneDescriptors.map(t => `  • ${t} → ${toneToWritingGuidance(t)}`).join("\n")
+    : "  • No tone descriptors set — default to professional, warm, transformative copy";
+
+  // ── Wizard data completeness — flag what's missing so Claude knows what to be careful about ──
+  const missing: string[] = [];
+  if (!d.audienceDescription)     missing.push("audience description (audienceItems/visionItems must be inferred from event/programme name and tone)");
+  if (!d.transformationPromise)   missing.push("transformation promise (outcomes copy will need to be derived from methodology/uniqueApproach)");
+  if (!d.methodologyDescription)  missing.push("methodology description (vpParagraphs and personalMessage will need to be generic-but-credible)");
+  if (!d.curriculumWeeks?.length) missing.push("curriculum weeks (sessionWeeks must be inferred from programme tagline and duration)");
+  if (!d.bonuses?.length)         missing.push("bonuses (generate 2–3 plausible bonuses that complement the offer)");
+  if (!d.testimonials?.length)    missing.push("testimonials (set ALL credibility/quote fields to null — do not fabricate)");
+  if (!d.hostBio)                 missing.push("host bio (write a credible 3-paragraph bio from the host name + title + tagline)");
+
+  const completenessNote = missing.length
+    ? `INCOMPLETE WIZARD DATA — the following inputs were not provided. Follow the per-field guidance to handle each:\n${missing.map(m => `  ⚠ ${m}`).join("\n")}`
+    : "✓ All critical wizard fields populated. Use the real data verbatim — never substitute generic copy.";
+
+  return `=== HOST & BRAND IDENTITY ===
+Host name: ${d.hostName ?? "NOT PROVIDED"}
+Host title / credentials: ${d.hostTitle ?? "NOT PROVIDED"}
+Host tagline (one-line essence): ${d.hostTagline ?? "NOT PROVIDED"}
+Host bio (full): ${d.hostBio ?? "NOT PROVIDED — derive a credible bio from host name, title, and tagline"}
+Host headshot: ${d.hostHeadshotUrl ? "Uploaded — visible in vision block above. Use its energy and presentation to inform how you write about this person." : "Not uploaded"}
+Host signature: ${d.hostSignatureUrl ? "Uploaded" : "Not uploaded"}
+
+Business name: ${d.businessName ?? "NOT PROVIDED — fall back to host name in brand references"}
+Legal entity name (for FTC disclaimers and copyright): ${d.legalEntityName ?? d.businessName ?? d.hostName ?? "NOT PROVIDED"}
+Contact / support email: ${d.contactEmail ?? "NOT PROVIDED"}
+Website: ${d.websiteUrl ?? "NOT PROVIDED"}
+Privacy Policy URL: ${d.privacyPolicyUrl ?? "Not set — ZIVA-hosted fallback will be used"}
+Terms of Use URL: ${d.termsOfUseUrl ?? "Not set — ZIVA-hosted fallback will be used"}
+Social — Instagram: ${d.instagramUrl ?? "—"} | LinkedIn: ${d.linkedinUrl ?? "—"} | Facebook: ${d.facebookUrl ?? "—"} | TikTok: ${d.tiktokUrl ?? "—"} | YouTube: ${d.youtubeUrl ?? "—"}
 
 === BRAND STYLE ===
-Colours: ${colorInfo}
-Typography: ${fontInfo || "Not set"}
+Auto-detected colours: ${colorInfo}
+Typography: ${fontInfo || "Not detected — system serif/sans fallbacks will apply"}
+
+${buildColorProfile(d)}
 
 === LIVE EVENT ===
-Name: ${d.eventName ?? ""}
-Tagline: ${d.eventTagline ?? ""}
-Date: ${d.eventDate ?? ""} at ${d.eventTime ?? ""} ${d.eventTimezone ?? ""}
-Duration: ${d.eventDuration ?? "4 hours"}
-Platform: ${d.eventPlatform ?? "online"}
+Name: ${d.eventName ?? "NOT PROVIDED"}
+Tagline (sub-headline source material): ${d.eventTagline ?? "NOT PROVIDED — derive from transformation promise"}
+Date: ${d.eventDate ?? "NOT PROVIDED"} at ${d.eventTime ?? "NOT PROVIDED"} ${d.eventTimezone ?? ""}
+Duration: ${d.eventDuration ?? "Not provided — say '3 hours' as a sensible default"}
+Platform: ${d.eventPlatform ?? "Online / Zoom"}
 Pricing: ${formatPricing(d)}
-Recording policy: ${d.eventRecordingPolicy ?? "Recording included"}
+Recording policy: ${d.eventRecordingPolicy ?? "Assume recording included for 30 days"}
 Promo video URL: ${d.eventVideoUrl ?? "NOT PROVIDED"}
 
 === UPSELL OFFER (one-time post-event offer) ===
-Product name: ${d.upsellOfferName ?? ""}
-Headline: ${d.upsellHeadline ?? ""}
-Description: ${d.upsellDescription ?? ""}
+Product name: ${d.upsellOfferName ?? "NOT PROVIDED — generate a plausible name aligned with the event topic"}
+Headline: ${d.upsellHeadline ?? "NOT PROVIDED"}
+Description: ${d.upsellDescription ?? "NOT PROVIDED"}
 Included items:
-${(d.upsellIncludedItems ?? []).map(it => `  • ${it.title}: ${it.description}`).join("\n") || "  Not provided — generate 3 compelling items that complement the live event"}
-Testimonial quote: ${d.upsellQuote ?? ""}
-Testimonial attribution: ${d.upsellQuoteAttribution ?? ""}
-Regular value: ${d.upsellRegularValue ? `$${d.upsellRegularValue}` : "Not set"}
+${(d.upsellIncludedItems ?? []).map(it => `  • ${it.title}: ${it.description}`).join("\n") || "  Not provided — generate 3 compelling items that genuinely complement the live event topic. No generic 'bonus PDFs'."}
+Testimonial quote (if any): ${d.upsellQuote ?? "—"}
+Testimonial attribution: ${d.upsellQuoteAttribution ?? "—"}
+Regular value: ${d.upsellRegularValue ? `$${d.upsellRegularValue}` : "Not set — derive a believable anchor (~3× offer price)"}
 Offer price: ${d.upsellOfferPrice ? `$${d.upsellOfferPrice}` : "Not set — calculate ~40% off full price or cheapest payment plan total"}
-Price note: ${d.upsellPriceNote ?? ""}
-CTA text: ${d.upsellCtaText ?? ""}
-CTA sub-text: ${d.upsellCtaSubText ?? ""}
-Decline text: ${d.upsellDeclineText ?? ""}
+Price note: ${d.upsellPriceNote ?? "—"}
+CTA text: ${d.upsellCtaText ?? "—"}
+CTA sub-text: ${d.upsellCtaSubText ?? "—"}
+Decline text: ${d.upsellDeclineText ?? "—"}
 
-=== PROGRAMME (high-ticket upsell) ===
-Name: ${d.programName ?? ""}
-Tagline: ${d.programTagline ?? ""}
-Start date: ${d.programStartDate ?? ""}
-Duration: ${d.programDuration ?? ""}
-Schedule: ${d.programSchedule ?? ""}
-Full price: $${d.programPriceFull ?? ""}
-Payment plans: ${paymentPlans}
-Member portal URL: ${d.programPortalUrl ?? "NOT PROVIDED — tell students to check their email"}
-Guarantee: ${d.programGuarantee ?? ""}
+=== PROGRAMME (high-ticket post-event offer) ===
+Name: ${d.programName ?? "NOT PROVIDED"}
+Tagline: ${d.programTagline ?? "NOT PROVIDED"}
+Start date: ${d.programStartDate ?? "NOT PROVIDED — say 'enrolment open' or omit start date copy"}
+Duration: ${d.programDuration ?? "NOT PROVIDED"}
+Schedule (when/cadence sessions run): ${d.programSchedule ?? "NOT PROVIDED"}
+Full price: ${d.programPriceFull ? `$${d.programPriceFull}` : "NOT PROVIDED — use $1997 as a sensible high-ticket default"}
+Payment plans: ${paymentPlansText}
+Member portal URL: ${d.programPortalUrl ?? "NOT PROVIDED — tell students to check their welcome email for portal access"}
+Guarantee: ${d.programGuarantee ?? "NOT PROVIDED — write a confidence-based guarantee appropriate to the offer (typically 7-14 day satisfaction)"}
 
 === CURRICULUM & CONTENT ===
-Target audience: ${d.audienceDescription ?? ""}
-Transformation promise: ${d.transformationPromise ?? ""}
-What's included: ${d.whatIsIncluded ?? ""}
+Target audience description: ${d.audienceDescription ?? "NOT PROVIDED — derive from event/programme name, tone, and methodology"}
+Transformation promise: ${d.transformationPromise ?? "NOT PROVIDED — derive from event/programme name and methodology"}
+What's included: ${d.whatIsIncluded ?? "NOT PROVIDED"}
 Week-by-week curriculum:
-${(d.curriculumWeeks ?? []).map(w => `  Week ${w.week} — ${w.title}: ${w.description}`).join("\n") || "  Not provided — generate based on transformation promise and programme name"}
+${(d.curriculumWeeks ?? []).map(w => `  Week ${w.week} — ${w.title}: ${w.description}`).join("\n") || "  Not provided — generate based on transformation promise, programme name, and duration. Each week must have a clear focus that builds on the previous."}
 Bonuses:
-${(d.bonuses ?? []).map(b => `  • ${b.title} (value: ${b.value || "unspecified"}): ${b.description}`).join("\n") || "  Not provided — generate 2–3 compelling bonuses that complement the curriculum"}
+${(d.bonuses ?? []).map(b => `  • ${b.title} (value: ${b.value || "unspecified"}): ${b.description}`).join("\n") || "  Not provided — generate 2–3 compelling bonuses that genuinely complement the curriculum. Assign realistic values."}
 
 === METHODOLOGY & STORY ===
-Methodology: ${d.methodologyDescription ?? ""}
-Unique approach: ${d.uniqueApproach ?? ""}
-Existing material URLs (text/links): ${(d.existingMaterialUrls ?? []).join(", ") || "None"}
+Methodology: ${d.methodologyDescription ?? "NOT PROVIDED"}
+Unique approach: ${d.uniqueApproach ?? "NOT PROVIDED"}
+Existing material URLs (text/links the host wants you to reference): ${(d.existingMaterialUrls ?? []).join(", ") || "None"}
 
 === SOCIAL PROOF ===
 Press logos: ${pressText}
 Testimonials:
 ${testimonialText}
+Video testimonials: ${videoTestimonialsText}
 
 === TONE & VOICE ===
-Descriptors: ${(d.toneDescriptors ?? []).join(", ") || "professional, warm, transformative"}
-Reference site (copy they love): ${d.copyLoveUrl ?? ""}
-Copy they dislike: ${d.copyHateDescription ?? ""}
+Descriptors: ${toneDescriptors.join(", ") || "professional, warm, transformative (defaults)"}
+Concrete writing translations:
+${toneGuidance}
+Reference URL (copy style they love): ${d.copyLoveUrl ?? "None provided"}
+Copy patterns they dislike: ${d.copyHateDescription ?? "Avoid: generic life-coach clichés, 'unlock your potential', 'manifest your dreams', any spiritual buzzword soup."}
 
-=== REFERENCE THEME ===
-Slug: ${themeEntry.slug}
-Label: ${themeEntry.label}
-Copy style descriptors: ${themeEntry.descriptor}
-Use this as an aesthetic and tonal anchor for copy style — not a template to copy from, but a reference point for voice, rhythm, and word choice. If the user's tone descriptors above conflict with this theme, the tone descriptors take priority.
+=== REFERENCE THEME (aesthetic anchor) ===
+${themeEntry.label} — ${themeEntry.descriptor}
+Use this as a tonal anchor for word choice and rhythm. If user tone descriptors conflict, USER TONE WINS.
 
-=== IMAGES AVAILABLE ===
-These images have been sent to you above as labelled vision blocks — study each one carefully.
-When assigning image URL fields in your JSON output, you MUST copy-paste the EXACT URL from this inventory.
-Set any image field to null if no suitable image exists. NEVER invent, modify, or truncate URLs.
+=== VISUAL ASSETS ===
+Images sent to you above as labelled vision blocks. Study each carefully.
+When assigning image URL fields, copy-paste the EXACT URL from this inventory.
+Set any image field to null if no suitable image exists — and add a useful suggestion to imageSuggestions.
 
-HERO/BACKGROUND IMAGES:
+HERO IMAGES:
 ${(d.heroImageUrls ?? []).length > 0
   ? (d.heroImageUrls ?? []).map((url, i) => `  hero-${i + 1}: ${url}`).join("\n")
   : "  None uploaded"}
 
-LIFESTYLE/SUPPORTING IMAGES:
+LIFESTYLE IMAGES:
 ${(d.lifestyleImageUrls ?? []).length > 0
   ? (d.lifestyleImageUrls ?? []).map((url, i) => `  lifestyle-${i + 1}: ${url}`).join("\n")
   : "  None uploaded"}
@@ -362,43 +403,136 @@ ${(d.additionalImageUrls ?? []).length > 0
 HOST HEADSHOT: ${d.hostHeadshotUrl ?? "Not uploaded"}
 BRAND LOGO: ${d.logoUrl ?? "Not uploaded"}
 
-Image writing guidance:
-- Hero images set the visual mood — reflect their atmosphere and subject in headline and section opening copy
-- Lifestyle images show the practitioner in context — write copy that authentically describes what those images suggest
-- Where you output null for an image field, include a concise suggestion in the imageSuggestions object
+Image usage guidance:
+- HERO images: rich, atmospheric, with depth. Use as backgrounds with dark overlay. Reflect their mood in opening headlines.
+- LIFESTYLE images: show the practitioner/community in context. Use for sidebars, value-prop blocks, mid-page features.
+- ADDITIONAL images: secondary use — bonus features, upsell products, ambient backgrounds.
+- HOST HEADSHOT: bio sections, personal-message sections, signature blocks.
+- LOGO: header / footer / progress bars only. Never used as decoration.
 
-=== DESIGN SYSTEM & COLOUR ARCHITECTURE ===
-These pages use a structured CSS token system. Your copy and image choices must respect it.
+If you set an image field to null, the corresponding imageSuggestions entry must be ACTIONABLE — describe the specific photograph the client should shoot or commission. Not "a nice photo" but "A warm three-quarter portrait of ${d.hostName ?? "the host"} in natural light, mid-explanation, holding a book — shot at golden hour against a soft neutral background."
 
-COLOUR ROLES — never swap these:
-- accent-primary (var(--accent-light) for CTAs): the primary action colour. Used EXCLUSIVELY for CTA buttons and primary purchase actions. The template system pre-lifts this to always be visible on dark surfaces.
-- accent-secondary: the atmospheric/supporting brand colour — live badges, calendar section tints, share buttons, icon accents.
-- accent-tertiary: muted brand touches — label text, subtle accents, secondary icons.
+=== DATA COMPLETENESS NOTE ===
+${completenessNote}
 
-${buildColorProfile(d)}
+=== UNIVERSAL RULES ===
 
-TYPOGRAPHY RULES — apply to every text field you generate:
-- Never combine two prices or payment options in a single field. Use the dedicated sub-field (e.g. programCtaPlanText, offerBarPrice plan) for the secondary option.
-- Price fields that render at large font sizes (42px+) must contain only one price so they fit on a single line.
-- Avoid orphan words: if a short sentence or label would break so that only one word falls on the final line, rephrase to distribute words more evenly across lines.
-- Short labels (eyebrows, badges, pill text) must always fit on a single line — keep them under 6 words.
+ANTI-HALLUCINATION — CRITICAL:
+- NEVER invent testimonial quotes, attendee names, locations, or contexts. If the wizard provided no testimonials, set credibility quote fields to null.
+- NEVER invent press features, awards, "as seen in" mentions. Use only what's in pressLogos above.
+- NEVER invent prices, dates, durations, or numerical claims. Use only what's in this brand context.
+- NEVER invent the host's specific credentials, qualifications, or career history. Use only the bio above; if bio is missing, write generic-but-credible role-based copy (e.g. "with over a decade of practice" only if implied by hostBio).
+- NEVER invent specific outcomes ("85% of students report…"). Speak in qualitative language without false statistics.
 
-GRID LAYOUT RULES — apply to any array that renders as a grid:
-- outcomesItems and outcomes2Items: generate exactly 3 items (1 row) or exactly 6 items (2 rows of 3). NEVER 4 or 5.
-- includesItems: ALWAYS generate exactly 6 items. The grid is 2 columns so odd counts create an orphan row. NEVER generate 3, 5, 7 or any other odd number.
-- Plan cards: always start with pay-in-full (see PAYMENT PLAN RULES below).
+BRACKET PLACEHOLDERS — BANNED:
+Every one of these MUST be replaced with the actual value from the brand context above:
+[host], [host name], [name], [your name], [first name],
+[event name], [event], [programme name], [program name],
+[date], [time], [timezone], [duration], [platform],
+[price], [amount], [contribution], [tier],
+[domain], [website], [email], [support email], [sender address],
+[guide name], [facilitator], [your business], [brand], [bonus value], [enrolment date],
+[city], [location], [studio name], [organisation],
+[year], [month], [season], [practice], [modality]
+If the actual value is missing, OMIT the sentence or rephrase to flow without it. NEVER leave brackets.
 
-PAYMENT PLAN RULES — apply to the plans array in programmeCheckout:
+MATHEMATICAL ACCURACY:
+- Payment plan totals MUST equal (installments × amountPerInstallment). Never describe payment plans where the math doesn't add up.
+- Bonus totals MUST be the sum of individual bonus values. If a bonus value is "$497" and another is "$197", the total is "$694" — never "around $700" or "$1000+".
+- Tiered pricing: if event is pay-what-you-want with min $11 and max $111, the price tiers MUST fall within this range.
+
+VOICE CONSISTENCY:
+- The same host speaks across all 8 funnel pages. Their voice MUST be identical from event landing → checkout → upsell → thank-you → replay → programme landing → programme checkout → programme thank-you.
+- If the host bio uses "I" (first person), every personal note across pages uses "I".
+- Vocabulary should be consistent: if the methodology is called "the Aligned Living framework" on the landing page, it remains that name across all pages.
+
+TYPOGRAPHY RULES (affect every text field):
+- Never combine two prices in one field. Use dedicated sub-fields for secondary prices (programCtaPlanText, hero-price-plan, etc.).
+- Price fields rendered at 42px+ contain ONE price only. No "or", no "from", no alternatives.
+- ORPHAN WORDS — CRITICAL: a sentence MUST NEVER break so that only one or two words fall on the final line. This is the most common visible failure. Specifically applies to all DISPLAY-class fields:
+    • heroHeadline, heroSubheadline, subheadline (event/programme thank-you), headline (replay), label, ty-event-name copy
+    • offerHeadline, finalCtaHeadline, finalVpHeading, extraVpHeading, vpHeading, outcomesHeading
+    • prog-hero-title, prog-hero-sub, replay-event-title, accessCardTitle
+  These render at clamp(22px, 3vw, 30px) up to clamp(48px, 7vw, 88px) — large enough that 4–10 words is the entire visible line. RULE: rewrite copy so total word count is divisible cleanly across roughly even lines. If "Your seat is confirmed. Here's what happens next." would break as 8 words + "next.", REWRITE to "Your seat is confirmed — here's what happens next" (no period) or "Your seat is confirmed. Here is what comes next." so words distribute evenly. Aim for either ONE-LINE-FITS or BALANCED-MULTILINE. Never single-orphan.
+- Short labels (eyebrows, badges, pill text): under 6 words, single line, ALL-CAPS-able.
+- Headlines under 12 words. Subheadlines under 20 words.
+- "·" (middle dot) is the only allowed inline separator. Never use "|" or em-dashes inside metadata strings.
+- Avoid trailing periods on short display copy under 8 words — they create awkward orphan endings and visual full-stops aren't needed at large sizes.
+
+GRID LAYOUT RULES (affect array length decisions):
+- outcomesItems / outcomes2Items: exactly 3 OR exactly 6. NEVER 4 or 5.
+- includesItems: exactly 6 (2-column grid; odd counts orphan).
+- audienceItems, challengeItems, alreadyTriedTags, visionItems, promiseBullets: 4–8 items, content-driven (no orphan-row constraint).
+- bonusesItems: 2–4 items. Each MUST have a believable monetary value.
+- nextSteps (thank-you pages): exactly 3 (event) or exactly 4 (programme).
+- detailRows / accessRows: 4–7 rows max.
+
+PAYMENT PLAN RULES (programmeCheckout.plans + plans modal):
 - "Pay in full" (id: "full") is ALWAYS the first plan and ALWAYS has isFeatured: true.
-- No payment plan (installment option) may ever have isFeatured: true.
-- Only ONE plan in the entire array may have isFeatured: true.
-- Never label multiple plans as "Most popular" or equivalent — only one plan can be featured and that is always "Pay in full".
+- No installment plan may ever have isFeatured: true.
+- Only ONE plan in the array may have isFeatured: true.
+- Never label multiple plans as "Most popular" — only one plan can be featured, and it's always Pay in full.
 
-DARK vs LIGHT SECTIONS — copy tone must match the surface:
-- Dark sections (hero, event details, dark bars, footer): dramatic, high-impact, declarative. Short sentences. Bold nouns.
-- Light sections (calendar, share, personal note, form boxes): warmer, more conversational, action-oriented.
+SECTION THEME RULES (encourageNTheme, alreadyTriedTheme, finalCtaTheme):
+- Values MUST be exactly one of: "dark" | "accent" | "light"
+- Vary the rhythm: don't pick "dark" for all three encourage sections — alternate.
+- Match the BRAND MOOD section above for guidance on bias.
 
-IMAGE CHOICES for dark sections: prefer images with strong contrast, rich shadows, or atmospheric depth — they composite well over the dark overlay. Flat, overexposed, or pastel images disappear into dark backgrounds.`;
+IMAGE-LED COPY:
+- Hero copy must echo the mood of the hero image (rich/intimate/expansive/serene — observe and reflect).
+- If no hero image: write copy that doesn't reference visuals or imply atmosphere.
+- Image suggestions must be actionable for a client to photograph or commission.`;
+}
+
+/** Translate a tone descriptor into concrete writing guidance for Claude.
+ *  Covers every descriptor in TONE_DESCRIPTORS (wizard-constants.ts) plus common variants.
+ */
+function toneToWritingGuidance(descriptor: string): string {
+  const t = descriptor.toLowerCase().trim();
+  const map: Record<string, string> = {
+    // === Core wizard options (TONE_DESCRIPTORS) ===
+    "warm":             "Second-person address ('you'), gentle pacing, sensory specificity. Reader is met, not pitched to.",
+    "nurturing":        "Acknowledge struggle before solution. 'You don't need to know how yet.' Permission-giving language.",
+    "direct":           "Lead with the outcome. No throat-clearing. Verbs in the first three words. Cut hedging.",
+    "authoritative":    "Declarative sentences, evidence-based phrasing, no hedging. 'I believe' → 'I know'. Calm command.",
+    "playful":          "Sentence-fragment punchlines. Conversational asides. Earned humour — never jokes for their own sake.",
+    "irreverent":       "Subvert reader expectations. Punch the cliché. Say the thing other coaches won't. Never crass.",
+    "mystical":         "Threshold language ('arrive', 'cross', 'remember'). Avoid metaphysical jargon ('manifest', 'vibration', 'frequency') — show the depth without the slang.",
+    "grounded":         "Concrete nouns over abstract ones. 'Your kitchen table' not 'your environment'. Specific, embodied.",
+    "cosmic":           "Large-scale framing — generations, lineages, archetypes. Match the scale to the offer, never bloat it.",
+    "strategic":        "Frame in moves, leverage, sequence. The reader is building something. Lead with mechanism.",
+    "analytical":       "Mechanism-led phrasing. Cite the why. Specific verbs over vague ones. Show structure.",
+    "empowering":       "Reader as agent, never recipient. 'You build', 'you choose', 'you decide'. No saviour positioning.",
+    "ceremonial":       "Weighted phrasing. Honour the threshold. Use 'mark', 'witness', 'gather'. Restraint over fanfare.",
+    "conversational":   "Sound like the host is across the table. Contractions. Sentence fragments where it lands. No corporate voice.",
+    "poetic":           "Rhythm, alliteration, white space in pacing. Don't sacrifice clarity for prettiness.",
+    "clinical":         "Precise, evidence-led, sparing with emotion. Like reading a careful clinician's note. No filler.",
+    "energetic":        "Forward-leaning verbs, short sentences, momentum. End each section with a pull, not a sigh.",
+    "calm":             "Long even cadence. Soft consonants. Permission to slow down. No exclamation marks.",
+    "celebratory":      "Acknowledge what the reader has crossed already. 'You've arrived'. Warm without saccharine.",
+    "reverent":         "Treat the work, the teacher, and the reader with weight. No casual asides. Choose every word.",
+    "urgent":           "Specific deadlines, concrete consequences of inaction. Never manufactured urgency.",
+    "measured":         "Steady cadence. Every claim earned. Avoid superlatives. Trust the reader.",
+    "provocative":      "Name what's avoided. Ask the question the reader won't. Always loving, never cruel.",
+    "gentle":           "Soften certainty with 'as much as feels right', 'when you're ready'. Lower the volume.",
+    // === Common synonyms / alternative phrasings ===
+    "professional":     "Confident, precise verbs. Avoid filler. No exclamation marks.",
+    "transformative":   "Frame the journey as a threshold or shift, not a transaction. Use 'become', 'arrive', 'cross'.",
+    "intimate":         "First-person host voice, short paragraphs, conversational rhythm.",
+    "spiritual":        "Embodied language ('felt sense', 'lived'), avoid metaphysical jargon ('manifest', 'vibration').",
+    "scientific":       "Mechanism-led phrasing. Cite the why. Specific verbs over vague ones.",
+    "minimalist":       "Short sentences. Active voice. One idea per paragraph. Cut adverbs.",
+    "no-fluff":         "Cut every word that doesn't earn its place. If a sentence could be deleted, delete it.",
+    "data-driven":      "Quantify where you can (without inventing numbers). Lead with the measurable shift.",
+    "achievement-focused": "Frame in milestones, completion, mastery. 'By week 3, you will…'",
+    "heart-centred":    "Feeling-led language. The reader is met before they are sold to.",
+    "body-centred":     "Embodied verbs: feel, settle, return, land. Avoid head-only language.",
+    "premium":          "Restraint over abundance. Less is more. Cut superlatives.",
+    "atmospheric":      "Set scene before claim. Sensory adjectives over abstract ones.",
+    "cinematic":        "Visual pacing — short paragraph, then long, then short. Build like a scene.",
+    "considered":       "No throwaway phrases. Every line feels chosen.",
+  };
+  return map[t] ?? `Write with the spirit of "${descriptor}" — interpret faithfully and apply consistently across all pages.`;
 }
 
 // ── Generate event funnel pages ──────────────────────────────────────────
@@ -464,30 +598,32 @@ async function generateProgrammePages(
 
 // ── Event pages prompt + schema ──────────────────────────────────────────
 function buildEventPrompt(brandContext: string, hasVideo: boolean, d: WizardData): string {
+  // Pre-compute price tier numbers from wizard min/max so Claude sees concrete integers in the example
+  const pMin = d.eventPriceMin ?? 11;
+  const pMax = d.eventPriceMax ?? 111;
+  const range = pMax - pMin;
+  const t2 = Math.round(pMin + range * 0.25);
+  const t3 = Math.round(pMin + range * 0.5);
+  const t4 = Math.round(pMin + range * 0.75);
+  const pDefault = t3;
+
   return `You are an expert conversion copywriter specialising in live events, retreats, and transformational online experiences. You write copy that is specific, emotionally resonant, and avoids all clichés.
 
 ${brandContext}
 
-Your task: Write compelling, personalised copy for the five EVENT pages of a sales funnel. Every field must be filled in using the real data above. Be specific. Use the host's real name, real dates, real prices.
+Your task: Write compelling, personalised copy for the five EVENT pages of a sales funnel — Event Landing, Event Checkout, Upsell, Event Thank-You, Replay.
 
-ABSOLUTE RULES — violating any of these makes the output unusable:
-- NEVER output placeholder text like [date], [host], [name], [event name], [amount], [domain], [timezone]. Replace every single bracket placeholder with the actual value from the brand context above.
-- NEVER copy the instructional description strings from the schema as output (e.g. "audience item 2 — a different characteristic..." must become real copy, not that instruction string).
-- NEVER use "Imagine if…" openers or generic life-coach clichés.
+OUTPUT DISCIPLINE — violating any of these makes the output unusable:
+- Return ONLY a valid JSON object. No prose. No markdown fences. No commentary. No leading/trailing whitespace beyond the JSON itself.
+- The JSON structure below shows EXAMPLE values inside string fields. You MUST replace each example with real, specific copy. NEVER copy the instruction string itself as output (e.g. "audience item 2 — a different characteristic..." must become real copy).
+- Every quoted-string value with an "e.g. '...'" example: use the SHAPE of the example, never the literal text. Substitute real data from the brand context.
+- For image URL fields: copy-paste the EXACT URL from the IMAGES AVAILABLE section above. Do NOT invent, guess, shorten, or modify any URL. Set to null if no suitable image exists and add an entry to imageSuggestions describing what to photograph.
 - Section theme fields must contain ONLY the string "dark", "accent", or "light" — nothing else.
-- Every array must contain real, specific, unique content — no "item 2", "item 3", "comment 2", "quote 2" or similar dummy values.
-- Use the host's real name, event's real name, real dates, real prices everywhere.
-- For ALL image URL fields: copy-paste the EXACT URL from the IMAGES AVAILABLE section above. Do NOT invent, guess, shorten, or modify any URL. Set to null if no suitable image exists and add an entry to imageSuggestions describing what to photograph.
+- All number fields (priceMin, priceMax, priceDefault, tier amounts) must be JSON numbers, not strings.
 
-Copy rules:
-- Match the tone descriptors exactly
-- Benefit-driven, not feature-driven
-- Punchy headlines (under 12 words)
-- Body copy reads like a perceptive human wrote it — specific, grounded, no buzzwords
-- CTAs that create urgency without being pushy
-- For arrays of paragraphs: each element is one complete paragraph (no bullet points inside a paragraph)
+(Reminder: the UNIVERSAL RULES from the brand context above — anti-hallucination, no bracket placeholders, math accuracy, grid sizes, payment plan order, typography rules, voice consistency — ALL apply here. Re-read them before generating.)
 
-Return ONLY a valid JSON object — no prose, no markdown fences, no explanation. The JSON must have exactly this structure:
+The JSON must have exactly this structure:
 
 {
   "eventLanding": {
@@ -506,9 +642,9 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "heroMetaLine": "short reassurance below CTA e.g. 'No prerequisites · Recording included'",
     "credibilityQuote1": "opening testimonial — short and powerful, under 30 words",
     "credibilityAttribution1": "Full Name · Location",
-    "videoSectionEyebrow": "eyebrow for video section e.g. 'A note from [host]'",
+    "videoSectionEyebrow": "eyebrow for video section e.g. 'A note from ${d.hostName ?? "the host"}'",
     "videoSectionHeading": "video section headline (display-section size)",
-    "videoCaption": ${hasVideo ? `"caption text below video e.g. 'A two-minute invitation from [host]'"` : "null"},
+    "videoCaption": ${hasVideo ? `"caption text below video e.g. 'A two-minute invitation from ${d.hostName ?? "the host"}'"` : "null"},
     "videoUrl": ${hasVideo ? `"use the promo video URL from the brand context above"` : "null"},
     "audienceEyebrow": "e.g. 'For whom this is built'",
     "audienceHeading": "e.g. 'This is for you if…'",
@@ -537,7 +673,7 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "credibilityAttribution2": "Full Name · Location",
     "outcomesEyebrow": "e.g. 'Outcomes'",
     "outcomesHeading": "e.g. 'What you'll experience'",
-    "outcomesSubheading": "body-lg subtitle e.g. 'Your life after [event name] — not in a year, but starting on Thursday.'",
+    "outcomesSubheading": "body-lg subtitle e.g. 'Your life after ${d.eventName ?? "this event"} — not in a year, but starting next week.'",
     "outcomesItems": [
       { "title": "outcome title (2–4 words)", "body": "1–2 specific sentences about this outcome" },
       { "title": "outcome title (2–4 words)", "body": "1–2 specific sentences about this outcome" },
@@ -547,13 +683,13 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     // NEVER generate 4 or 5 items — 4 breaks the grid layout and 5 creates an uneven orphan row.
     "outcomesClosingText": "italic closing below outcome grid e.g. 'This is not a list of someday-results.'",
     "outcomesMicrocopy": "small timing/urgency note below closing text",
-    "personalMessageHeading": "e.g. 'A note from [host name]'",
+    "personalMessageHeading": "e.g. 'A note from ${d.hostName ?? "the host"}'",
     "personalMessageParagraphs": [
       "paragraph 1 — write in the host's voice, specific and personal",
       "paragraph 2",
       "paragraph 3"
     ],
-    "personalMessageSignature": "e.g. '— [Host Name]'",
+    "personalMessageSignature": "e.g. '— ${d.hostName ?? "the host"}' — use the actual host name from brand context",
     "testimonialsEyebrow": "e.g. 'In their words'",
     "testimonialsHeading": "testimonials section heading (display-section class)",
     "encourageText2": "second CTA section text — different line from encourageText1",
@@ -601,13 +737,13 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     // GRID RULE: outcomes2Items MUST contain exactly 3 items (preferred) OR exactly 6 items.
     // NEVER generate 4 or 5 items — the grid only renders cleanly at 3 or 6.
     "bioEyebrow": "e.g. 'About the host'",
-    "bioHeading": "e.g. 'About [host name]'",
+    "bioHeading": "e.g. 'About ${d.hostName ?? "the host"}'",
     "bioParagraphs": [
       "paragraph 1 — first paragraph gets drop-cap styling; write first-person",
       "paragraph 2",
       "paragraph 3"
     ],
-    "bioSignature": "e.g. 'I would be glad to spend four hours with you on [date]. — [Host Name]'",
+    "bioSignature": "e.g. 'I would be glad to spend ${d.eventDuration ?? "this time"} with you${d.eventDate ? ` on ${d.eventDate}` : ""}. — ${d.hostName ?? "the host"}'",
     "finalVpHeading": "final VP heading above FAQ (display size, centered)",
     "finalVpIntro": "opening paragraph of final VP section",
     "finalVpFromTo": [
@@ -637,16 +773,17 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "logoUrl": "copy the exact BRAND LOGO URL from IMAGES AVAILABLE, or null if no logo was uploaded",
     "checkoutSidebarImageUrl": "copy the exact URL of the most inviting lifestyle or hero image for the sales sidebar. Prefer lifestyle-1. Set to null if none available.",
     "priceRangeCopy": "short persuasive copy about the price range e.g. 'Pay what is genuinely accessible and meaningful for you.'",
-    "priceMin": 11,
-    "priceMax": 111,
-    "priceDefault": 77,
+    "priceMin": ${pMin},
+    "priceMax": ${pMax},
+    "priceDefault": ${pDefault},
     "priceTiers": [
-      { "tier": 1, "amount": 11, "label": "$11" },
-      { "tier": 2, "amount": 33, "label": "$33" },
-      { "tier": 3, "amount": 55, "label": "$55" },
-      { "tier": 4, "amount": 77, "label": "$77" },
-      { "tier": 5, "amount": 111, "label": "$111" }
+      { "tier": 1, "amount": ${pMin},  "label": "$${pMin}" },
+      { "tier": 2, "amount": ${t2},    "label": "$${t2}" },
+      { "tier": 3, "amount": ${t3},    "label": "$${t3}" },
+      { "tier": 4, "amount": ${t4},    "label": "$${t4}" },
+      { "tier": 5, "amount": ${pMax},  "label": "$${pMax}" }
     ],
+    // RULE: priceTiers are pre-calculated for you above based on the wizard min ($${pMin}) and max ($${pMax}). Output them VERBATIM — do not adjust amounts, change labels, or invent new tiers. Every "amount" MUST be a JSON number (not a string).
     "benefits": [
       "Full live session — the actual duration from brand context",
       "Lifetime recording access — available within 24 hours",
@@ -654,25 +791,26 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
       "Any integration or follow-up call included",
       "Any ongoing access or correspondence promised by the host — use real details from brand context, no placeholder text"
     ],
-    "ctaText": "Complete registration · $[amount]",
+    "ctaText": "Complete registration — short, decisive, action-led. Do NOT include a price (the UI injects the selected tier amount automatically).",
     "guaranteeText": "Your contribution is processed securely. If you cannot attend live, the recording will be available within 24 hours.",
     "ftcDisclaimer": "FTC disclaimer for checkout"
   },
   "upsell": {
     "productImageUrl": "copy the exact URL of an image that visually represents the upsell add-on product or experience — something that feels like a premium bonus, not the main event. Priority order: (1) any additional-N image (these are product/bonus shots), (2) lifestyle-2 if it shows a different context from lifestyle-1, (3) lifestyle-1 as last resort only if nothing else exists. DO NOT use a hero image. Set to null if no additional or lifestyle images were uploaded.",
-    "confirmationBannerText": "short confirmation banner e.g. 'Your spot for [event] is confirmed — one more thing before you go.'",
+    "confirmationBannerText": "short confirmation banner e.g. 'Your spot for ${d.eventName ?? "the event"} is confirmed — one more thing before you go.' — use the actual event name",
     "eyebrow": "e.g. 'One-time offer · Step 2 of 2'",
     "headline": "upsell offer headline — use wizard upsellHeadline if provided",
     "description": "1–2 sentences describing the product in context — use wizard upsellDescription if provided",
     "includedTitle": "e.g. 'What's in the bundle'",
     "includedItems": [
-      { "title": "item title — use wizard data if provided", "description": "item description — use wizard data if provided" }
+      { "title": "item title — use wizard upsellIncludedItems verbatim if provided", "description": "item description — use wizard upsellIncludedItems verbatim if provided" }
     ],
+    // RULE: includedItems should contain 3–5 items. If wizard provided upsellIncludedItems, use those EXACTLY (don't rephrase). Each item must be a real, specific deliverable — no generic "bonus PDF" entries.
     "testimonialQuote": "testimonial supporting the upsell — use wizard upsellQuote if provided",
     "testimonialAttribution": "Full Name · Location · Event, Month Year — use wizard upsellQuoteAttribution if provided",
     "regularPrice": "regular value e.g. '$297' — use wizard upsellRegularValue if provided",
     "offerPrice": "discounted price e.g. '$97' — use wizard upsellOfferPrice if provided",
-    "savingAmount": "savings callout e.g. 'Save $200 — today only'",
+    "savingAmount": "savings callout e.g. 'Save $200 — today only' — the $ amount MUST equal (regularPrice − offerPrice). Do the math; never approximate.",
     "urgencyNote": "urgency copy e.g. 'This offer is available once, right now. <strong>Added to your existing payment method — no second checkout.</strong>' — use wizard upsellPriceNote if provided",
     "yesCtaText": "yes CTA text — use wizard upsellCtaText if provided",
     "yesCtaSubText": "small line below yes CTA — use wizard upsellCtaSubText if provided",
@@ -683,7 +821,7 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "backgroundImageUrl": "copy the exact URL of the most atmospheric hero or lifestyle image for the thank-you hero background. Prefer hero-1. Set to null if none available.",
     "label": "e.g. 'You're in.'",
     "headline": "thank-you headline — event name",
-    "subheadline": "1-sentence confirmation",
+    "subheadline": "1-sentence confirmation. CRITICAL: this renders at clamp(22px, 3vw, 30px) on a single line. Keep it to 5–9 words AND make sure the words distribute across lines without orphans — no single word ever ends up alone on line 2. Avoid trailing periods. Example shape: 'Your seat is confirmed — here is what comes next' (10 words, balances cleanly). Bad example: 'Your seat is confirmed. Here's what happens next.' (9 words BUT will likely orphan 'next.' on its own line at most viewports).",
     "emailNote": "e.g. 'Confirmation sent to your inbox from ${d.contactEmail ?? "our team"}' — use the actual contact email from brand context, never a bracket placeholder",
     "nextStepsHeading": "e.g. 'Three things to do right now'",
     "nextSteps": [
@@ -691,9 +829,9 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
       { "step": "02", "title": "Add to your calendar", "body": "so you don't forget" },
       { "step": "03", "title": "Prepare your question", "body": "what is the real question you are bringing?" }
     ],
-    "calendarHeading": "e.g. 'Add [event name] to your calendar'",
+    "calendarHeading": "e.g. 'Add ${d.eventName ?? "the event"} to your calendar' — use actual event name",
     "calendarSub": "short instruction e.g. 'Choose your calendar app'",
-    "timezoneNote": "e.g. 'All times shown in [timezone]. Adjust for your location.'",
+    "timezoneNote": "e.g. 'All times shown in ${d.eventTimezone ?? "your local timezone"}. Adjust for your location.' — use actual timezone",
     "detailRows": [
       { "label": "Format", "value": "Live online", "isLive": true },
       { "label": "Date", "value": "use the actual event date from brand context" },
@@ -707,12 +845,12 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "shareHeading": "e.g. 'Tell someone who needs this'",
     "shareSub": "e.g. 'If someone in your life is at a threshold, pass it on.'",
     "shareUrl": "${d.websiteUrl ?? d.eventVideoUrl?.split('/').slice(0, 3).join('/') ?? ''}",
-    "personalNoteHeadline": "e.g. 'A note from [host]'",
+    "personalNoteHeadline": "e.g. 'A note from ${d.hostName ?? "the host"}' — use actual host name",
     "personalNoteParagraphs": [
       "paragraph 1 — warm, personal note to the new registrant",
       "paragraph 2"
     ],
-    "personalNoteSignature": "e.g. '— [Host Name]'"
+    "personalNoteSignature": "e.g. '— ${d.hostName ?? "the host"}' — use actual host name"
   },
   "replay": {
     "heroBackgroundImageUrl": "copy the exact URL of the most fitting hero image for the replay page header background. Prefer hero-2 if available (to differ from event landing), else hero-1. Set to null if none.",
@@ -728,9 +866,10 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "metaAccess": "e.g. '30-day access'",
     "resourcesLabel": "e.g. 'Your materials'",
     "resources": [
-      { "name": "Practice Card PDF", "fileType": "PDF", "fileSize": "1.2 MB" },
-      { "name": "Written Prompts", "fileType": "PDF", "fileSize": "0.4 MB" }
+      { "name": "Practice Card PDF — replace with a real resource name derived from the event content", "fileType": "PDF", "fileSize": "1.2 MB" },
+      { "name": "Written Prompts — replace with a second real resource name derived from the event methodology", "fileType": "PDF", "fileSize": "0.4 MB" }
     ],
+    // RULE: resources MUST have exactly 2 items unless the event clearly has more deliverables. Real materials only — never invent specific PDF names not implied by the event.
     "videos": [
       {
         "partLabel": "Part 1",
@@ -758,13 +897,14 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "commentsEyebrow": "e.g. 'What the room said'",
     "commentsTitle": "live comments section heading",
     "comments": [
-      { "bubble": "Short live-chat reaction from an attendee — specific to the event content, 8–15 words", "name": "First name from testimonials or a plausible first name" },
-      { "bubble": "A second distinct live-chat reaction — captures a moment of breakthrough or resonance", "name": "Different first name" },
-      { "bubble": "A third comment — expresses something shifting or clarifying", "name": "Different first name" },
-      { "bubble": "A fourth comment — practical or emotional response to the content", "name": "Different first name" },
-      { "bubble": "A fifth comment — names a specific outcome or realisation", "name": "Different first name" },
-      { "bubble": "A sixth comment — endorsement or gratitude, concise and genuine", "name": "Different first name" }
+      { "bubble": "Short live-chat reaction — specific to the event content, 8–15 words", "name": "Real first name from testimonials list if available, else omit comment" },
+      { "bubble": "A second distinct live-chat reaction", "name": "Different real first name from testimonials" },
+      { "bubble": "A third comment", "name": "Different real first name from testimonials" },
+      { "bubble": "A fourth comment", "name": "Different real first name from testimonials" },
+      { "bubble": "A fifth comment", "name": "Different real first name from testimonials" },
+      { "bubble": "A sixth comment", "name": "Different real first name from testimonials" }
     ],
+    // RULE: comments must use REAL first names from the testimonials list in brand context. If fewer than 6 testimonials are provided, generate only as many comments as you have real names. NEVER fabricate names like "Sarah" or "Mike" out of thin air.
     "programCtaLabel": "e.g. 'Ready to go deeper?'",
     "programCtaHeadline": "actual programme name from brand context — compelling CTA headline",
     "programCtaDescription": "2–3 sentences about the programme",
@@ -781,7 +921,7 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "ftcText": "FTC disclaimer for replay page"
   },
   "imageSuggestions": {
-    "FIELD_NAME_WHERE_NULL": "One sentence describing the ideal image to photograph or upload for this slot — e.g. 'A warm close-up portrait of [host name] in a natural setting'. Only include entries for fields you set to null."
+    "FIELD_NAME_WHERE_NULL": "One sentence describing the SPECIFIC image to photograph or commission for this slot. Be actionable — describe subject, lighting, framing, mood. e.g. 'A warm three-quarter portrait of ${d.hostName ?? "the host"} in natural window light, mid-explanation, captured at golden hour against a soft neutral background.' Only include entries for fields you set to null."
   }
 }`;
 }
@@ -789,36 +929,41 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
 // ── Programme pages prompt + schema ─────────────────────────────────────
 function buildProgrammePrompt(brandContext: string, d: WizardData): string {
   const portalUrl = d.programPortalUrl ?? "NOT PROVIDED";
-  const upsellPrice = d.upsellOfferPrice
-    ? `$${d.upsellOfferPrice}`
-    : d.programPriceFull
-      ? `$${Math.round(d.programPriceFull * 0.4)}` // 40% off default
-      : "discounted price";
-  const upsellRegularValue = d.upsellRegularValue ? `$${d.upsellRegularValue}` : "regular value not set";
+
+  // Pre-build the plans array for programmeCheckout. Pay-in-full is ALWAYS first and featured.
+  // Installment plans follow in order from the wizard and are never featured.
+  const fullPrice = d.programPriceFull ?? 1997;
+  const fmt = (n: number) => `$${n.toLocaleString()}`;
+  const installmentPlans = d.programPaymentPlans ?? [
+    { installments: 3,  cadence: "monthly", amountPerInstallment: Math.ceil(fullPrice * 1.13 / 3)  },
+    { installments: 12, cadence: "monthly", amountPerInstallment: Math.ceil(fullPrice * 1.20 / 12) },
+  ];
+  const plansSchema = [
+    `      { "id": "full", "name": "Pay in full", "amount": "${fmt(fullPrice)}", "schedule": "One payment\\nBest value", "isFeatured": true }`,
+    ...installmentPlans.map((p, i) => {
+      const total = p.installments * p.amountPerInstallment;
+      return `      { "id": "plan-${i}", "name": "${p.installments} payments", "amount": "${fmt(p.amountPerInstallment)}", "schedule": "× ${p.installments} ${p.cadence}\\nTotal ${fmt(total)}", "isFeatured": false }`;
+    }),
+  ].join(",\n");
 
   return `You are an expert conversion copywriter specialising in coaching programmes, retreats, and transformational high-ticket offers. You write copy that is specific, emotionally resonant, and avoids all clichés.
 
 ${brandContext}
 
-Your task: Write compelling, personalised copy for the three PROGRAMME pages. Every field must use the real data above. Use the actual curriculum weeks, bonuses, and payment plans from the brand context.
+Your task: Write compelling, personalised copy for the three PROGRAMME pages — Programme Landing, Programme Checkout, Programme Thank-You.
 
-ABSOLUTE RULES — violating any of these makes the output unusable:
-- NEVER output placeholder text like [date], [host], [name], [programme name], [amount]. Replace every single bracket placeholder with the actual value from the brand context above.
-- NEVER copy the instructional description strings from the schema as output (e.g. "Vision item 2 — a different dimension..." must become real copy, not that instruction string).
+OUTPUT DISCIPLINE — violating any of these makes the output unusable:
+- Return ONLY a valid JSON object. No prose. No markdown fences. No commentary.
+- The JSON structure below shows EXAMPLE values inside string fields. You MUST replace each example with real, specific copy. NEVER copy the instruction string itself as output.
+- The plans array in programmeCheckout is PRE-COMPUTED for you. Output it verbatim — do not adjust, reorder, or add plans.
+- For image URL fields: copy-paste the EXACT URL from the IMAGES AVAILABLE section above. Do NOT invent, guess, shorten, or modify any URL. Set to null if no suitable image exists and add an entry to imageSuggestions.
 - Section theme fields must contain ONLY the string "dark", "accent", or "light" — nothing else.
-- Every array must contain real, specific, unique content — no "item 2", "item 3", "benefit 2", or similar dummy values.
-- Use the host's real name, programme's real name, real dates, real prices everywhere — never "[host name]" or "[guide name]".
-- The curriculum weeks and bonuses sections MUST use the actual data provided — generate from context only if not provided.
-- For ALL image URL fields: copy-paste the EXACT URL from the IMAGES AVAILABLE section above. Do NOT invent, guess, shorten, or modify any URL. Set to null if no suitable image exists and add an entry to imageSuggestions.
+- Curriculum weeks (sessionWeeks) MUST use the actual data from curriculumWeeks in brand context. The count MUST equal the count of weeks provided.
+- Bonus values MUST be specific dollar amounts. The bonusesTotal MUST equal the exact arithmetic sum of individual bonus values.
 
-Copy rules:
-- Match the tone descriptors exactly
-- Address the audience's real pain points with specificity
-- Curriculum details must reflect the actual week-by-week structure provided
-- Bonus descriptions must be specific and highlight tangible value
-- For arrays of paragraphs: each element is one complete paragraph
+(Reminder: the UNIVERSAL RULES from the brand context above — anti-hallucination, no bracket placeholders, math accuracy, grid sizes, payment plan order, typography rules, voice consistency — ALL apply here. Re-read them before generating.)
 
-Return ONLY a valid JSON object — no prose, no markdown fences, no explanation.
+The JSON must have exactly this structure:
 
 {
   "programmeLanding": {
@@ -865,7 +1010,7 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
       "Promise bullet 4 — the cumulative or identity-level change. All 4 derived from transformation promise and methodology."
     ],
     "includesEyebrow": "e.g. 'What you get'",
-    "includesHeading": "e.g. 'Everything inside [programme name]'",
+    "includesHeading": "e.g. 'Everything inside ${d.programName ?? "the programme"}' — use actual programme name",
     "includesItems": [
       { "num": "01", "title": "include item 1 title", "description": "what this gives them specifically", "tag": "optional tag e.g. 'Core curriculum'" },
       { "num": "02", "title": "include item 2 title", "description": "what this gives them specifically", "tag": "optional tag" },
@@ -876,10 +1021,11 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     ],
     // RULE: includesItems MUST contain exactly 6 items. The grid is 2 columns — odd counts create an orphan. NEVER generate fewer or more than 6.
     "sessionEyebrow": "e.g. 'The curriculum'",
-    "sessionHeading": "e.g. 'Eight weeks of guided transformation'",
+    "sessionHeading": "e.g. '${(d.curriculumWeeks?.length ?? 8)} weeks of guided transformation' — use the actual week count from curriculum data in brand context",
     "sessionWeeks": [
-      { "num": "01", "title": "week title — use actual curriculum data", "dates": "dates placeholder", "points": ["what happens in this week", "point 2"] }
+      { "num": "01", "title": "use actual Week 1 title from curriculumWeeks in brand context", "dates": "specific dates if known from programme start date and cadence, else omit", "points": ["specific point from curriculum description", "second specific point"] }
     ],
+    // RULE: sessionWeeks length MUST equal the number of curriculumWeeks provided in brand context. If wizard provided 8 weeks, generate exactly 8 entries. If wizard provided no curriculum, generate a sensible week-by-week structure (4, 6, 8, or 12 weeks) based on programDuration.
     "videoTestimonialsEyebrow": "e.g. 'Hear from past students'",
     "videoTestimonialsHeading": "video testimonials section heading",
     "credibilityQuote": "mid-page pull quote from a testimonial — use real testimonial data from brand context",
@@ -887,18 +1033,20 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "bonusesEyebrow": "e.g. 'Also included'",
     "bonusesHeading": "e.g. 'Bonuses with every enrolment'",
     "bonusesItems": [
-      { "num": "01", "title": "bonus title", "description": "what this bonus is and why it matters", "value": "$xxx" }
+      { "num": "01", "title": "actual bonus title from brand context (or sensible new one)", "description": "what this bonus is and why it matters — specific, not generic", "value": "$xxx — must be a specific dollar amount, no 'priceless' or 'invaluable'" }
     ],
-    "bonusesTotal": "e.g. 'Total bonus value: $xxx'",
-    "midPriceLabel": "e.g. 'Join [programme name]'",
+    "bonusesTotal": "e.g. 'Total bonus value: $xxx' — MUST equal the exact sum of individual bonus values above. Do the math.",
+    // RULE: bonusesItems length is 2–4. Each value MUST be a specific $ amount. bonusesTotal MUST equal the arithmetic sum of those values.
+    "midPriceLabel": "e.g. 'Join ${d.programName ?? "the programme"}' — use actual programme name",
     "midPriceCtaText": "mid-page CTA button text",
     "midPriceUrgency": "urgency note for mid-page price",
     "outcomesEyebrow": "e.g. 'The transformation'",
     "outcomesHeading": "outcomes section heading",
     "outcomesBody": "1–2 sentence intro to outcomes section",
     "outcomesItems": [
-      { "before": "where they are before", "after": "where they'll be after" }
+      { "before": "where they are before — specific, named, recognisable", "after": "where they'll be after — concrete, observable, derived from transformation promise" }
     ],
+    // RULE: outcomesItems MUST contain exactly 3 items (1 row) OR exactly 6 items (2 rows of 3). NEVER 4 or 5.
     "outcomesCtaText": "CTA after outcomes",
     "testimonialsEyebrow": "e.g. 'In their words'",
     "testimonialsHeading": "testimonials section heading",
@@ -934,10 +1082,9 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "programName": "actual programme name from brand context — no bracket placeholders",
     "programChips": ["actual programme duration from brand context", "Live online", "actual start date from brand context"],
     "plans": [
-      { "id": "full", "name": "Pay in full", "amount": "$${d.programPriceFull ?? 1997}", "schedule": "One payment\nBest value", "isFeatured": true },
-      { "id": "spread", "name": "${d.programPaymentPlans?.[0]?.installments ?? 3} payments", "amount": "$${d.programPaymentPlans?.[0]?.amountPerInstallment ?? 749}", "schedule": "× ${d.programPaymentPlans?.[0]?.installments ?? 3} monthly\nTotal $${(d.programPaymentPlans?.[0]?.installments ?? 3) * (d.programPaymentPlans?.[0]?.amountPerInstallment ?? 749)}", "isFeatured": false },
-      { "id": "extended", "name": "${d.programPaymentPlans?.[1]?.installments ?? 12} payments", "amount": "$${d.programPaymentPlans?.[1]?.amountPerInstallment ?? 197}", "schedule": "× ${d.programPaymentPlans?.[1]?.installments ?? 12} monthly\nTotal $${(d.programPaymentPlans?.[1]?.installments ?? 12) * (d.programPaymentPlans?.[1]?.amountPerInstallment ?? 197)}", "isFeatured": false }
+${plansSchema}
     ],
+    // RULE: plans are pre-computed for you above from the wizard's programPriceFull (${fmt(fullPrice)}) and programPaymentPlans. Output this array VERBATIM — do not add new plans, remove plans, change amounts, or shift the featured flag. "Pay in full" is ALWAYS first and ALWAYS the only featured plan.
     "benefits": [
       "First specific benefit of the programme — derived from curriculum or transformation promise",
       "Second benefit — different dimension (practical, emotional, tangible)",
@@ -955,9 +1102,9 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "backgroundImageUrl": "copy the exact URL of the most atmospheric hero or lifestyle image for the thank-you hero background. Prefer a different image from the programme landing hero. Set to null if none available.",
     "label": "e.g. 'You're enrolled.'",
     "headline": "actual programme name from brand context — no bracket placeholders",
-    "subheadline": "1-sentence enrolment confirmation",
+    "subheadline": "1-sentence enrolment confirmation. CRITICAL: renders at clamp(22px, 3vw, 30px) — keep to 5–9 words, no orphans on the final line, no trailing period. Apply the same orphan-avoidance rule from TYPOGRAPHY RULES above.",
     "chips": ["Starts actual date from brand context", "actual programme duration", "session count if known or omit"],
-    "emailNote": "e.g. 'Your welcome email is on its way from [host email]'",
+    "emailNote": "e.g. 'Your welcome email is on its way from ${d.contactEmail ?? "our team"}' — use the actual contact email from brand context, never a bracket placeholder",
     "nextHeadline": "e.g. 'Your next four steps'",
     "steps": [
       { "num": "01", "title": "Check your inbox", "body": "your welcome email and everything you need to get started is on its way", "tag": "Do this now" },
@@ -970,9 +1117,9 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
       { "week": "Week 1", "focus": "actual Week 1 title from curriculum data", "dates": "actual dates if known, else 'TBC'" },
       { "week": "Week 2", "focus": "actual Week 2 title from curriculum data", "dates": "actual dates if known, else 'TBC'" }
     ],
-    "noteEyebrow": "e.g. 'A note from [host]'",
+    "noteEyebrow": "e.g. 'A note from ${d.hostName ?? "the host"}' — use actual host name",
     "noteParagraphs": ["personal note paragraph 1", "paragraph 2"],
-    "noteSignature": "e.g. '— [Host Name], [Host Title]'",
+    "noteSignature": "e.g. '— ${d.hostName ?? "the host"}${d.hostTitle ? `, ${d.hostTitle}` : ""}' — use actual host name and title from brand context",
     "commitmentLabel": "e.g. 'What you've just chosen'",
     "commitmentHeadline": "commitment section headline",
     "commitmentItems": [
@@ -992,7 +1139,7 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     // RULE: Never use bracket placeholders like [support email] in accessNote — the contact email is always injected automatically from the wizard.
   },
   "imageSuggestions": {
-    "FIELD_NAME_WHERE_NULL": "One sentence describing the ideal image to photograph or upload for this slot. Only include entries for fields you set to null."
+    "FIELD_NAME_WHERE_NULL": "One sentence describing the SPECIFIC image to photograph or commission for this slot. Be actionable — describe subject, lighting, framing, mood. e.g. 'A wide environmental shot of ${d.hostName ?? "the host"} working at a desk with natural light, surrounded by methodology notes, captured in soft morning light.' Only include entries for fields you set to null."
   }
 }`;
 }

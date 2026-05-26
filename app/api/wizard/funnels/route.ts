@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { getOrCreateUserId } from "@/lib/getOrCreateUserId";
+import { overallCompleteness } from "@/lib/wizard-completeness";
+import type { WizardData } from "@/lib/wizard-types";
 
 async function getServiceClient() {
   const { createClient } = await import("@supabase/supabase-js");
@@ -24,7 +26,7 @@ export async function GET() {
   const [submissionsResult, generatedResult] = await Promise.all([
     supabase
       .from("wizard_submissions")
-      .select("id, name, current_step, status, updated_at, created_at")
+      .select("id, name, current_step, status, updated_at, created_at, step_data")
       .eq("user_id", userId)
       .order("updated_at", { ascending: false }),
     supabase
@@ -54,10 +56,16 @@ export async function GET() {
     (gf) => new Date(gf.created_at) >= since
   ).length;
 
-  const funnels = (submissionsResult.data ?? []).map((f) => ({
-    ...f,
-    generated_funnel_id: generatedMap[f.id] ?? null,
-  }));
+  // Strip step_data out of the sidebar response (it's large) but expose a
+  // computed completion_pct so the sidebar can show consistent progress.
+  const funnels = (submissionsResult.data ?? []).map((f) => {
+    const { step_data, ...rest } = f as { step_data?: WizardData } & Record<string, unknown>;
+    return {
+      ...rest,
+      generated_funnel_id: generatedMap[f.id] ?? null,
+      completion_pct: overallCompleteness(step_data ?? {}),
+    };
+  });
 
   return NextResponse.json({
     funnels,
