@@ -152,12 +152,18 @@ export default function UpsellPage({ content: c, wizard: w }: Props) {
       </main>
 
       {/* Footer */}
-      <footer className="upsell-footer">
+      <footer className="ty-footer">
         <div className="inner">
-          <span className="copy">&copy; {new Date().getFullYear()} {brandName}</span>
-          <nav className="links">
-            <a href="#">Privacy</a>
-            <a href="#">Terms of Use</a>
+          <div className="ty-footer-left">
+            {safeUrl(w.logoUrl)
+              ? <img src={safeUrl(w.logoUrl)!} alt={brandName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              : <div className="ty-footer-brand">{brandName}</div>
+            }
+            <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {brandName}</span>
+          </div>
+          <nav className="ty-footer-links">
+            <a href={w.privacyPolicyUrl ?? "#"}>Privacy</a>
+            <a href={w.termsOfUseUrl ?? "#"}>Terms of Use</a>
           </nav>
         </div>
       </footer>

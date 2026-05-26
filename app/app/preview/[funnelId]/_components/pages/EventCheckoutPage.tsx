@@ -490,14 +490,18 @@ export default function EventCheckoutPage({ content: c, wizard: w }: Props) {
       </div>
 
       {/* Footer */}
-      <footer className="checkout-footer">
+      <footer className="ty-footer">
         <div className="inner">
-          <span className="copy">
-            &copy; {new Date().getFullYear()} {businessName || hostName} &middot; All Rights Reserved
-          </span>
-          <nav className="links">
-            <a href="#">Privacy</a>
-            <a href="#">Terms of Use</a>
+          <div className="ty-footer-left">
+            {safeUrl(c.logoUrl ?? w.logoUrl)
+              ? <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={businessName || hostName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              : <div className="ty-footer-brand">{businessName || hostName}</div>
+            }
+            <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {businessName || hostName}</span>
+          </div>
+          <nav className="ty-footer-links">
+            <a href={w.privacyPolicyUrl ?? "#"}>Privacy</a>
+            <a href={w.termsOfUseUrl ?? "#"}>Terms of Use</a>
           </nav>
         </div>
       </footer>

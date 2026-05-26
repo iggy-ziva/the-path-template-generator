@@ -13,6 +13,8 @@ export interface WizardData {
   contactEmail?: string;
   legalEntityName?: string;
   websiteUrl?: string;
+  privacyPolicyUrl?: string;
+  termsOfUseUrl?: string;
   instagramUrl?: string;
   linkedinUrl?: string;
   facebookUrl?: string;

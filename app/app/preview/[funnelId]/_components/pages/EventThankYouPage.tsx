@@ -279,18 +279,16 @@ export default function EventThankYouPage({ content: c, wizard: w }: Props) {
       {/* Footer */}
       <footer className="ty-footer">
         <div className="inner">
-          <div>
+          <div className="ty-footer-left">
             {safeUrl(c.logoUrl ?? w.logoUrl)
-              ? <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={businessName || hostName} style={{ height: "48px", objectFit: "contain", marginBottom: "4px", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              : <div className="brand">{businessName || hostName}</div>
+              ? <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={businessName || hostName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              : <div className="ty-footer-brand">{businessName || hostName}</div>
             }
-            <div className="copy">
-              &copy; {new Date().getFullYear()} {businessName || hostName} &middot; All Rights Reserved
-            </div>
+            <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {businessName || hostName}</span>
           </div>
-          <nav className="links">
-            <a href="#">Privacy</a>
-            <a href="#">Terms of Use</a>
+          <nav className="ty-footer-links">
+            <a href={w.privacyPolicyUrl ?? "#"}>Privacy</a>
+            <a href={w.termsOfUseUrl ?? "#"}>Terms of Use</a>
           </nav>
         </div>
       </footer>

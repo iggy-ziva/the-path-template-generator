@@ -142,7 +142,7 @@ export default function Step2({ data, onChange }: Props) {
           <Field label="Business / practice name" required>
             <TextInput value={data.businessName ?? ""} onChange={(v) => onChange({ businessName: v })} placeholder="e.g. Aria Bloom Wellness" />
           </Field>
-          <Field label="Contact email" required hint="Used in footer and support sections">
+          <Field label="Support / contact email" required hint="Used as a mailto link in footers and the programme access card across all funnel pages">
             <TextInput type="email" value={data.contactEmail ?? ""} onChange={(v) => onChange({ contactEmail: v })} placeholder="hello@yourdomain.com" />
           </Field>
         </Grid>
@@ -152,9 +152,23 @@ export default function Step2({ data, onChange }: Props) {
       </Section>
 
       <Section title="Logo">
-        <Field label="Logo file" hint="PNG with transparent background preferred. Used in headers and footers throughout the funnel.">
+        <Field label="Logo file" hint="PNG with transparent background required. Crop the file tightly to the visible pixels of your logo — do not leave empty space around the edges. Used in headers and footers throughout the funnel.">
           <FileUpload label="Upload logo" accept="image/jpeg,image/png,image/webp,image/svg+xml" currentUrl={data.logoUrl} onUpload={(url) => onChange({ logoUrl: url })} />
         </Field>
+      </Section>
+
+      <Section title="Legal pages">
+        <p style={{ fontSize: 13, color: "#888", marginBottom: 16, marginTop: -8 }}>
+          These links appear in the footer of every funnel page. If you don&apos;t have these pages yet, leave blank — ZIVA will set them up for you.
+        </p>
+        <Grid>
+          <Field label="Privacy Policy URL (optional)">
+            <TextInput type="url" value={data.privacyPolicyUrl ?? ""} onChange={(v) => onChange({ privacyPolicyUrl: v })} placeholder="https://yoursite.com/privacy" />
+          </Field>
+          <Field label="Terms of Use URL (optional)">
+            <TextInput type="url" value={data.termsOfUseUrl ?? ""} onChange={(v) => onChange({ termsOfUseUrl: v })} placeholder="https://yoursite.com/terms" />
+          </Field>
+        </Grid>
       </Section>
 
       <Section title="Online presence">

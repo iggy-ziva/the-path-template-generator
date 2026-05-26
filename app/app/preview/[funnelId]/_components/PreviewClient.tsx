@@ -538,8 +538,8 @@ Notes:
               onClick={() => setActivePage(p.key)}
               style={{
                 padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer",
-                background: activePage === p.key ? primary : "transparent",
-                color: activePage === p.key ? primaryTextColor : "#9a9390",
+                background: activePage === p.key ? accentSecondaryOnDark : "transparent",
+                color: activePage === p.key ? textOnSecondary : "#9a9390",
                 fontWeight: activePage === p.key ? 700 : 500,
                 fontSize: 11, whiteSpace: "nowrap", flexShrink: 0,
                 transition: "all 0.12s",
@@ -564,9 +564,9 @@ Notes:
           disabled={downloading}
           style={{
             padding: "6px 14px",
-            background: primary,
+            background: accentSecondaryOnDark,
             border: "none", borderRadius: 6,
-            color: primaryTextColor,
+            color: textOnSecondary,
             cursor: downloading ? "not-allowed" : "pointer",
             fontSize: 11, fontWeight: 700,
             opacity: downloading ? 0.6 : 1,

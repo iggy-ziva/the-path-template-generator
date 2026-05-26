@@ -219,7 +219,9 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) 
                 <p className="access-card-eyebrow">Your program details</p>
                 <h3 className="access-card-headline">{c.accessCardTitle ?? programName}</h3>
                 <div className="access-details">
-                  {(c.accessRows ?? []).map((row, i) => (
+                  {(c.accessRows ?? [])
+                    .filter(row => !/question/i.test(row.label))
+                    .map((row, i) => (
                     <div key={i} className="access-detail-row">
                       <span className="access-detail-label">{row.label}</span>
                       <span className="access-detail-value" dangerouslySetInnerHTML={{ __html: row.value }} />
@@ -251,16 +253,18 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) 
       {/* ── FOOTER ── */}
       <footer className="ty-footer">
         <div className="inner">
-          {safeUrl(c.logoUrl ?? w.logoUrl)
-            ? <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={hostName} style={{ height: "32px", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-            : <div className="ty-footer-brand">{hostName}</div>
-          }
+          <div className="ty-footer-left">
+            {safeUrl(c.logoUrl ?? w.logoUrl)
+              ? <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={hostName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              : <div className="ty-footer-brand">{hostName}</div>
+            }
+            <span className="ty-footer-copy">&copy; {year} {hostName}</span>
+          </div>
           <nav className="ty-footer-links">
-            {w.websiteUrl && <a href={w.websiteUrl}>Privacy</a>}
-            <a href="#">Terms</a>
-            {w.contactEmail && <a href={`mailto:${w.contactEmail}`}>Contact</a>}
+            <a href={w.privacyPolicyUrl ?? "#"}>Privacy</a>
+            <a href={w.termsOfUseUrl ?? "#"}>Terms of Use</a>
+            {w.contactEmail && <a href={`mailto:${w.contactEmail}`} style={{ color: "var(--accent-secondary-on-dark)", textDecoration: "underline", textUnderlineOffset: "2px" }}>Contact</a>}
           </nav>
-          <span className="ty-footer-copy">&copy; {year} {hostName}</span>
         </div>
       </footer>
     </>

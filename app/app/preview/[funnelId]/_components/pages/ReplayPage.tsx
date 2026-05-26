@@ -277,14 +277,19 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
       </div>
 
       {/* Footer */}
-      <footer className="replay-footer">
-        <div className="container">
-          <span className="footer-logo">{businessName || hostName}</span>
-          <nav className="footer-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Use</a>
+      <footer className="ty-footer">
+        <div className="inner">
+          <div className="ty-footer-left">
+            {safeUrl(c.logoUrl ?? w.logoUrl)
+              ? <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={businessName || hostName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              : <div className="ty-footer-brand">{businessName || hostName}</div>
+            }
+            <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {businessName || hostName}</span>
+          </div>
+          <nav className="ty-footer-links">
+            <a href={w.privacyPolicyUrl ?? "#"}>Privacy</a>
+            <a href={w.termsOfUseUrl ?? "#"}>Terms of Use</a>
             <a href="#">Refund Policy</a>
-            {contactEmail && <a href={`mailto:${contactEmail}`}>Contact</a>}
           </nav>
         </div>
       </footer>

@@ -580,14 +580,22 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
         </div>
       )}
 
-      <footer className="prog-footer">
-        <div className="container">
-          <span className="prog-footer-logo">{hostName}</span>
-          <nav className="prog-footer-links">
-            {w.websiteUrl && <a href={w.websiteUrl}>Privacy Policy</a>}
-            <a href="#">Terms of Use</a>
-            {w.contactEmail && <a href={`mailto:${w.contactEmail}`}>Contact</a>}
-          </nav>
+      <footer className="ty-footer">
+        <div className="inner">
+          <div className="ty-footer-left">
+            {safeUrl(w.logoUrl)
+              ? <img src={safeUrl(w.logoUrl)!} alt={hostName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              : <div className="ty-footer-brand">{hostName}</div>
+            }
+            <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {hostName}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--s-5)", flexWrap: "wrap" }}>
+            <nav className="ty-footer-links">
+              <a href={w.privacyPolicyUrl ?? "#"}>Privacy</a>
+              <a href={w.termsOfUseUrl ?? "#"}>Terms of Use</a>
+            </nav>
+            <a href={checkoutHref} className="btn btn-primary" onClick={(e) => { e.preventDefault(); setModalOpen(true); }}>{c.pricingCtaText ?? "Enrol now"} →</a>
+          </div>
         </div>
       </footer>
 

@@ -670,59 +670,20 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       )}
 
       {/* ── 21 Footer ── */}
-      <footer>
-        <div className="container">
-          <div>
-            <div className="brand">{brandName}</div>
-            <div className="copy">© {new Date().getFullYear()} {brandName} · All Rights Reserved</div>
+      <footer className="ty-footer">
+        <div className="inner">
+          <div className="ty-footer-left">
+            {safeUrl(w.logoUrl)
+              ? <img src={safeUrl(w.logoUrl)!} alt={brandName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              : <div className="ty-footer-brand">{brandName}</div>
+            }
+            <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {brandName}</span>
           </div>
-          <div className="right">
-            <div className="links">
-              {w.instagramUrl && (
-                <a href={w.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                  </svg>
-                </a>
-              )}
-              {w.linkedinUrl && (
-                <a href={w.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/>
-                  </svg>
-                </a>
-              )}
-              {w.facebookUrl && (
-                <a href={w.facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-                  </svg>
-                </a>
-              )}
-              {w.youtubeUrl && (
-                <a href={w.youtubeUrl} target="_blank" rel="noopener noreferrer" aria-label="YouTube">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/>
-                  </svg>
-                </a>
-              )}
-              {w.tiktokUrl && (
-                <a href={w.tiktokUrl} target="_blank" rel="noopener noreferrer" aria-label="TikTok">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.84a8.16 8.16 0 0 0 4.77 1.52V6.91a4.85 4.85 0 0 1-1-.22z"/>
-                  </svg>
-                </a>
-              )}
-              {w.websiteUrl && (
-                <a href={w.websiteUrl} target="_blank" rel="noopener noreferrer" aria-label="Website">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                  </svg>
-                </a>
-              )}
-              <a href="#">Privacy</a>
-              <a href="#">Terms of Use</a>
-            </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--s-5)", flexWrap: "wrap" }}>
+            <nav className="ty-footer-links">
+              <a href={w.privacyPolicyUrl ?? "#"}>Privacy</a>
+              <a href={w.termsOfUseUrl ?? "#"}>Terms of Use</a>
+            </nav>
             <a href="/checkout" className="btn btn-primary">{ctaText}</a>
           </div>
         </div>

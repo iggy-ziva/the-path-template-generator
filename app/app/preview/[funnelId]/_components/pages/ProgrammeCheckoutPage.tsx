@@ -350,13 +350,20 @@ export default function ProgrammeCheckoutPage({ content: c, wizard: w }: Props) 
       )}
 
       {/* ── FOOTER ── */}
-      <footer className="co-footer">
-        <span className="co-footer-copy">&copy; {year} {hostName}</span>
-        <nav className="co-footer-links">
-          {w.websiteUrl && <a href={w.websiteUrl}>Privacy policy</a>}
-          <a href="#">Terms of use</a>
-          {w.contactEmail && <a href={`mailto:${w.contactEmail}`}>Contact</a>}
-        </nav>
+      <footer className="ty-footer">
+        <div className="inner">
+          <div className="ty-footer-left">
+            {safeUrl(c.logoUrl ?? w.logoUrl)
+              ? <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={hostName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              : <div className="ty-footer-brand">{hostName}</div>
+            }
+            <span className="ty-footer-copy">&copy; {year} {hostName}</span>
+          </div>
+          <nav className="ty-footer-links">
+            <a href={w.privacyPolicyUrl ?? "#"}>Privacy</a>
+            <a href={w.termsOfUseUrl ?? "#"}>Terms of Use</a>
+          </nav>
+        </div>
       </footer>
     </div>
   );

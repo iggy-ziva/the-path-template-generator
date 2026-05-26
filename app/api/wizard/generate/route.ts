@@ -263,8 +263,10 @@ Host title / credentials: ${d.hostTitle ?? ""}
 Host tagline: ${d.hostTagline ?? ""}
 Host bio: ${d.hostBio ?? ""}
 Business name: ${d.businessName ?? ""}
-Contact email: ${d.contactEmail ?? ""}
+Contact / support email: ${d.contactEmail ?? ""}
 Website: ${d.websiteUrl ?? ""}
+Privacy Policy URL: ${d.privacyPolicyUrl ?? "NOT PROVIDED"}
+Terms of Use URL: ${d.termsOfUseUrl ?? "NOT PROVIDED"}
 Instagram: ${d.instagramUrl ?? ""} | LinkedIn: ${d.linkedinUrl ?? ""} | Facebook: ${d.facebookUrl ?? ""} | TikTok: ${d.tiktokUrl ?? ""} | YouTube: ${d.youtubeUrl ?? ""}
 
 === BRAND STYLE ===
@@ -682,7 +684,7 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "label": "e.g. 'You're in.'",
     "headline": "thank-you headline — event name",
     "subheadline": "1-sentence confirmation",
-    "emailNote": "e.g. 'Confirmation sent to your email from [sender address]'",
+    "emailNote": "e.g. 'Confirmation sent to your inbox from ${d.contactEmail ?? "our team"}' — use the actual contact email from brand context, never a bracket placeholder",
     "nextStepsHeading": "e.g. 'Three things to do right now'",
     "nextSteps": [
       { "step": "01", "title": "Check your email", "body": "your confirmation and event link are on their way" },
@@ -704,7 +706,7 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "zoomNote": "e.g. 'Zoom link sent by email immediately. Check your spam folder if not received within 5 minutes.'",
     "shareHeading": "e.g. 'Tell someone who needs this'",
     "shareSub": "e.g. 'If someone in your life is at a threshold, pass it on.'",
-    "shareUrl": "https://[domain]/",
+    "shareUrl": "${d.websiteUrl ?? d.eventVideoUrl?.split('/').slice(0, 3).join('/') ?? ''}",
     "personalNoteHeadline": "e.g. 'A note from [host]'",
     "personalNoteParagraphs": [
       "paragraph 1 — warm, personal note to the new registrant",
@@ -828,8 +830,8 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "heroSubheadline": "one-sentence core transformation promise",
     "heroMeta": ["actual programme duration from brand context", "Live online", "actual start date from brand context — no bracket placeholders"],
     "heroPriceFrom": "e.g. 'From $197/month'",
-    "heroCtaText": "e.g. 'Enrol now'",
     "heroUrgency": "urgency note — use actual enrolment close date if available, otherwise omit or write a generic scarcity note",
+    // NOTE: heroCtaText is intentionally omitted — the hero CTA button is not shown on the Programme Landing page.
     "visionEyebrow": "e.g. 'Picture this'",
     "visionHeading": "vision section heading",
     "visionItems": [
@@ -929,7 +931,7 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "logoUrl": "copy the exact BRAND LOGO URL from IMAGES AVAILABLE, or null if no logo was uploaded",
     "programmeImageUrl": "copy the exact URL of a lifestyle or hero image for the order summary sidebar. Prefer lifestyle-1 or additional-1. Set to null if none available.",
     "programEyebrow": "e.g. 'You are enrolling in'",
-    "programName": "[programme name]",
+    "programName": "actual programme name from brand context — no bracket placeholders",
     "programChips": ["actual programme duration from brand context", "Live online", "actual start date from brand context"],
     "plans": [
       { "id": "full", "name": "Pay in full", "amount": "$${d.programPriceFull ?? 1997}", "schedule": "One payment\nBest value", "isFeatured": true },
@@ -952,7 +954,7 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "logoUrl": "copy the exact BRAND LOGO URL from IMAGES AVAILABLE, or null if no logo was uploaded",
     "backgroundImageUrl": "copy the exact URL of the most atmospheric hero or lifestyle image for the thank-you hero background. Prefer a different image from the programme landing hero. Set to null if none available.",
     "label": "e.g. 'You're enrolled.'",
-    "headline": "[programme name]",
+    "headline": "actual programme name from brand context — no bracket placeholders",
     "subheadline": "1-sentence enrolment confirmation",
     "chips": ["Starts actual date from brand context", "actual programme duration", "session count if known or omit"],
     "emailNote": "e.g. 'Your welcome email is on its way from [host email]'",
@@ -978,15 +980,16 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
       "Second commitment outcome — a different dimension of what they've chosen",
       "Third commitment outcome — the identity or capability shift they've invested in"
     ],
-    "accessCardTitle": "[programme name]",
+    "accessCardTitle": "actual programme name from brand context — no bracket placeholders",
     "accessRows": [
       { "label": "Format", "value": "Live online" },
       { "label": "Schedule", "value": "actual schedule from brand context — start date and cadence" },
       { "label": "Duration", "value": "actual programme duration from brand context" },
-      { "label": "Access", "value": "${portalUrl !== "NOT PROVIDED" ? portalUrl : "Check your welcome email"}" },
-      { "label": "Questions", "value": "${d.contactEmail ?? "Contact us via email"}" }
+      { "label": "Access", "value": "${portalUrl !== "NOT PROVIDED" ? portalUrl : "Check your welcome email"}" }
     ],
-    "accessNote": "e.g. 'Having trouble accessing? Email us at [support email]'"
+    // RULE: NEVER add a "Questions" or contact email row to accessRows — this is always injected automatically from the wizard contact email field.
+    "accessNote": "e.g. 'Having trouble? Your welcome email has everything you need — check your spam folder if not received within 5 minutes.'"
+    // RULE: Never use bracket placeholders like [support email] in accessNote — the contact email is always injected automatically from the wizard.
   },
   "imageSuggestions": {
     "FIELD_NAME_WHERE_NULL": "One sentence describing the ideal image to photograph or upload for this slot. Only include entries for fields you set to null."
