@@ -229,7 +229,7 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) 
                     <div className="access-detail-row">
                       <span className="access-detail-label">Questions</span>
                       <span className="access-detail-value">
-                        <a href={`mailto:${w.contactEmail}`} style={{ color: "var(--accent-primary-on-dark)", textDecoration: "underline", textUnderlineOffset: "2px" }}>
+                        <a href={`mailto:${w.contactEmail}`} style={{ color: "var(--accent-secondary-on-dark)", textDecoration: "underline", textUnderlineOffset: "2px" }}>
                           {w.contactEmail}
                         </a>
                       </span>

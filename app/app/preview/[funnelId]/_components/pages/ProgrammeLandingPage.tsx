@@ -84,9 +84,6 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
                 ))}
               </div>
             )}
-            <a href={checkoutHref} className="prog-hero-cta" onClick={(e) => { e.preventDefault(); setModalOpen(true); }}>
-              {c.heroCtaText ?? "Enrol now"} →
-            </a>
           </div>
 
           <div className="prog-hero-price-card">

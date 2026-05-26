@@ -643,6 +643,7 @@ section {
 .hero-host-title {
   padding-left: calc(28px + var(--s-3));
   font-size: 13px;
+  text-wrap: balance;
 }
 .mob-br { display: none; }
 @media (max-width: 768px) {
@@ -1083,13 +1084,20 @@ section {
 /* =====================================================================
    Testimonials (12)
    ===================================================================== */
-.testimonials .section-header { text-align: center; }
+.testimonials .section-header { text-align: center; margin-bottom: var(--s-9); }
 .testimonials .section-header .display-section { max-width: 22ch; margin-inline: auto; }
+
 .testimonial-track {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--s-6);
   margin-bottom: var(--s-7);
+  /* Fade in each time the track re-mounts (key change triggers this) */
+  animation: testimonialFadeIn 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes testimonialFadeIn {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
 @media (max-width: 1024px) {
   .testimonial-track { grid-template-columns: repeat(2, 1fr); }
@@ -1097,6 +1105,7 @@ section {
 @media (max-width: 768px) {
   .testimonial-track { grid-template-columns: 1fr; }
 }
+
 .testimonial-card {
   background: var(--surface-raised);
   border: 1px solid var(--border-subtle);
@@ -1141,12 +1150,20 @@ section {
   transition: background 200ms ease, color 200ms ease;
 }
 .carousel-controls button:hover { background: var(--text-primary); color: var(--text-inverse); }
-.carousel-dots { display: flex; gap: 8px; }
+.carousel-dots { display: flex; gap: 8px; align-items: center; }
 .carousel-dots .dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--border-subtle);
+  border: none; padding: 0; cursor: pointer;
+  transition: background 200ms ease, transform 150ms ease;
 }
-.carousel-dots .dot.active { background: var(--text-primary); }
+.carousel-dots .dot:hover { background: color-mix(in srgb, var(--text-primary) 50%, transparent); }
+.carousel-dots .dot.active {
+  background: var(--accent-secondary-on-light);
+  transform: scale(1.3);
+}
+/* On dark sections the active dot uses the on-dark variant */
+.on-dark .carousel-dots .dot.active { background: var(--accent-secondary-on-dark); }
 
 /* =====================================================================
    How It Works (13)
@@ -1313,18 +1330,26 @@ section {
 .outcomes-grid .section-header { text-align: center; }
 .outcomes-grid-list {
   display: grid;
+  /* 3 columns by default (preferred: 3 or 6 items → 1 or 2 clean rows) */
   grid-template-columns: repeat(3, 1fr);
   gap: var(--s-7) var(--s-8);
   max-width: 1200px;
   margin: 0 auto;
 }
+/* 4 items: switch to 4 columns so no card is orphaned on its own row */
+.outcomes-grid-list:has(> :nth-child(4):last-child) {
+  grid-template-columns: repeat(4, 1fr);
+}
 @media (max-width: 1024px) {
-  .outcomes-grid-list { grid-template-columns: repeat(2, 1fr); }
+  .outcomes-grid-list,
+  .outcomes-grid-list:has(> :nth-child(4):last-child) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 .outcomes-grid-item { text-align: left; }
 .outcomes-grid-item .big-icon {
   width: 64px; height: 64px;
-  color: var(--accent-primary);
+  color: var(--accent-secondary-on-light);
   margin-bottom: var(--s-5);
 }
 @media (max-width: 768px) {

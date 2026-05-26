@@ -381,6 +381,11 @@ TYPOGRAPHY RULES — apply to every text field you generate:
 - Avoid orphan words: if a short sentence or label would break so that only one word falls on the final line, rephrase to distribute words more evenly across lines.
 - Short labels (eyebrows, badges, pill text) must always fit on a single line — keep them under 6 words.
 
+GRID LAYOUT RULES — apply to any array that renders as a grid:
+- outcomesItems and outcomes2Items: generate exactly 3 items (1 row) or exactly 6 items (2 rows of 3). NEVER 4 or 5.
+- includesItems: ALWAYS generate exactly 6 items. The grid is 2 columns so odd counts create an orphan row. NEVER generate 3, 5, 7 or any other odd number.
+- Plan cards: always start with pay-in-full (see PAYMENT PLAN RULES below).
+
 PAYMENT PLAN RULES — apply to the plans array in programmeCheckout:
 - "Pay in full" (id: "full") is ALWAYS the first plan and ALWAYS has isFeatured: true.
 - No payment plan (installment option) may ever have isFeatured: true.
@@ -532,8 +537,12 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "outcomesHeading": "e.g. 'What you'll experience'",
     "outcomesSubheading": "body-lg subtitle e.g. 'Your life after [event name] — not in a year, but starting on Thursday.'",
     "outcomesItems": [
+      { "title": "outcome title (2–4 words)", "body": "1–2 specific sentences about this outcome" },
+      { "title": "outcome title (2–4 words)", "body": "1–2 specific sentences about this outcome" },
       { "title": "outcome title (2–4 words)", "body": "1–2 specific sentences about this outcome" }
     ],
+    // GRID RULE: outcomesItems MUST contain exactly 3 items (1 row of 3) OR exactly 6 items (2 rows of 3).
+    // NEVER generate 4 or 5 items — 4 breaks the grid layout and 5 creates an uneven orphan row.
     "outcomesClosingText": "italic closing below outcome grid e.g. 'This is not a list of someday-results.'",
     "outcomesMicrocopy": "small timing/urgency note below closing text",
     "personalMessageHeading": "e.g. 'A note from [host name]'",
@@ -583,8 +592,12 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "outcomes2Eyebrow": "e.g. 'What you take home'",
     "outcomes2Heading": "second outcomes section heading",
     "outcomes2Items": [
+      { "title": "deliverable title", "body": "what this is and why it matters" },
+      { "title": "deliverable title", "body": "what this is and why it matters" },
       { "title": "deliverable title", "body": "what this is and why it matters" }
     ],
+    // GRID RULE: outcomes2Items MUST contain exactly 3 items (preferred) OR exactly 6 items.
+    // NEVER generate 4 or 5 items — the grid only renders cleanly at 3 or 6.
     "bioEyebrow": "e.g. 'About the host'",
     "bioHeading": "e.g. 'About [host name]'",
     "bioParagraphs": [
@@ -852,8 +865,14 @@ Return ONLY a valid JSON object — no prose, no markdown fences, no explanation
     "includesEyebrow": "e.g. 'What you get'",
     "includesHeading": "e.g. 'Everything inside [programme name]'",
     "includesItems": [
-      { "num": "01", "title": "include item title", "description": "what this gives them specifically", "tag": "optional tag e.g. 'Core curriculum'" }
+      { "num": "01", "title": "include item 1 title", "description": "what this gives them specifically", "tag": "optional tag e.g. 'Core curriculum'" },
+      { "num": "02", "title": "include item 2 title", "description": "what this gives them specifically", "tag": "optional tag" },
+      { "num": "03", "title": "include item 3 title", "description": "what this gives them specifically", "tag": "optional tag" },
+      { "num": "04", "title": "include item 4 title", "description": "what this gives them specifically", "tag": "optional tag" },
+      { "num": "05", "title": "include item 5 title", "description": "what this gives them specifically", "tag": "optional tag" },
+      { "num": "06", "title": "include item 6 title", "description": "what this gives them specifically", "tag": "optional tag" }
     ],
+    // RULE: includesItems MUST contain exactly 6 items. The grid is 2 columns — odd counts create an orphan. NEVER generate fewer or more than 6.
     "sessionEyebrow": "e.g. 'The curriculum'",
     "sessionHeading": "e.g. 'Eight weeks of guided transformation'",
     "sessionWeeks": [

@@ -75,7 +75,7 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
       >
         <div className="container">
           {safeUrl(c.logoUrl ?? w.logoUrl) && (
-            <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={businessName || hostName} style={{ height: "96px", objectFit: "contain", display: "block", marginBottom: "28px", marginInline: "auto" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={businessName || hostName} style={{ maxHeight: "120px", maxWidth: "200px", width: "100%", objectFit: "contain", display: "block", marginBottom: "28px", marginInline: "auto" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
           )}
           <p className="replay-eyebrow">{eyebrow}</p>
           <h1 className="replay-event-title">{headline}</h1>

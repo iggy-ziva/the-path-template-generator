@@ -396,46 +396,13 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
         </section>
       )}
 
-      {/* ── 12 Testimonials ── */}
+      {/* ── Testimonials ── */}
       {(w.testimonials ?? []).length > 0 && (
-        <section className="testimonials">
-          <div className="container">
-            <div className="section-header">
-              {c.testimonialsEyebrow && <span className="eyebrow">{c.testimonialsEyebrow}</span>}
-              <h2 className="display-section">{c.testimonialsHeading ?? "What people say"}</h2>
-            </div>
-            <div className="testimonial-track">
-              {(w.testimonials ?? []).slice(0, 3).map((t, i) => (
-                <article key={i} className="testimonial-card">
-                  <h3 className="h3">&ldquo;{t.quote.slice(0, 60)}&hellip;&rdquo;</h3>
-                  <p className="quote">{t.quote}</p>
-                  <div className="attrib">
-                    <span className="name">{t.name}</span>
-                    {(t.location || t.context) && (
-                      <span className="loc">{[t.location, t.context].filter(Boolean).join(" · ")}</span>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
-            <div className="carousel-controls">
-              <button aria-label="Previous">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 18l-6-6 6-6"/>
-                </svg>
-              </button>
-              <div className="carousel-dots" role="tablist">
-                <span className="dot active" />
-                <span className="dot" />
-              </div>
-              <button aria-label="Next">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 6l6 6-6 6"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </section>
+        <TestimonialCarousel
+          testimonials={w.testimonials ?? []}
+          eyebrow={c.testimonialsEyebrow}
+          heading={c.testimonialsHeading ?? "What people say"}
+        />
       )}
 
       {/* ── 07b Encourage CTA 2 ── */}
@@ -761,5 +728,90 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
         </div>
       </footer>
     </div>
+  );
+}
+
+// ── Testimonial carousel — always 3 visible, circular navigation ───────────
+interface Testimonial { quote: string; name: string; location?: string; context?: string; }
+
+function TestimonialCarousel({
+  testimonials, eyebrow, heading,
+}: {
+  testimonials: Testimonial[];
+  perSlide?: number;
+  totalSlides?: number;
+  eyebrow?: string;
+  heading: string;
+}) {
+  const n = testimonials.length;
+  const [start, setStart] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+
+  function navigate(dir: 1 | -1) {
+    setStart(s => (s + dir + n) % n);
+    setAnimKey(k => k + 1);
+  }
+
+  // Always pick exactly 3 cards, wrapping circularly so no slide is ever short
+  const visible = n <= 3
+    ? testimonials
+    : [0, 1, 2].map(offset => testimonials[(start + offset) % n]);
+
+  const showControls = n > 3;
+
+  return (
+    <section className="testimonials">
+      <div className="container">
+        <div className="section-header">
+          {eyebrow && <span className="eyebrow">{eyebrow}</span>}
+          <h2 className="display-section">{heading}</h2>
+        </div>
+
+        {/* key change triggers the fade-in animation on each navigation */}
+        <div key={animKey} className="testimonial-track">
+          {visible.map((t, i) => (
+            <article key={i} className="testimonial-card">
+              <h3 className="h3">&ldquo;{t.quote.length > 60 ? t.quote.slice(0, 60) + "…" : t.quote}&rdquo;</h3>
+              <p className="quote">{t.quote}</p>
+              <div className="attrib">
+                <span className="name">{t.name}</span>
+                {(t.location || t.context) && (
+                  <span className="loc">{[t.location, t.context].filter(Boolean).join(" · ")}</span>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {showControls && (
+          <div className="carousel-controls">
+            <button onClick={() => navigate(-1)} aria-label="Previous testimonials">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6"/>
+              </svg>
+            </button>
+
+            <div className="carousel-dots" role="tablist">
+              {testimonials.map((_, i) => (
+                <button
+                  key={i}
+                  role="tab"
+                  aria-selected={i === start}
+                  aria-label={`Testimonial ${i + 1}`}
+                  className={`dot${i === start ? " active" : ""}`}
+                  onClick={() => { setStart(i); setAnimKey(k => k + 1); }}
+                />
+              ))}
+            </div>
+
+            <button onClick={() => navigate(1)} aria-label="Next testimonials">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 6l6 6-6 6"/>
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
