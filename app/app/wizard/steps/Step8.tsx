@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { WizardData } from "@/lib/wizard-types";
 import { Section, UrlListInput } from "../WizardField";
 
@@ -36,8 +36,10 @@ function PressLogoRow({
   onRemove: () => void;
 }) {
   const [fetching, setFetching] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [fetchError, setFetchError] = useState("");
   const [darkPreview, setDarkPreview] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFetch() {
     if (!entry.websiteUrl) return;
@@ -59,6 +61,49 @@ function PressLogoRow({
       setFetching(false);
     }
   }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setFetchError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("bucket", "wizard-uploads");
+      const res = await fetch("/api/wizard/upload", { method: "POST", body: formData });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Upload failed");
+      onUpdate({ logoUrl: json.url, textFallback: false, transparentBg: false });
+      setDarkPreview(false);
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  const actionBtn = (label: string, onClick: () => void, disabled = false, primary = false): React.ReactNode => (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        display: "flex", alignItems: "center", gap: 6,
+        padding: "7px 14px", borderRadius: 8,
+        background: primary && !disabled ? Z.white : Z.creamMid,
+        border: `1.5px solid ${disabled ? Z.faint : primary ? Z.pink : Z.creamDeep}`,
+        color: disabled ? Z.faint : primary ? Z.pink : Z.muted,
+        fontFamily: Z.font, fontSize: 12, fontWeight: 600,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.7 : 1,
+        transition: "all 0.15s",
+      }}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div style={{
@@ -99,7 +144,15 @@ function PressLogoRow({
       </div>
 
       {/* Logo row */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+        onChange={handleUpload}
+        style={{ display: "none" }}
+        disabled={uploading}
+      />
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
         {entry.logoUrl ? (
           <>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -123,21 +176,20 @@ function PressLogoRow({
               </button>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, minWidth: 220 }}>
               {entry.transparentBg && (
-                <div style={{ padding: "8px 12px", background: "#FFF8E6", border: "1.5px solid #F0C040", borderRadius: 8, maxWidth: 380 }}>
+                <div style={{ padding: "8px 12px", background: "#FFF8E6", border: "1.5px solid #F0C040", borderRadius: 8, maxWidth: 420 }}>
                   <p style={{ fontFamily: Z.font, fontSize: 12, color: "#8A6800", fontWeight: 600, marginBottom: 2 }}>
                     ⚠ This logo has a transparent background with likely white or light-coloured text.
                   </p>
-                  <p style={{ fontFamily: Z.font, fontSize: 12, color: "#8A6800", lineHeight: 1.5 }}>
-                    It may appear blank on light backgrounds — use the dark preview to confirm. Don&apos;t worry: the AI will recolourise it to match your brand palette when generating your funnel.
+                  <p style={{ fontFamily: Z.font, fontSize: 12, color: "#8A6800", lineHeight: 1.5, margin: 0 }}>
+                    It may appear blank on light backgrounds — use the dark preview to confirm, or upload your own logo below if auto-fetch got it wrong.
                   </p>
                 </div>
               )}
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <button type="button" onClick={handleFetch} disabled={!entry.websiteUrl || fetching} style={{ fontFamily: Z.font, fontSize: 12, color: Z.muted, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>
-                  {fetching ? "Fetching…" : "Re-fetch logo"}
-                </button>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                {actionBtn(fetching ? "Fetching…" : "Re-fetch logo", handleFetch, !entry.websiteUrl || fetching)}
+                {actionBtn(uploading ? "Uploading…" : "Upload replacement", () => fileInputRef.current?.click(), uploading, true)}
                 <button type="button" onClick={() => onUpdate({ logoUrl: "", textFallback: false, transparentBg: false })} style={{ fontFamily: Z.font, fontSize: 12, color: Z.coral, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>
                   Remove logo
                 </button>
@@ -147,7 +199,7 @@ function PressLogoRow({
         ) : entry.textFallback ? (
           <>
             {/* Text badge preview */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <span style={{
                 padding: "5px 14px", borderRadius: 6,
                 border: `1.5px solid ${Z.creamDeep}`, background: Z.white,
@@ -157,34 +209,21 @@ function PressLogoRow({
                 {entry.name || extractDomain(entry.websiteUrl)}
               </span>
               <span style={{ fontFamily: Z.font, fontSize: 12, color: "#3D6B30", fontWeight: 600 }}>
-                ✓ No logo found — don&apos;t worry, we&apos;ll display a styled text badge in your funnel instead.
+                ✓ No logo found — we&apos;ll display a styled text badge, or upload your own logo below.
               </span>
             </div>
-            <button type="button" onClick={handleFetch} disabled={!entry.websiteUrl || fetching} style={{ fontFamily: Z.font, fontSize: 12, color: Z.muted, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>
-              {fetching ? "Fetching…" : "Try again"}
-            </button>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", width: "100%" }}>
+              {actionBtn(fetching ? "Fetching…" : "Try auto-fetch again", handleFetch, !entry.websiteUrl || fetching)}
+              {actionBtn(uploading ? "Uploading…" : "↑ Upload custom logo", () => fileInputRef.current?.click(), uploading, true)}
+            </div>
           </>
         ) : (
-          <button
-            type="button"
-            onClick={handleFetch}
-            disabled={!entry.websiteUrl || fetching}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "7px 14px", borderRadius: 8,
-              background: entry.websiteUrl ? Z.white : Z.creamDeep,
-              border: `1.5px solid ${entry.websiteUrl ? Z.pink : Z.faint}`,
-              color: entry.websiteUrl ? Z.pink : Z.faint,
-              fontFamily: Z.font, fontSize: 12, fontWeight: 600,
-              cursor: entry.websiteUrl && !fetching ? "pointer" : "not-allowed",
-              opacity: fetching ? 0.7 : 1,
-              transition: "all 0.15s",
-            }}
-          >
-            {fetching ? "Fetching logo…" : "↓ Auto-fetch logo"}
-          </button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            {actionBtn(fetching ? "Fetching…" : "↓ Auto-fetch logo", handleFetch, !entry.websiteUrl || fetching, true)}
+            {actionBtn(uploading ? "Uploading…" : "↑ Upload custom logo", () => fileInputRef.current?.click(), uploading)}
+          </div>
         )}
-        {fetchError && <span style={{ fontFamily: Z.font, fontSize: 12, color: Z.coral }}>{fetchError}</span>}
+        {fetchError && <span style={{ fontFamily: Z.font, fontSize: 12, color: Z.coral, width: "100%" }}>{fetchError}</span>}
       </div>
     </div>
   );
@@ -211,41 +250,64 @@ export default function Step8({ data, onChange }: Props) {
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
-    padding: "10px",
-    background: "#0f0e0c",
-    border: "1px solid #2a2926",
-    borderRadius: "8px",
-    color: "#f5f1ea",
-    fontSize: "13px",
+    padding: "10px 12px",
+    background: Z.white,
+    border: `1.5px solid ${Z.creamDeep}`,
+    borderRadius: 8,
+    color: Z.charcoal,
+    fontSize: 13,
     outline: "none",
     boxSizing: "border-box",
-    fontFamily: "inherit",
+    fontFamily: Z.font,
+  };
+
+  const miniLabel: React.CSSProperties = {
+    display: "block",
+    fontFamily: Z.font,
+    fontSize: 11,
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+    color: Z.charcoal,
+    marginBottom: 6,
   };
 
   return (
     <div>
-      <p style={{ fontSize: "13px", color: "#666", marginBottom: "32px", lineHeight: 1.6 }}>
+      <p style={{ fontFamily: Z.font, fontSize: 13, color: Z.muted, marginBottom: 32, lineHeight: 1.6 }}>
         Add at least 3 testimonials for the best results. These appear in the landing page, programme LP, and replay page. The AI will use the language and specific details to make testimonial sections feel authentic.
       </p>
 
       <Section title="Text testimonials">
         {testimonials.map((t, i) => (
-          <div key={i} style={{ background: "#1a1917", border: "1px solid #2a2926", borderRadius: "12px", padding: "20px", marginBottom: "12px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px" }}>
-              <span style={{ fontSize: "12px", fontWeight: 700, color: "#D4A878" }}>Testimonial {i + 1}</span>
-              <button onClick={() => onChange({ testimonials: testimonials.filter((_, idx) => idx !== i) })} style={{ background: "none", border: "none", color: "#555", cursor: "pointer" }}>×</button>
+          <div key={i} style={{ background: Z.creamMid, border: `1.5px solid ${Z.creamDeep}`, borderRadius: 12, padding: 20, marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <span style={{ fontFamily: Z.font, fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.08em", color: Z.pink }}>Testimonial {i + 1}</span>
+              <button onClick={() => onChange({ testimonials: testimonials.filter((_, idx) => idx !== i) })} style={{ background: "none", border: "none", color: Z.faint, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: 0 }} title="Remove testimonial">×</button>
             </div>
-            <div style={{ display: "grid", gap: "10px" }}>
-              <textarea value={t.quote} onChange={(e) => updateTestimonial(i, "quote", e.target.value)} placeholder="The testimonial quote — the more specific and vivid, the better" rows={3} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.5 }} />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                <input value={t.name} onChange={(e) => updateTestimonial(i, "name", e.target.value)} placeholder="First name & last initial (e.g. Sarah T.)" style={inputStyle} />
-                <input value={t.location} onChange={(e) => updateTestimonial(i, "location", e.target.value)} placeholder="City, Country" style={inputStyle} />
+            <div style={{ display: "grid", gap: 10 }}>
+              <div>
+                <label style={miniLabel}>Quote</label>
+                <textarea value={t.quote} onChange={(e) => updateTestimonial(i, "quote", e.target.value)} placeholder="The testimonial quote — the more specific and vivid, the better" rows={3} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.5 }} />
               </div>
-              <input value={t.context ?? ""} onChange={(e) => updateTestimonial(i, "context", e.target.value)} placeholder="Context (optional): e.g. 'Cohort 3, Soul Contract Mastery'" style={inputStyle} />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={miniLabel}>Name</label>
+                  <input value={t.name} onChange={(e) => updateTestimonial(i, "name", e.target.value)} placeholder="First name & last initial (e.g. Sarah T.)" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={miniLabel}>Location</label>
+                  <input value={t.location} onChange={(e) => updateTestimonial(i, "location", e.target.value)} placeholder="City, Country" style={inputStyle} />
+                </div>
+              </div>
+              <div>
+                <label style={miniLabel}>Context (optional)</label>
+                <input value={t.context ?? ""} onChange={(e) => updateTestimonial(i, "context", e.target.value)} placeholder="e.g. 'Cohort 3, Soul Contract Mastery'" style={inputStyle} />
+              </div>
             </div>
           </div>
         ))}
-        <button onClick={addTestimonial} style={{ padding: "12px 20px", background: "none", border: "1px dashed #2a2926", borderRadius: "10px", color: "#D4A878", cursor: "pointer", fontSize: "14px", fontWeight: 600, width: "100%" }}>
+        <button onClick={addTestimonial} style={{ padding: "12px 20px", background: "none", border: `1.5px dashed ${Z.faint}`, borderRadius: 10, color: Z.pink, fontFamily: Z.font, cursor: "pointer", fontSize: 14, fontWeight: 600, width: "100%" }}>
           + Add testimonial
         </button>
       </Section>
@@ -262,7 +324,7 @@ export default function Step8({ data, onChange }: Props) {
 
       <Section title="Press and media mentions (optional)">
         <p style={{ fontFamily: Z.font, fontSize: 13, color: Z.muted, marginBottom: 16, lineHeight: 1.6 }}>
-          Add each publication, podcast or media outlet. Paste their website URL and click <strong>Auto-fetch logo</strong> — we&apos;ll download it and store it for the &lsquo;As seen in&rsquo; section of your event page.
+          Add each publication, podcast or media outlet. Paste their website URL and click <strong>Auto-fetch logo</strong>, or <strong>Upload custom logo</strong> if you already have the correct file — auto-fetch doesn&apos;t always get it right.
         </p>
 
         {(data.pressLogos ?? []).map((entry, i) => (

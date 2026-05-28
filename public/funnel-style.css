@@ -421,7 +421,7 @@ section {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 100;
-  background: rgba(15, 14, 12, 0.92);
+  background: color-mix(in srgb, var(--surface-inverse) 92%, transparent);
   backdrop-filter: saturate(140%) blur(8px);
   color: var(--text-inverse);
   border-bottom: 1px solid rgba(245,241,234,0.08);
@@ -515,6 +515,31 @@ section {
   opacity: 0.4;
   z-index: -1;
 }
+/* Warm-brand hero — mid slate/teal band instead of near-black */
+.hero.accent-bg {
+  background: var(--surface-accent);
+}
+.hero.accent-bg::before {
+  background:
+    radial-gradient(60% 50% at 70% 20%, color-mix(in srgb, var(--accent-primary-on-dark) 14%, transparent), transparent 70%),
+    radial-gradient(80% 60% at 20% 90%, color-mix(in srgb, var(--surface-inverse) 35%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--surface-accent) 0%, color-mix(in srgb, var(--surface-inverse) 45%, var(--surface-accent)) 100%);
+}
+.hero.sunken-bg {
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+}
+.hero.sunken-bg::before,
+.hero.sunken-bg::after { display: none; }
+.hero.sunken-bg .subtitle { color: var(--text-secondary); }
+.hero.sunken-bg .hero-meta { color: var(--text-secondary); }
+.hero.sunken-bg .hero-eyebrow {
+  color: var(--accent-secondary-on-light);
+  border-color: color-mix(in srgb, var(--accent-secondary-on-light) 32%, transparent);
+  background: color-mix(in srgb, var(--accent-secondary-on-light) 8%, transparent);
+}
+.hero.sunken-bg .hero-eyebrow .dot { background: var(--accent-secondary-on-light); }
+.hero.sunken-bg .hero-meta .label { color: var(--accent-secondary-on-light); }
 /* Eyebrow pill: secondary-on-dark so it is always contrast-safe on the dark hero
    regardless of how light or dark the client's secondary colour is (makeOnDark lifts it).
    Primary is reserved exclusively for CTA buttons. */
@@ -825,12 +850,17 @@ section {
   color: var(--text-tertiary);
 }
 .logo-wall {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: var(--s-4);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
+  gap: var(--s-4) var(--s-8);
+  width: 100%;
 }
 .logo-slot {
+  flex: 0 0 auto;
+  min-width: 100px;
+  max-width: 160px;
   height: 56px;
   display: flex;
   align-items: center;
@@ -848,7 +878,8 @@ section {
 .logo-slot.style-2 { font-family: var(--font-body); font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; font-size: 13px; }
 .logo-slot.style-3 { font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.05em; }
 @media (max-width: 768px) {
-  .logo-wall { grid-template-columns: repeat(2, 1fr); gap: var(--s-5); }
+  .logo-wall { gap: var(--s-4) var(--s-5); }
+  .logo-slot { min-width: 88px; max-width: 140px; }
 }
 
 /* =====================================================================
@@ -1406,6 +1437,15 @@ section {
    Final Value Proposition (18)
    ===================================================================== */
 .final-vp { background: var(--surface-inverse); color: var(--text-inverse); }
+.final-vp.accent-bg { background: var(--surface-accent); }
+.final-vp.sunken-bg {
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+}
+.final-vp.sunken-bg h2,
+.final-vp.sunken-bg p,
+.final-vp.sunken-bg .from-to li { color: var(--text-primary); }
+.final-vp.sunken-bg p { color: var(--text-secondary); }
 .final-vp .reading { max-width: 800px; }
 .final-vp h2 {
   font-family: var(--font-display);

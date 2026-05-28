@@ -17,7 +17,7 @@ export default async function ThankYouPage({
   return (
     <>
       {/* 01 — Confirmation Hero */}
-      <section className="ty-hero">
+      <section className="ty-hero on-dark">
         <div className="inner">
           <div className="ty-check" aria-hidden="true">
             <Icon name="check" size={32} strokeWidth={2.5} />

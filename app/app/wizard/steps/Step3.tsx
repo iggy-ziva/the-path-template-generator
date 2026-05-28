@@ -3,6 +3,12 @@ import type { WizardData } from "@/lib/wizard-types";
 import { Field, TextInput, Textarea, Select, Grid, Section, DatePicker, TimePicker } from "../WizardField";
 import { TIMEZONE_OPTIONS, PLATFORM_OPTIONS } from "../wizard-constants";
 
+const Z = {
+  pink: "#FF007E", coral: "#FA2A45", charcoal: "#2E2E2E", muted: "#8A7A6A",
+  faint: "#C8B8A4", creamMid: "#FCF8EF", creamDeep: "#F5EEE0", white: "#FFFFFF",
+  font: 'var(--font-barlow), -apple-system, sans-serif',
+};
+
 interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; }
 
 export default function Step3({ data, onChange }: Props) {
@@ -42,24 +48,29 @@ export default function Step3({ data, onChange }: Props) {
       <Section title="Pricing">
         <Field label="Pricing model" required>
           <div style={{ display: "flex", gap: "10px" }}>
-            {(["pay-what-you-want", "fixed"] as const).map((model) => (
-              <button
-                key={model}
-                onClick={() => onChange({ eventPricingModel: model })}
-                style={{
-                  padding: "12px 20px",
-                  border: data.eventPricingModel === model ? "2px solid #D4A878" : "1px solid #2a2926",
-                  borderRadius: "10px",
-                  background: data.eventPricingModel === model ? "#D4A87820" : "#1a1917",
-                  color: data.eventPricingModel === model ? "#D4A878" : "#888",
-                  cursor: "pointer",
-                  fontWeight: data.eventPricingModel === model ? 700 : 400,
-                  fontSize: "14px",
-                }}
-              >
-                {model === "pay-what-you-want" ? "Pay what you want" : "Fixed price"}
-              </button>
-            ))}
+            {(["pay-what-you-want", "fixed"] as const).map((model) => {
+              const active = data.eventPricingModel === model;
+              return (
+                <button
+                  key={model}
+                  onClick={() => onChange({ eventPricingModel: model })}
+                  style={{
+                    padding: "12px 20px",
+                    border: active ? `2px solid ${Z.pink}` : `1.5px solid ${Z.creamDeep}`,
+                    borderRadius: "10px",
+                    background: active ? "rgba(255,0,126,0.07)" : Z.white,
+                    color: active ? Z.pink : Z.muted,
+                    cursor: "pointer",
+                    fontWeight: active ? 700 : 400,
+                    fontSize: "14px",
+                    fontFamily: Z.font,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {model === "pay-what-you-want" ? "Pay what you want" : "Fixed price"}
+                </button>
+              );
+            })}
           </div>
         </Field>
 

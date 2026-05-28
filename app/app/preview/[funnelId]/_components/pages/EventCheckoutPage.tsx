@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { EventCheckoutContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
+import BrandLogo from "../BrandLogo";
 
 interface Props {
   content: EventCheckoutContent;
@@ -69,15 +70,12 @@ export default function EventCheckoutPage({ content: c, wizard: w }: Props) {
       <header className="checkout-header">
         <div className="inner">
           <div className="logo">
-            {safeUrl(c.logoUrl ?? w.logoUrl)
-              ? <img
-                  src={safeUrl(c.logoUrl ?? w.logoUrl)!}
-                  alt={businessName || hostName}
-                  style={{ height: "96px", objectFit: "contain" }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).parentElement!.textContent = businessName || hostName; }}
-                />
-              : (businessName || hostName)
-            }
+            <BrandLogo
+              logoUrl={c.logoUrl ?? w.logoUrl}
+              logoTransparent={w.logoTransparent}
+              name={businessName || hostName}
+              imgStyle={{ height: "96px", objectFit: "contain" }}
+            />
           </div>
           <div className="trust-badges">
             <div className="trust-badge">
@@ -493,10 +491,13 @@ export default function EventCheckoutPage({ content: c, wizard: w }: Props) {
       <footer className="ty-footer">
         <div className="inner">
           <div className="ty-footer-left">
-            {safeUrl(c.logoUrl ?? w.logoUrl)
-              ? <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={businessName || hostName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              : <div className="ty-footer-brand">{businessName || hostName}</div>
-            }
+            <BrandLogo
+              logoUrl={c.logoUrl ?? w.logoUrl}
+              logoTransparent={w.logoTransparent}
+              name={businessName || hostName}
+              className="ty-footer-brand"
+              imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}
+            />
             <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {businessName || hostName}</span>
           </div>
           <nav className="ty-footer-links">

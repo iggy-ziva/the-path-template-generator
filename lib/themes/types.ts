@@ -304,6 +304,7 @@ export interface ReplayContent {
   programCtaDescription: string;
   programCtaBenefits: string[];
   programUrgency: string;
+  disclaimerHeading: string;
   disclaimerText: string;
 }
 

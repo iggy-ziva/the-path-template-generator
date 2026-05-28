@@ -12,9 +12,7 @@ async function getServiceClient() {
   );
 }
 
-const GENERATION_LIMIT = 10;
-
-/** List all funnels for the logged-in user, plus generation usage */
+/** List all funnels for the logged-in user */
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -49,13 +47,6 @@ export async function GET() {
     }
   }
 
-  // Count generations in the last 30 days
-  const since = new Date();
-  since.setDate(since.getDate() - 30);
-  const generationsUsed = (generatedResult.data ?? []).filter(
-    (gf) => new Date(gf.created_at) >= since
-  ).length;
-
   // Strip step_data out of the sidebar response (it's large) but expose a
   // computed completion_pct so the sidebar can show consistent progress.
   const funnels = (submissionsResult.data ?? []).map((f) => {
@@ -67,11 +58,7 @@ export async function GET() {
     };
   });
 
-  return NextResponse.json({
-    funnels,
-    generationsUsed,
-    generationLimit: GENERATION_LIMIT,
-  });
+  return NextResponse.json({ funnels });
 }
 
 /** Create a new blank funnel */

@@ -152,8 +152,14 @@ export default function Step2({ data, onChange }: Props) {
       </Section>
 
       <Section title="Logo">
-        <Field label="Logo file" hint="PNG with transparent background required. Crop the file tightly to the visible pixels of your logo — do not leave empty space around the edges. Used in headers and footers throughout the funnel.">
-          <FileUpload label="Upload logo" accept="image/jpeg,image/png,image/webp,image/svg+xml" currentUrl={data.logoUrl} onUpload={(url) => onChange({ logoUrl: url })} />
+        <Field label="Logo file" hint="PNG, SVG, or WebP with a transparent background required. JPEG and opaque images are rejected. Crop tightly to visible pixels — used in headers and footers throughout the funnel.">
+          <FileUpload
+            label="Upload logo"
+            accept="image/png,image/webp,image/svg+xml"
+            requireTransparency
+            currentUrl={data.logoUrl}
+            onUpload={(url) => onChange({ logoUrl: url, logoTransparent: true })}
+          />
         </Field>
       </Section>
 
@@ -316,6 +322,20 @@ export default function Step2({ data, onChange }: Props) {
                     <span key={f} style={{ padding: "4px 12px", background: "#E6F4EA", border: "1px solid #A8D5B0", borderRadius: 100, fontFamily: Z.font, fontSize: 12, color: "#2D6A35", fontWeight: 600 }}>✓ {f}</span>
                   ))}
                 </div>
+                {(sg!.fontDisplay || sg!.fontBody) && (
+                  <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 12 }}>
+                    {sg!.fontDisplay && (
+                      <p style={{ fontFamily: Z.font, fontSize: 12, color: Z.charcoal, margin: 0 }}>
+                        <strong>Headlines:</strong> {sg!.fontDisplay}
+                      </p>
+                    )}
+                    {sg!.fontBody && (
+                      <p style={{ fontFamily: Z.font, fontSize: 12, color: Z.charcoal, margin: 0 }}>
+                        <strong>Body:</strong> {sg!.fontBody}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             {sg!.customFonts.length > 0 && (

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { createClient } from "@supabase/supabase-js";
 import { nanoid } from "nanoid";
+import { pngHasAlpha, svgHasTransparency } from "@/lib/image-alpha";
 
 function getServiceClient() {
   return createClient(
@@ -24,18 +25,6 @@ function resolveUrl(base: string, relative: string): string {
   } catch {
     return relative;
   }
-}
-
-/**
- * Reads the PNG IHDR color type byte to detect alpha channel.
- * PNG layout: 8-byte sig | 4 IHDR-len | 4 "IHDR" | 4 width | 4 height | 1 bitDepth | 1 colorType
- * Color type 4 = Grayscale+Alpha, 6 = RGBA → has transparency.
- */
-function pngHasAlpha(buffer: ArrayBuffer): boolean {
-  const bytes = new Uint8Array(buffer);
-  if (bytes.length < 26) return false;
-  const colorType = bytes[25];
-  return colorType === 4 || colorType === 6;
 }
 
 /**

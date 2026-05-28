@@ -58,19 +58,21 @@
     .trust-badge-icon {
       width: 28px;
       height: 28px;
-      background: #1F2A2A;
+      background: color-mix(in srgb, var(--accent-secondary-on-light) 10%, var(--surface-sunken));
+      border: 1px solid color-mix(in srgb, var(--accent-secondary-on-light) 24%, transparent);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      color: var(--accent-secondary-on-light);
     }
     .trust-badge-icon svg {
       width: 14px;
       height: 14px;
       display: block;
       fill: none;
-      stroke: #F5F1EA;
+      stroke: currentColor;
       stroke-width: 2.5;
       stroke-linecap: round;
       stroke-linejoin: round;

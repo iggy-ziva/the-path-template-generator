@@ -1,7 +1,9 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { WizardData } from "@/lib/wizard-types";
+import type { BrandProfile } from "@/lib/brand-profile";
+import { computeBrandProfile } from "@/lib/brand-profile";
 import { THEME_LIST_FOR_WIZARD } from "../wizard-constants";
 
 interface ThemeSuggestion {
@@ -10,6 +12,7 @@ interface ThemeSuggestion {
   swatch: string;
   descriptor: string;
   reason: string;
+  brandProfile?: BrandProfile;
 }
 
 interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; submissionId?: string | null; }
@@ -40,16 +43,47 @@ function visibleSwatch(hex: string): string {
   return hex;
 }
 
+function BrandProfileCard({ profile }: { profile: BrandProfile }) {
+  const colors = [
+    profile.brandColors.primary,
+    profile.brandColors.secondary,
+    profile.brandColors.tertiary,
+  ].filter(Boolean) as string[];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {colors.length > 0 && (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {colors.map((c) => (
+            <div key={c} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 22, height: 22, borderRadius: 6, background: c, border: `1px solid ${Z.border}`, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: Z.muted, fontFamily: "monospace" }}>{c}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <p style={{ fontSize: 13, color: Z.text, lineHeight: 1.65, margin: 0 }}>{profile.visualMood}</p>
+      <p style={{ fontSize: 12, color: Z.muted, lineHeight: 1.6, margin: 0 }}>
+        <strong style={{ color: Z.gold }}>Section rhythm:</strong> {profile.sectionRhythm}
+      </p>
+      <p style={{ fontSize: 12, color: Z.muted, lineHeight: 1.6, margin: 0 }}>
+        <strong style={{ color: Z.gold }}>Copy voice:</strong> {profile.copyVoice}
+      </p>
+    </div>
+  );
+}
+
 interface ThemeCardProps {
   activeTheme: ThemeSuggestion | { slug: string; label: string; swatch: string; descriptor: string; reason?: string };
   themeSuggestion: ThemeSuggestion | null;
   showOverride: boolean;
   setShowOverride: (v: boolean | ((prev: boolean) => boolean)) => void;
   activeReferenceSlug: string | undefined;
+  referenceThemeSource?: "ai" | "user";
   onSelect: (slug: string) => void;
 }
 
-function ThemeCard({ activeTheme, themeSuggestion, showOverride, setShowOverride, activeReferenceSlug, onSelect }: ThemeCardProps) {
+function ThemeCard({ activeTheme, themeSuggestion, showOverride, setShowOverride, activeReferenceSlug, referenceThemeSource, onSelect }: ThemeCardProps) {
   const uiColor = visibleSwatch(activeTheme.swatch);
   return (
     <>
@@ -68,9 +102,14 @@ function ThemeCard({ activeTheme, themeSuggestion, showOverride, setShowOverride
           <div style={{ fontWeight: 700, color: uiColor, fontSize: "15px" }}>{activeTheme.label}</div>
           <div style={{ fontSize: "12px", color: Z.muted, marginTop: "2px" }}>{activeTheme.descriptor}</div>
         </div>
-        {themeSuggestion && !showOverride && (
+        {themeSuggestion && !showOverride && referenceThemeSource !== "user" && (
           <div style={{ fontSize: "11px", color: Z.gold, background: `${Z.gold}18`, padding: "4px 10px", borderRadius: "100px", flexShrink: 0 }}>
-            AI selected
+            AI matched
+          </div>
+        )}
+        {referenceThemeSource === "user" && !showOverride && (
+          <div style={{ fontSize: "11px", color: Z.muted, background: `${Z.border}`, padding: "4px 10px", borderRadius: "100px", flexShrink: 0 }}>
+            Manual override
           </div>
         )}
       </div>
@@ -173,7 +212,7 @@ const STEP_THRESHOLDS = (() => {
   return GEN_STEPS.map((g) => { cum += g.weight; return Math.round((cum / total) * 100); });
 })();
 
-const ESTIMATED_SECONDS = 90;
+const ESTIMATED_SECONDS = 240;
 
 export default function Step11({ data, onChange, submissionId }: Props) {
   const [generating, setGenerating] = useState(false);
@@ -182,12 +221,16 @@ export default function Step11({ data, onChange, submissionId }: Props) {
   const [timeLeft, setTimeLeft]     = useState(ESTIMATED_SECONDS);
   const [error, setError]           = useState("");
   const [themeSuggestion, setThemeSuggestion] = useState<ThemeSuggestion | null>(null);
+  const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [themeLoading, setThemeLoading]       = useState(false);
   const [showOverride, setShowOverride]       = useState(false);
   const progressRef = useRef(0);
   const startRef    = useRef(0);
   const rafRef      = useRef<number | null>(null);
   const router = useRouter();
+
+  const localProfile = useMemo(() => computeBrandProfile(data), [data]);
+  const displayProfile = brandProfile ?? data.brandProfile ?? localProfile;
 
   const missing = REQUIRED_FIELDS.filter((f) => {
     const v = data[f.key];
@@ -196,35 +239,65 @@ export default function Step11({ data, onChange, submissionId }: Props) {
 
   const activeTheme = THEME_LIST_FOR_WIZARD.find((t) => t.slug === data.referenceTheme) ?? themeSuggestion;
 
-  // Fetch AI theme suggestion on mount (once)
-  useEffect(() => {
-    if (data.referenceTheme) return; // user already has a theme set — skip
+  const fetchThemeSuggestion = useCallback(async (force = false) => {
+    if (!force && data.referenceThemeSource === "user") {
+      setBrandProfile(localProfile);
+      return;
+    }
     setThemeLoading(true);
-    fetch("/api/wizard/suggest-theme", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        toneDescriptors:        data.toneDescriptors,
-        methodologyDescription: data.methodologyDescription,
-        uniqueApproach:         data.uniqueApproach,
-        transformationPromise:  data.transformationPromise,
-        audienceDescription:    data.audienceDescription,
-        hostTitle:              data.hostTitle,
-        eventName:              data.eventName,
-        programName:            data.programName,
-      }),
-    })
-      .then((r) => r.json())
-      .then((suggestion: ThemeSuggestion) => {
-        setThemeSuggestion(suggestion);
-        // Pre-select the suggested theme so it flows into generation
-        onChange({ referenceTheme: suggestion.slug });
-      })
-      .catch(() => {
-        // silently fall back — threshold is the default in the generate route
-      })
-      .finally(() => setThemeLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    try {
+      const res = await fetch("/api/wizard/suggest-theme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toneDescriptors:        data.toneDescriptors,
+          methodologyDescription: data.methodologyDescription,
+          uniqueApproach:         data.uniqueApproach,
+          transformationPromise:  data.transformationPromise,
+          audienceDescription:    data.audienceDescription,
+          hostTitle:              data.hostTitle,
+          eventName:              data.eventName,
+          programName:            data.programName,
+          businessName:           data.businessName,
+          styleGuide:             data.styleGuide,
+          referenceTheme:         data.referenceTheme,
+          referenceThemeSource:   data.referenceThemeSource,
+        }),
+      });
+      const suggestion = await res.json() as ThemeSuggestion;
+      setThemeSuggestion(suggestion);
+      if (suggestion.brandProfile) setBrandProfile(suggestion.brandProfile);
+      const profile = suggestion.brandProfile ?? localProfile;
+      if (force) {
+        onChange({
+          referenceTheme: suggestion.slug,
+          referenceThemeSource: "ai",
+          brandProfile: profile,
+        });
+      } else if (data.referenceThemeSource !== "user") {
+        onChange({
+          referenceTheme: suggestion.slug,
+          referenceThemeSource: "ai",
+          brandProfile: profile,
+        });
+      }
+    } catch {
+      setBrandProfile(localProfile);
+      if (data.referenceThemeSource !== "user") {
+        onChange({
+          referenceTheme: localProfile.suggestedThemeSlug,
+          referenceThemeSource: "ai",
+          brandProfile: localProfile,
+        });
+      }
+    } finally {
+      setThemeLoading(false);
+    }
+  }, [data, localProfile, onChange]);
+
+  useEffect(() => {
+    fetchThemeSuggestion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Animate progress up to ~95% while waiting for the real API response
@@ -353,45 +426,69 @@ export default function Step11({ data, onChange, submissionId }: Props) {
           <ReviewRow label="Uploaded materials" value={data.existingFileUrls} />
           <ReviewRow label="Material URLs" value={data.existingMaterialUrls} />
           <ReviewRow label="Tone descriptors" value={(data.toneDescriptors ?? []).join(" · ") || undefined} />
-          <ReviewRow label="Reference theme" value={activeTheme?.label} />
+          <ReviewRow label="Copy voice theme" value={activeTheme?.label} />
         </div>
       </div>
 
-      {/* AI THEME SUGGESTION */}
+      {/* BRAND PROFILE */}
       <div style={{ background: Z.dark, border: `1px solid ${Z.border}`, borderRadius: "16px", padding: "24px", marginBottom: "32px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: 12 }}>
           <h3 style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: Z.gold, margin: 0 }}>
-            Reference Theme
+            Brand Profile
           </h3>
-          {!themeLoading && activeTheme && (
-            <button
-              onClick={() => setShowOverride((v) => !v)}
-              style={{ fontSize: "12px", color: Z.muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
-            >
-              {showOverride ? "Hide options" : "Change"}
-            </button>
-          )}
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            {!themeLoading && (
+              <button
+                type="button"
+                onClick={() => fetchThemeSuggestion(true)}
+                style={{ fontSize: "12px", color: Z.muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+              >
+                Refresh suggestion
+              </button>
+            )}
+            {!themeLoading && activeTheme && (
+              <button
+                type="button"
+                onClick={() => setShowOverride((v) => !v)}
+                style={{ fontSize: "12px", color: Z.muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+              >
+                {showOverride ? "Hide override" : "Override copy theme"}
+              </button>
+            )}
+          </div>
         </div>
+
+        <p style={{ fontSize: 12, color: Z.muted, margin: "0 0 16px", lineHeight: 1.5 }}>
+          Visual colours come from your Step 2 brand analysis. This profile calibrates copy voice and section rhythm for generation.
+        </p>
 
         {themeLoading ? (
           <div style={{ display: "flex", alignItems: "center", gap: "12px", color: Z.muted, fontSize: "13px" }}>
             <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>⟳</span>
-            AI is analysing your inputs and selecting the best theme…
+            Analysing your brand colours, tone, and context…
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
-        ) : activeTheme ? (
-          <ThemeCard
-            activeTheme={activeTheme}
-            themeSuggestion={themeSuggestion}
-            showOverride={showOverride}
-            setShowOverride={setShowOverride}
-            activeReferenceSlug={data.referenceTheme}
-            onSelect={(slug) => onChange({ referenceTheme: slug })}
-          />
         ) : (
-          <p style={{ fontSize: "13px", color: Z.muted, margin: 0 }}>
-            No theme selected — the default Threshold theme will be used.
-          </p>
+          <>
+            <BrandProfileCard profile={displayProfile} />
+
+            {activeTheme && (
+              <div style={{ marginTop: 20, paddingTop: 20, borderTop: `1px solid ${Z.border}` }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: Z.muted, marginBottom: 12 }}>
+                  Copy style anchor
+                </div>
+                <ThemeCard
+                  activeTheme={activeTheme}
+                  themeSuggestion={themeSuggestion}
+                  showOverride={showOverride}
+                  setShowOverride={setShowOverride}
+                  activeReferenceSlug={data.referenceTheme}
+                  referenceThemeSource={data.referenceThemeSource}
+                  onSelect={(slug) => onChange({ referenceTheme: slug, referenceThemeSource: "user" })}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 

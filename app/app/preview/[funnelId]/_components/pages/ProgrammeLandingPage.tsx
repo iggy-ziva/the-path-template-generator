@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import type { ProgrammeLandingContent, WizardSnapshot, SectionTheme } from "../funnel-types";
-import { safeUrl } from "../funnel-types";
+import { safeUrl, brandSectionOverlay, brandImageBackground } from "../funnel-types";
+import BrandLogo from "../BrandLogo";
 
 function themeClasses(theme?: SectionTheme, defaultTheme: SectionTheme = "dark"): string {
   const t = theme ?? defaultTheme;
@@ -67,7 +68,10 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
       <section
         className="prog-hero"
         style={heroImageUrl ? {
-          backgroundImage: `linear-gradient(to right, rgba(15,14,12,0.92) 45%, rgba(15,14,12,0.5) 100%), url(${heroImageUrl})`,
+          backgroundImage: brandImageBackground(
+            "linear-gradient(to right, color-mix(in srgb, var(--surface-inverse) 92%, transparent) 45%, color-mix(in srgb, var(--surface-inverse) 50%, transparent) 100%)",
+            heroImageUrl,
+          ),
           backgroundSize: "cover",
           backgroundPosition: "center",
         } : undefined}
@@ -556,7 +560,7 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
       {(c.finalCtaHeadline || c.finalCtaText) && (
         <section
           className={`final-cta ${themeClasses(c.finalCtaTheme, "dark")}`}
-          style={finalCtaBgUrl ? { backgroundImage: `linear-gradient(rgba(15,14,12,0.88),rgba(15,14,12,0.88)), url(${finalCtaBgUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+          style={finalCtaBgUrl ? { backgroundImage: brandImageBackground(brandSectionOverlay(0.88), finalCtaBgUrl), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
             {c.finalCtaHeadline && <h2 className="final-cta-headline">{c.finalCtaHeadline}</h2>}
@@ -583,10 +587,13 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
       <footer className="ty-footer">
         <div className="inner">
           <div className="ty-footer-left">
-            {safeUrl(w.logoUrl)
-              ? <img src={safeUrl(w.logoUrl)!} alt={hostName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              : <div className="ty-footer-brand">{hostName}</div>
-            }
+            <BrandLogo
+              logoUrl={w.logoUrl}
+              logoTransparent={w.logoTransparent}
+              name={hostName}
+              className="ty-footer-brand"
+              imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}
+            />
             <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {hostName}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--s-5)", flexWrap: "wrap" }}>

@@ -4,6 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { createClient } from "@supabase/supabase-js";
 import JSZip from "jszip";
+import { splitFunnelContent } from "@/lib/funnel-snapshot";
+import { resolveFontRoles, buildGoogleFontsImport } from "@/lib/font-roles";
+import { shouldShowLogoImage } from "@/lib/logo-display";
+import { buildSurfaceCSSVars } from "@/lib/brand-surfaces";
 
 // NOTE: No React component imports here — HTML is built from template strings
 // to avoid Turbopack bundling the client-side preview components into this route.
@@ -21,28 +25,38 @@ type AnyRecord = Record<string, any>;
 function buildGlobalCSS(wizard: AnyRecord): string {
   const sg = wizard.styleGuide ?? {};
   const primary = sg?.brandColors?.primary ?? "#D4A878";
+  const secondary = sg?.brandColors?.secondary ?? "#445566";
+  const tertiary = sg?.brandColors?.tertiary ?? "#6699BB";
   const fonts: string[] = sg?.googleFonts ?? [];
-  const fontImport = fonts.length > 0
-    ? `@import url('https://fonts.googleapis.com/css2?family=${fonts.map((f: string) => f.replace(/ /g, "+") + ":wght@400;500;600;700").join("&family=")}&display=swap');`
-    : `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&display=swap');`;
+  const { display: displayFont, body: bodyFont } = resolveFontRoles(fonts, {
+    fontDisplay: sg?.fontDisplay,
+    fontBody: sg?.fontBody,
+  });
+  const fontImport = buildGoogleFontsImport([displayFont, bodyFont, ...fonts])
+    || `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&display=swap');`;
+  const surfaceVars = buildSurfaceCSSVars({
+    primary,
+    secondary,
+    tertiary,
+  });
 
   return `${fontImport}
 
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; overflow-x: hidden; }
-body { margin: 0; padding: 0; background: #0F0E0C; color: #f5f1ea; -webkit-font-smoothing: antialiased; font-family: ${fonts[0] ? `'${fonts[0]}'` : "Inter"}, -apple-system, system-ui, sans-serif; }
+body { margin: 0; padding: 0; background: var(--surface-canvas); color: var(--text-primary); -webkit-font-smoothing: antialiased; font-family: '${bodyFont}', -apple-system, system-ui, sans-serif; }
 img { max-width: 100%; display: block; }
 a { text-decoration: none; color: inherit; }
 button { font: inherit; cursor: pointer; border: none; }
-h1, h2, h3, h4, h5, h6 { margin: 0; font-family: ${fonts[1] ? `'${fonts[1]}'` : '"Source Serif 4"'}, Georgia, serif; }
+h1, h2, h3, h4, h5, h6 { margin: 0; font-family: '${displayFont}', Georgia, serif; }
 p { margin: 0; }
 
 :root {
-  --brand-primary: ${primary};
-  --brand-bg: #0F0E0C;
-  --brand-text: #f5f1ea;
-  --font-display: ${fonts[1] ? `'${fonts[1]}'` : '"Source Serif 4"'}, Georgia, serif;
-  --font-body: ${fonts[0] ? `'${fonts[0]}'` : "Inter"}, -apple-system, system-ui, sans-serif;
+  ${surfaceVars}
+  --brand-bg: var(--surface-inverse);
+  --brand-text: var(--text-inverse);
+  --font-display: '${displayFont}', Georgia, serif;
+  --font-body: '${bodyFont}', -apple-system, system-ui, sans-serif;
 }
 
 .page-section { max-width: 900px; margin: 0 auto; padding: 60px 32px; }
@@ -117,9 +131,15 @@ function faqs(arr: AnyRecord[] = []): string {
 }
 
 function buildEventLanding(c: AnyRecord, w: AnyRecord): string {
+  const brandName = w.businessName ?? w.hostName ?? "";
+  const logoBlock = w.logoUrl && shouldShowLogoImage(w.logoUrl, w.logoTransparent)
+    ? `<img src="${esc(w.logoUrl)}" alt="${esc(brandName)}" style="max-width:160px;margin:0 auto 40px;" />`
+    : brandName
+      ? `<p class="logo" style="font-size:18px;margin:0 auto 40px;">${esc(brandName)}</p>`
+      : "";
   return renderPage(w.eventName ?? "Event", c, w, `
     <section class="hero">
-      ${w.logoUrl ? `<img src="${esc(w.logoUrl)}" alt="${esc(w.businessName)}" style="max-width:160px;margin:0 auto 40px;" />` : ""}
+      ${logoBlock}
       <p style="color:var(--brand-primary);font-size:.9rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px">${esc(c.heroEyebrow)}</p>
       <h1>${esc(c.heroHeadline)}</h1>
       <p>${esc(c.heroSubheadline)}</p>
@@ -330,10 +350,12 @@ export async function GET(
 
   if (!funnel) return NextResponse.json({ error: "Funnel not found" }, { status: 404 });
 
-  const content = funnel.content as AnyRecord;
-  let wizard: AnyRecord = {};
+  const { pageContent, wizardSnapshot } = splitFunnelContent(
+    funnel.content as Record<string, unknown>,
+  );
+  let wizard: AnyRecord = wizardSnapshot ?? {};
 
-  if (funnel.submission_id) {
+  if (!wizardSnapshot && funnel.submission_id) {
     const { data: submission } = await supabase
       .from("wizard_submissions")
       .select("step_data")
@@ -345,14 +367,14 @@ export async function GET(
   const zip = new JSZip();
 
   const pages: { filename: string; html: string }[] = [
-    { filename: "index.html",                html: buildEventLanding(content.eventLanding ?? {}, wizard) },
-    { filename: "event-checkout.html",       html: buildEventCheckout(content.eventCheckout ?? {}, wizard) },
-    { filename: "upsell.html",               html: buildUpsell(content.upsell ?? {}, wizard) },
-    { filename: "event-thank-you.html",      html: buildEventThankYou(content.eventThankYou ?? {}, wizard) },
-    { filename: "replay.html",               html: buildReplay(content.replay ?? {}, wizard) },
-    { filename: "programme.html",            html: buildProgrammeLanding(content.programmeLanding ?? {}, wizard) },
-    { filename: "programme-checkout.html",   html: buildProgrammeCheckout(content.programmeCheckout ?? {}, wizard) },
-    { filename: "programme-thank-you.html",  html: buildProgrammeThankYou(content.programmeThankYou ?? {}, wizard) },
+    { filename: "index.html",                html: buildEventLanding(pageContent.eventLanding ?? {}, wizard) },
+    { filename: "event-checkout.html",       html: buildEventCheckout(pageContent.eventCheckout ?? {}, wizard) },
+    { filename: "upsell.html",               html: buildUpsell(pageContent.upsell ?? {}, wizard) },
+    { filename: "event-thank-you.html",      html: buildEventThankYou(pageContent.eventThankYou ?? {}, wizard) },
+    { filename: "replay.html",               html: buildReplay(pageContent.replay ?? {}, wizard) },
+    { filename: "programme.html",            html: buildProgrammeLanding(pageContent.programmeLanding ?? {}, wizard) },
+    { filename: "programme-checkout.html",   html: buildProgrammeCheckout(pageContent.programmeCheckout ?? {}, wizard) },
+    { filename: "programme-thank-you.html",  html: buildProgrammeThankYou(pageContent.programmeThankYou ?? {}, wizard) },
   ];
 
   for (const { filename, html } of pages) {

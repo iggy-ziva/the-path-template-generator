@@ -317,7 +317,7 @@
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 1001; /* above ThemeSwitcher (1000) — slides over it when visible */
-  background: rgba(15, 14, 12, 0.92);
+  background: color-mix(in srgb, var(--surface-inverse) 92%, transparent);
   backdrop-filter: saturate(140%) blur(8px);
   color: var(--text-inverse);
   border-bottom: 1px solid rgba(245,241,234,0.08);
@@ -694,12 +694,17 @@
   color: var(--text-tertiary);
 }
 .theme-root .logo-wall {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: var(--s-7);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
+  gap: var(--s-7) var(--s-8);
+  width: 100%;
 }
 .theme-root .logo-slot {
+  flex: 0 0 auto;
+  min-width: 100px;
+  max-width: 160px;
   height: 36px;
   display: grid; place-items: center;
   color: var(--text-tertiary);
@@ -719,7 +724,8 @@
   font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.05em;
 }
 @media (max-width: 768px) {
-  .theme-root .logo-wall { grid-template-columns: repeat(2, 1fr); gap: var(--s-5); }
+  .theme-root .logo-wall { gap: var(--s-4) var(--s-5); }
+  .theme-root .logo-slot { min-width: 88px; max-width: 140px; }
 }
 
 /* =====================================================================
@@ -1427,15 +1433,17 @@
 }
 .theme-root .trust-badge-icon {
   width: 28px; height: 28px;
-  background: #1F2A2A;
+  background: color-mix(in srgb, var(--accent-secondary-on-light) 10%, var(--surface-sunken));
+  border: 1px solid color-mix(in srgb, var(--accent-secondary-on-light) 24%, transparent);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  color: var(--surface-canvas);
+  color: var(--accent-secondary-on-light);
 }
 .theme-root .trust-badge-icon svg {
   width: 14px; height: 14px;
   display: block;
+  stroke: currentColor;
   stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -1988,6 +1996,30 @@
   color: var(--accent-primary);
   margin-bottom: var(--s-4);
 }
+.theme-root .offer-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-align: center;
+  color: var(--text-primary);
+  margin: 0 0 var(--s-4);
+  text-wrap: balance;
+}
+.theme-root .offer-tagline {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.8vw, 26px);
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  text-align: center;
+  color: var(--text-secondary);
+  margin: 0 0 var(--s-5);
+  max-width: 36ch;
+  margin-inline: auto;
+  text-wrap: balance;
+}
 .theme-root .offer-headline {
   font-family: var(--font-display);
   font-size: clamp(32px, 5vw, 48px);
@@ -2001,10 +2033,10 @@
 }
 .theme-root .offer-desc {
   text-align: center;
-  font-size: 18px; line-height: 1.65;
+  font-size: 17px; line-height: 1.65;
   color: var(--text-secondary);
   margin-bottom: var(--s-7);
-  max-width: 52ch;
+  max-width: 48ch;
   margin-inline: auto;
 }
 .theme-root .offer-divider {
@@ -2525,10 +2557,10 @@
   font-size: 18px;
   margin-bottom: var(--s-1);
 }
-.theme-root .ty-footer .copy { font-size: 13px; color: color-mix(in srgb, var(--text-inverse) 50%, transparent); }
+.theme-root .ty-footer .copy { font-size: 13px; color: var(--text-muted-on-inverse, var(--text-inverse)); }
 .theme-root .ty-footer .links {
   display: flex; gap: var(--s-5);
-  font-size: 13px; color: color-mix(in srgb, var(--text-inverse) 60%, transparent);
+  font-size: 13px; color: var(--text-muted-on-inverse, var(--text-inverse));
 }
 .theme-root .ty-footer .links a { color: inherit; text-decoration: none; }
 .theme-root .ty-footer .links a:hover { color: var(--text-inverse); }
@@ -3086,10 +3118,10 @@
   display: inline-flex; align-items: center; gap: var(--s-2);
   font-family: var(--font-body);
   font-size: 12px; font-weight: 600;
-  color: var(--accent-highlight);
+  color: var(--panel-urgency-fg, var(--accent-secondary-on-dark));
   padding: 6px 12px;
-  background: rgba(212,168,120,0.1);
-  border: 1px solid rgba(212,168,120,0.2);
+  background: var(--panel-urgency-bg, color-mix(in srgb, var(--accent-secondary-on-dark) 12%, transparent));
+  border: 1px solid var(--panel-urgency-border, color-mix(in srgb, var(--accent-secondary-on-dark) 28%, transparent));
   border-radius: 9999px;
 }
 .theme-root .replay-disclaimer {
@@ -3104,6 +3136,15 @@
   text-align: center;
 }
 @media (max-width: 768px) { .theme-root .replay-disclaimer .container { padding-inline: var(--s-5); } }
+.theme-root .disclaimer-heading {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin: 0 0 var(--s-4);
+}
 .theme-root .disclaimer-text {
   font-family: var(--font-body);
   font-size: 12px;
@@ -4948,13 +4989,13 @@
 .theme-root .co-ftc h2 {
   font-size: 11px; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--text-inverse) 25%, transparent);
+  color: var(--text-muted-on-inverse, var(--text-inverse));
   margin: 0 0 var(--s-3);
 }
 .theme-root .co-ftc p {
   font-size: 13px;
   line-height: 1.65;
-  color: color-mix(in srgb, var(--text-inverse) 30%, transparent);
+  color: var(--text-muted-on-inverse, var(--text-inverse));
   max-width: 860px;
   margin: 0;
 }
@@ -4975,15 +5016,15 @@
 }
 .theme-root .co-footer-copy {
   font-size: 13px;
-  color: color-mix(in srgb, var(--text-inverse) 25%, transparent);
+  color: var(--text-muted-on-inverse, var(--text-inverse));
 }
 .theme-root .co-footer-links {
   display: flex; gap: var(--s-5);
   font-size: 13px;
-  color: color-mix(in srgb, var(--text-inverse) 35%, transparent);
+  color: var(--text-muted-on-inverse, var(--text-inverse));
 }
 .theme-root .co-footer-links a { color: inherit; text-decoration: none; }
-.theme-root .co-footer-links a:hover { color: color-mix(in srgb, var(--text-inverse) 70%, transparent); }
+.theme-root .co-footer-links a:hover { color: var(--text-inverse); }
 
 /* =====================================================================
    PROGRAM THANK YOU

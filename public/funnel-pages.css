@@ -50,22 +50,29 @@
     .trust-badge-icon {
       width: 28px;
       height: 28px;
-      background: color-mix(in srgb, var(--accent-primary) 40%, transparent);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
     }
+    /* Dark checkout header — use contrast-safe secondary on brand inverse surface */
+    .checkout-header .trust-badge-icon {
+      background: color-mix(in srgb, var(--accent-secondary-on-dark) 22%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent-secondary-on-dark) 30%, transparent);
+      color: var(--accent-secondary-on-dark);
+    }
     .trust-badge-icon svg {
       width: 14px;
       height: 14px;
       display: block;
       fill: none;
-      stroke: var(--text-inverse);
       stroke-width: 2.5;
       stroke-linecap: round;
       stroke-linejoin: round;
+    }
+    .checkout-header .trust-badge-icon svg {
+      stroke: currentColor;
     }
     @media (max-width: 600px) {
       .trust-badges { gap: var(--s-3); }
@@ -809,37 +816,42 @@
       margin-bottom: var(--s-4);
     }
 
-    /* Offer name (product title above headline) */
-    .offer-name {
+    /* Product title — primary display */
+    .offer-title {
       text-align: center;
       font-family: var(--font-display);
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--s-3);
-    }
-
-    /* Offer headline */
-    .offer-headline {
-      font-family: var(--font-display);
-      font-size: clamp(32px, 5vw, 48px);
+      font-size: clamp(36px, 5vw, 52px);
       font-weight: 400;
-      line-height: 1.1;
+      line-height: 1.08;
       letter-spacing: -0.02em;
-      text-align: center;
       color: var(--text-primary);
-      margin: 0 0 var(--s-5);
+      margin: 0 0 var(--s-4);
       text-wrap: balance;
     }
 
-    /* Offer description */
+    /* Tagline / promise — visible but subordinate to product name */
+    .offer-tagline {
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: clamp(20px, 2.8vw, 26px);
+      font-weight: 400;
+      line-height: 1.35;
+      letter-spacing: -0.01em;
+      color: var(--text-secondary);
+      margin: 0 0 var(--s-5);
+      max-width: 36ch;
+      margin-inline: auto;
+      text-wrap: balance;
+    }
+
+    /* Short intro — 1–2 sentences max */
     .offer-desc {
       text-align: center;
-      font-size: 18px;
+      font-size: 17px;
       line-height: 1.65;
       color: var(--text-secondary);
       margin-bottom: var(--s-7);
-      max-width: 52ch;
+      max-width: 48ch;
       margin-inline: auto;
     }
 
@@ -979,6 +991,13 @@
     .no-link:hover { color: var(--text-secondary); }
 
     /* Testimonial pull-quote */
+    .offer-quotes {
+      display: flex;
+      flex-direction: column;
+      gap: var(--s-4);
+      margin: var(--s-7) 0;
+    }
+    .offer-quotes .offer-quote { margin: 0; }
     .offer-quote {
       background: var(--surface-raised);
       border: 1px solid var(--border-subtle);
@@ -1145,7 +1164,7 @@
       align-items: center;
       gap: var(--s-4);
       font-size: 15px;
-      color: color-mix(in srgb, var(--text-inverse) 60%, transparent);
+      color: var(--text-muted-on-inverse, var(--text-inverse));
       flex-wrap: wrap;
       justify-content: center;
     }
@@ -1153,7 +1172,7 @@
     .ty-event-details .sep {
       width: 4px; height: 4px;
       border-radius: 50%;
-      background: color-mix(in srgb, var(--text-inverse) 25%, transparent);
+      background: var(--text-muted-on-inverse, color-mix(in srgb, var(--text-inverse) 50%, transparent));
     }
     .ty-email-note {
       margin-top: var(--s-6);
@@ -1162,44 +1181,53 @@
       border: 1px solid color-mix(in srgb, var(--text-inverse) 10%, transparent);
       border-radius: var(--r-md);
       font-size: 14px;
-      color: color-mix(in srgb, var(--text-inverse) 75%, transparent);
+      color: var(--text-muted-on-inverse, var(--text-inverse));
       display: inline-block;
     }
     /* Email address: secondary-on-dark — visually distinct from primary, still contrast-safe */
     .ty-email-note strong { color: var(--accent-secondary-on-dark); font-weight: 600; }
 
-    /* ── Light-hero overrides (no background image uploaded) ─────────────────
-       When .on-dark is absent the section background is --surface-canvas (light).
-       Every token that references -on-dark or text-inverse must be remapped to its
-       light-surface counterpart so ALL client brands work correctly at launch.
+    /* ── Light hero variant (optional — canvas background, dark text) ────────
+       Default .ty-hero is always inverse/dark. Add .light-hero only when a page
+       explicitly opts into a light confirmation band.
        ──────────────────────────────────────────────────────────────────────── */
-    .ty-hero:not(.on-dark) .ty-label {
+    .ty-hero.light-hero {
+      background: var(--surface-canvas);
+      color: var(--text-primary);
+    }
+    .ty-hero.light-hero::before {
+      background:
+        radial-gradient(ellipse 110% 80% at 50% -10%, color-mix(in srgb, var(--accent-primary) 12%, transparent), transparent 58%),
+        radial-gradient(ellipse 55% 45% at 88% 60%, color-mix(in srgb, var(--accent-secondary) 10%, transparent), transparent 55%),
+        linear-gradient(180deg, var(--surface-canvas) 0%, var(--surface-sunken) 100%);
+    }
+    .ty-hero.light-hero .ty-label {
       color: var(--accent-secondary-on-light);
       background: color-mix(in srgb, var(--accent-secondary-on-light) 12%, transparent);
       border-color: color-mix(in srgb, var(--accent-secondary-on-light) 30%, transparent);
     }
-    .ty-hero:not(.on-dark) .ty-check {
+    .ty-hero.light-hero .ty-check {
       background: color-mix(in srgb, var(--accent-secondary-on-light) 12%, transparent);
       border-color: color-mix(in srgb, var(--accent-secondary-on-light) 40%, transparent);
     }
-    .ty-hero:not(.on-dark) .ty-check svg { color: var(--text-primary); }
-    .ty-hero:not(.on-dark) .ty-headline { color: var(--text-primary); }
-    .ty-hero:not(.on-dark) .ty-event-name { color: var(--accent-secondary-on-light); }
-    .ty-hero:not(.on-dark) .ty-event-details {
-      color: color-mix(in srgb, var(--text-secondary) 80%, transparent);
+    .ty-hero.light-hero .ty-check svg { color: var(--text-primary); }
+    .ty-hero.light-hero .ty-headline { color: var(--text-primary); }
+    .ty-hero.light-hero .ty-event-name { color: var(--accent-secondary-on-light); }
+    .ty-hero.light-hero .ty-event-details {
+      color: var(--text-secondary);
     }
-    .ty-hero:not(.on-dark) .ty-event-details > span:first-child {
+    .ty-hero.light-hero .ty-event-details > span:first-child {
       color: var(--accent-primary-on-light);
     }
-    .ty-hero:not(.on-dark) .ty-event-details .sep {
+    .ty-hero.light-hero .ty-event-details .sep {
       background: var(--border-subtle);
     }
-    .ty-hero:not(.on-dark) .ty-email-note {
+    .ty-hero.light-hero .ty-email-note {
       background: var(--surface-sunken);
       border-color: var(--border-subtle);
       color: var(--text-secondary);
     }
-    .ty-hero:not(.on-dark) .ty-email-note strong { color: var(--accent-secondary-on-light); }
+    .ty-hero.light-hero .ty-email-note strong { color: var(--accent-secondary-on-light); }
 
     /* =====================================================================
        Page content wrapper
@@ -1565,8 +1593,8 @@
       font-size: 18px;
       margin-bottom: var(--s-1);
     }
-    .ty-footer .copy { font-size: 13px; color: color-mix(in srgb, var(--text-inverse) 50%, transparent); }
-    .ty-footer .links { display: flex; gap: var(--s-5); font-size: 13px; color: color-mix(in srgb, var(--text-inverse) 60%, transparent); }
+    .ty-footer .copy { font-size: 13px; color: var(--text-muted-on-inverse, var(--text-inverse)); }
+    .ty-footer .links { display: flex; gap: var(--s-5); font-size: 13px; color: var(--text-muted-on-inverse, var(--text-inverse)); }
     .ty-footer .links a:hover { color: var(--text-inverse); }
 
 /* === replay.html === */
@@ -2270,10 +2298,11 @@
       font-family: var(--font-body);
       font-size: 12px;
       font-weight: 600;
-      color: var(--accent-primary-on-dark);
+      /* Secondary/tertiary emphasis — never primary when stacked above .program-cta-btn */
+      color: var(--panel-urgency-fg, var(--accent-secondary-on-dark));
       padding: 6px 12px;
-      background: color-mix(in srgb, var(--accent-light) 10%, transparent);
-      border: 1px solid color-mix(in srgb, var(--accent-light) 20%, transparent);
+      background: var(--panel-urgency-bg, color-mix(in srgb, var(--accent-secondary-on-dark) 12%, transparent));
+      border: 1px solid var(--panel-urgency-border, color-mix(in srgb, var(--accent-secondary-on-dark) 28%, transparent));
       border-radius: 9999px;
     }
     .program-urgency svg { stroke: currentColor; fill: none; }
@@ -2294,6 +2323,15 @@
     }
     @media (max-width: 768px) {
       .replay-disclaimer .container { padding-inline: var(--s-5); }
+    }
+    .disclaimer-heading {
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin: 0 0 var(--s-4);
     }
     .disclaimer-text {
       font-family: var(--font-body);
@@ -4678,16 +4716,21 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: color-mix(in srgb, var(--text-inverse) 25%, transparent);
+      color: var(--text-muted-on-inverse, var(--text-inverse));
       margin: 0 0 var(--s-3);
     }
     .co-ftc p {
       font-size: 13px;
       line-height: 1.65;
-      color: color-mix(in srgb, var(--text-inverse) 30%, transparent);
+      color: var(--text-muted-on-inverse, var(--text-inverse));
       max-width: 860px;
       margin: 0;
     }
+    /* Align checkout footer with main column width */
+    .programme-checkout-page .ty-footer .inner {
+      max-width: 1160px;
+    }
+
     .co-footer {
       max-width: 1160px;
       margin-inline: auto;
@@ -4701,14 +4744,14 @@
     @media (max-width: 768px) {
       .co-footer { padding-inline: var(--s-5); flex-direction: column; text-align: center; }
     }
-    .co-footer-copy { font-size: 13px; color: color-mix(in srgb, var(--text-inverse) 25%, transparent); }
+    .co-footer-copy { font-size: 13px; color: var(--text-muted-on-inverse, var(--text-inverse)); }
     .co-footer-links {
       display: flex;
       gap: var(--s-5);
       font-size: 13px;
-      color: color-mix(in srgb, var(--text-inverse) 35%, transparent);
+      color: var(--text-muted-on-inverse, var(--text-inverse));
     }
-    .co-footer-links a:hover { color: color-mix(in srgb, var(--text-inverse) 70%, transparent); }
+    .co-footer-links a:hover { color: var(--text-inverse); }
 
     /* =====================================================================
        Animations
@@ -4834,7 +4877,7 @@
       font-weight: 400;
       font-style: italic;
       line-height: 1.3;
-      color: color-mix(in srgb, var(--text-inverse) 75%, transparent);
+      color: var(--text-muted-on-inverse, var(--text-inverse));
       margin: 0 0 var(--s-7);
       letter-spacing: -0.01em;
       text-wrap: balance;
@@ -4859,7 +4902,7 @@
       border-radius: var(--r-full);
       font-size: 13px;
       font-weight: 500;
-      color: color-mix(in srgb, var(--text-inverse) 70%, transparent);
+      color: var(--text-muted-on-inverse, var(--text-inverse));
     }
     .ty-chip svg { width: 13px; height: 13px; opacity: 0.6; }
     .ty-chip.gold {
@@ -4879,7 +4922,7 @@
       border: 1px solid color-mix(in srgb, var(--text-inverse) 9%, transparent);
       border-radius: var(--r-md);
       font-size: 14px;
-      color: color-mix(in srgb, var(--text-inverse) 60%, transparent);
+      color: var(--text-muted-on-inverse, var(--text-inverse));
       line-height: 1.5;
       text-align: left;
       flex-wrap: wrap;
@@ -5311,18 +5354,19 @@
     .ty-footer-brand {
       font-family: var(--font-display);
       font-size: 16px;
-      color: color-mix(in srgb, var(--text-inverse) 70%, transparent);
+      color: var(--text-inverse);
     }
     .ty-footer-links {
       display: flex;
       gap: var(--s-5);
       font-size: 13px;
-      color: color-mix(in srgb, var(--text-inverse) 40%, transparent);
+      color: var(--text-muted-on-inverse, var(--text-inverse));
     }
-    .ty-footer-links a:hover { color: color-mix(in srgb, var(--text-inverse) 80%, transparent); }
+    .ty-footer-links a { color: inherit; text-decoration: none; }
+    .ty-footer-links a:hover { color: var(--text-inverse); }
     .ty-footer-copy {
       font-size: 13px;
-      color: color-mix(in srgb, var(--text-inverse) 30%, transparent);
+      color: var(--text-muted-on-inverse, var(--text-inverse));
     }
 
     /* =====================================================================

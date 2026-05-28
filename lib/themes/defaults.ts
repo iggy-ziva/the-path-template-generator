@@ -480,6 +480,7 @@ export const BASE_CONTENT: ThemeContent = {
       "Begins {{program.startDate}} · Closes {{program.enrolmentDeadline}}",
     ],
     programUrgency: "Enrolment closes {{program.enrolmentDeadline}}",
+    disclaimerHeading: "Important disclaimer",
     disclaimerText:
       "{{program.name}} is delivered by {{host.legalEntity}}. Results vary. The replay is for personal use only and not for redistribution.",
   },

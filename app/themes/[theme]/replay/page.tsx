@@ -193,6 +193,7 @@ export default async function ReplayPage({
       {/* 07 — Disclaimer + footer */}
       <div className="replay-disclaimer">
         <div className="container">
+          <h2 className="disclaimer-heading">{c.disclaimerHeading ?? "Important disclaimer"}</h2>
           <p className="disclaimer-text">{c.disclaimerText}</p>
         </div>
       </div>

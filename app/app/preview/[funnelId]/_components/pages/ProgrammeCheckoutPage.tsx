@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { ProgrammeCheckoutContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
+import BrandLogo from "../BrandLogo";
 
 interface Props {
   content: ProgrammeCheckoutContent;
@@ -46,20 +47,17 @@ export default function ProgrammeCheckoutPage({ content: c, wizard: w }: Props) 
   const chips = c.programChips ?? (w.programDuration ? [w.programDuration] : []);
 
   return (
-    <div style={{ background: "var(--surface-inverse)", color: "var(--text-inverse)", minHeight: "100%" }}>
+    <div className="programme-checkout-page" style={{ background: "var(--surface-inverse)", color: "var(--text-inverse)", minHeight: "100%" }}>
       {/* ── HEADER ── */}
       <header className="co-header">
         <div className="inner">
           <div className="co-logo">
-            {safeUrl(c.logoUrl ?? w.logoUrl)
-              ? <img
-                  src={safeUrl(c.logoUrl ?? w.logoUrl)!}
-                  alt={hostName}
-                  style={{ height: "64px", objectFit: "contain" }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).parentElement!.textContent = hostName; }}
-                />
-              : hostName
-            }
+            <BrandLogo
+              logoUrl={c.logoUrl ?? w.logoUrl}
+              logoTransparent={w.logoTransparent}
+              name={hostName}
+              imgStyle={{ height: "64px", objectFit: "contain" }}
+            />
           </div>
           <div className="co-trust">
             <div className="co-trust-item">
@@ -353,10 +351,13 @@ export default function ProgrammeCheckoutPage({ content: c, wizard: w }: Props) 
       <footer className="ty-footer">
         <div className="inner">
           <div className="ty-footer-left">
-            {safeUrl(c.logoUrl ?? w.logoUrl)
-              ? <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={hostName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              : <div className="ty-footer-brand">{hostName}</div>
-            }
+            <BrandLogo
+              logoUrl={c.logoUrl ?? w.logoUrl}
+              logoTransparent={w.logoTransparent}
+              name={hostName}
+              className="ty-footer-brand"
+              imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}
+            />
             <span className="ty-footer-copy">&copy; {year} {hostName}</span>
           </div>
           <nav className="ty-footer-links">

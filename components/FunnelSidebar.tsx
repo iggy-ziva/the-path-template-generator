@@ -36,8 +36,6 @@ interface Props {
   onFunnelsChange: (funnels: FunnelSummary[]) => void;
   onSwitch: (funnel: FunnelSummary) => void;
   onDelete: (id: string) => void;
-  generationsUsed?: number;
-  generationLimit?: number;
 }
 
 function relativeTime(iso: string): string {
@@ -58,8 +56,6 @@ export default function FunnelSidebar({
   onFunnelsChange,
   onSwitch,
   onDelete,
-  generationsUsed = 0,
-  generationLimit = 10,
 }: Props) {
   const [creating, setCreating] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);

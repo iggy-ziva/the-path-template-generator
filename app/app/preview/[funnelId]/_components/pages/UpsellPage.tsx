@@ -1,5 +1,7 @@
 import type { UpsellContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
+import BrandLogo from "../BrandLogo";
+import { distillUpsellDescription } from "@/lib/upsell-copy";
 
 interface Props {
   content: UpsellContent;
@@ -12,12 +14,35 @@ const CheckSvg = () => (
   </svg>
 );
 
+function resolveUpsellQuotes(
+  w: WizardSnapshot,
+  c: UpsellContent,
+): { quote: string; attribution?: string }[] {
+  const fromWizard = w.upsellQuotes?.filter((q) => q.quote?.trim()) ?? [];
+  if (fromWizard.length > 0) return fromWizard;
+
+  if (w.upsellQuote?.trim()) {
+    return [{ quote: w.upsellQuote, attribution: w.upsellQuoteAttribution }];
+  }
+
+  const fromContent = c.testimonialQuotes?.filter((q) => q.quote?.trim()) ?? [];
+  if (fromContent.length > 0) return fromContent;
+
+  if (c.testimonialQuote?.trim()) {
+    return [{ quote: c.testimonialQuote, attribution: c.testimonialAttribution }];
+  }
+
+  return [];
+}
+
 export default function UpsellPage({ content: c, wizard: w }: Props) {
   const brandName = w.businessName ?? w.hostName ?? "Your Brand";
 
-  // Merge wizard upsell data with Claude-generated content (wizard takes precedence for direct fields)
-  const headline     = w.upsellHeadline    ?? c.headline    ?? "Take the work deeper.";
-  const description  = w.upsellDescription ?? c.description ?? "";
+  // Product name stays from wizard; tagline + description prefer AI-distilled generated copy
+  const offerName    = w.upsellOfferName ?? "";
+  const tagline      = c.headline ?? w.upsellHeadline ?? "";
+  const description  = c.description
+    ?? (w.upsellDescription ? distillUpsellDescription(w.upsellDescription) : "");
   const offerPrice   = w.upsellOfferPrice  ?? c.offerPrice  ?? "$97";
   const regularValue = w.upsellRegularValue ?? c.regularPrice ?? "$297";
   const yesCtaText   = w.upsellCtaText     ?? c.yesCtaText  ?? "Yes — add this to my order";
@@ -29,8 +54,7 @@ export default function UpsellPage({ content: c, wizard: w }: Props) {
     ? w.upsellIncludedItems!
     : (c.includedItems ?? []);
 
-  const testimonialQuote = w.upsellQuote ?? c.testimonialQuote;
-  const testimonialAttrib = w.upsellQuoteAttribution ?? c.testimonialAttribution;
+  const testimonialQuotes = resolveUpsellQuotes(w, c);
 
   return (
     <div style={{ background: "var(--surface-canvas)", color: "var(--text-primary)", fontFamily: "var(--font-body)" }}>
@@ -84,11 +108,14 @@ export default function UpsellPage({ content: c, wizard: w }: Props) {
           {c.eyebrow ?? "One-time offer · Step 2 of 2"}
         </div>
 
-        {w.upsellOfferName && (
-          <div className="offer-name">{w.upsellOfferName}</div>
-        )}
-
-        <h1 className="offer-headline">{headline}</h1>
+        {offerName ? (
+          <>
+            <h1 className="offer-title">{offerName}</h1>
+            {tagline && <p className="offer-tagline">{tagline}</p>}
+          </>
+        ) : tagline ? (
+          <h1 className="offer-title">{tagline}</h1>
+        ) : null}
 
         {description && <p className="offer-desc">{description}</p>}
 
@@ -113,17 +140,21 @@ export default function UpsellPage({ content: c, wizard: w }: Props) {
           ))}
         </div>
 
-        {/* Testimonial */}
-        {testimonialQuote && (
-          <div className="offer-quote">
-            <span className="quote-glyph">&ldquo;</span>
-            <blockquote>{testimonialQuote}</blockquote>
-            {testimonialAttrib && (
-              <cite>
-                <strong>{testimonialAttrib.split("·")[0]?.trim()}</strong>
-                {testimonialAttrib.includes("·") ? ` · ${testimonialAttrib.split("·").slice(1).join("·").trim()}` : ""}
-              </cite>
-            )}
+        {/* Testimonials */}
+        {testimonialQuotes.length > 0 && (
+          <div className="offer-quotes">
+            {testimonialQuotes.map((t, i) => (
+              <div key={i} className="offer-quote">
+                <span className="quote-glyph">&ldquo;</span>
+                <blockquote>{t.quote}</blockquote>
+                {t.attribution && (
+                  <cite>
+                    <strong>{t.attribution.split("·")[0]?.trim()}</strong>
+                    {t.attribution.includes("·") ? ` · ${t.attribution.split("·").slice(1).join("·").trim()}` : ""}
+                  </cite>
+                )}
+              </div>
+            ))}
           </div>
         )}
 
@@ -155,10 +186,13 @@ export default function UpsellPage({ content: c, wizard: w }: Props) {
       <footer className="ty-footer">
         <div className="inner">
           <div className="ty-footer-left">
-            {safeUrl(w.logoUrl)
-              ? <img src={safeUrl(w.logoUrl)!} alt={brandName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              : <div className="ty-footer-brand">{brandName}</div>
-            }
+            <BrandLogo
+              logoUrl={w.logoUrl}
+              logoTransparent={w.logoTransparent}
+              name={brandName}
+              className="ty-footer-brand"
+              imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}
+            />
             <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {brandName}</span>
           </div>
           <nav className="ty-footer-links">

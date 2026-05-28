@@ -25,6 +25,18 @@ These are non-negotiable design laws for the whole template. They come directly 
 | **CTA microcopy precedes every CTA button** | Michael: *"it's like the copy that goes just above a CTA which is like tightening the screws of the argument"* | Closes the persuasion loop before the click. |
 | **Icons accompany every list with desired-state outcomes** | Michael: *"icons connect to bullet point lists because that just is found to be very effective... it's enhances understanding, interpretation"* | Visual learners; comprehension; aesthetic anchor. |
 
+### Brand-aware section backgrounds
+
+Section themes (`dark` / `accent` / `light`) map to CSS surface tokens derived from the client's brand colours — not fixed Threshold black.
+
+| Brand type | Typical rhythm | Token behaviour |
+|---|---|---|
+| **Warm luminous** (coral, gold, peach primary) | Light canvas majority; accent hero + register; deep slate final VP | `--surface-inverse` = deep branded slate (~55% darken of secondary); `--surface-accent` = mid slate/teal band |
+| **Dark literary** (very dark primary) | Dark-heavy hero, CTAs, footers | `--surface-inverse` ≈ near-black (93% darken of secondary) |
+| **Balanced / mid** | Alternate dark and light in equal measure | Interpolated inverse depth |
+
+Structural sections with AI theme fields: `heroTheme`, `encourageNTheme`, `finalVpTheme`, `registerTheme`. When absent, render-time defaults apply from brand primary luminance.
+
 ---
 
 ## Section order (canonical)

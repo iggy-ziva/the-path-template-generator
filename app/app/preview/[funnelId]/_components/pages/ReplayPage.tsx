@@ -1,5 +1,6 @@
 import type { ReplayContent, WizardSnapshot } from "../funnel-types";
-import { safeUrl } from "../funnel-types";
+import { safeUrl, brandSectionOverlay, brandImageBackground } from "../funnel-types";
+import BrandLogo from "../BrandLogo";
 
 interface Props {
   content: ReplayContent;
@@ -37,6 +38,7 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
   const programCtaPlanText    = c.programCtaPlanText ?? "";
   const programCtaUrgency     = c.programCtaUrgency ?? "";
   const programCtaEnrolText   = c.programCtaEnrolText ?? (programName ? `Enrol in ${programName}` : "Enrol now");
+  const ftcHeading            = c.ftcHeading ?? "Important disclaimer";
   const ftcText               = c.ftcText ?? "These recordings are for the personal use of registered attendees only and may not be shared, redistributed, or reproduced in any form. Content is provided for educational and personal development purposes. Results are individual and are not guaranteed.";
 
   return (
@@ -68,14 +70,19 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
       <header
         className={`replay-header${safeUrl(c.heroBackgroundImageUrl ?? w.heroImageUrls?.[1] ?? w.heroImageUrls?.[0]) ? " on-dark" : ""}`}
         style={safeUrl(c.heroBackgroundImageUrl ?? w.heroImageUrls?.[1] ?? w.heroImageUrls?.[0]) ? {
-          backgroundImage: `linear-gradient(rgba(15,14,12,0.92),rgba(15,14,12,0.92)), url(${safeUrl(c.heroBackgroundImageUrl ?? w.heroImageUrls?.[1] ?? w.heroImageUrls![0])})`,
+          backgroundImage: brandImageBackground(brandSectionOverlay(0.92), safeUrl(c.heroBackgroundImageUrl ?? w.heroImageUrls?.[1] ?? w.heroImageUrls![0])!),
           backgroundSize: "cover",
           backgroundPosition: "center",
         } : undefined}
       >
         <div className="container">
-          {safeUrl(c.logoUrl ?? w.logoUrl) && (
-            <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={businessName || hostName} style={{ maxHeight: "120px", maxWidth: "200px", width: "100%", objectFit: "contain", display: "block", marginBottom: "28px", marginInline: "auto" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          {(c.logoUrl ?? w.logoUrl) && (
+            <BrandLogo
+              logoUrl={c.logoUrl ?? w.logoUrl}
+              logoTransparent={w.logoTransparent}
+              name={businessName || hostName}
+              imgStyle={{ maxHeight: "120px", maxWidth: "200px", width: "100%", objectFit: "contain", display: "block", marginBottom: "28px", marginInline: "auto" }}
+            />
           )}
           <p className="replay-eyebrow">{eyebrow}</p>
           <h1 className="replay-event-title">{headline}</h1>
@@ -272,6 +279,7 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
       {/* 07 — Disclaimer */}
       <div className="replay-disclaimer">
         <div className="container">
+          <h2 className="disclaimer-heading">{ftcHeading}</h2>
           <p className="disclaimer-text">{ftcText}</p>
         </div>
       </div>
@@ -280,10 +288,13 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
       <footer className="ty-footer">
         <div className="inner">
           <div className="ty-footer-left">
-            {safeUrl(c.logoUrl ?? w.logoUrl)
-              ? <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={businessName || hostName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              : <div className="ty-footer-brand">{businessName || hostName}</div>
-            }
+            <BrandLogo
+              logoUrl={c.logoUrl ?? w.logoUrl}
+              logoTransparent={w.logoTransparent}
+              name={businessName || hostName}
+              className="ty-footer-brand"
+              imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}
+            />
             <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {businessName || hostName}</span>
           </div>
           <nav className="ty-footer-links">

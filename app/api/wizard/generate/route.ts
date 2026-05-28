@@ -4,7 +4,61 @@ import type { MessageParam, ContentBlockParam, ImageBlockParam, TextBlockParam }
 import { getSession } from "@/lib/session";
 import { getOrCreateUserId } from "@/lib/getOrCreateUserId";
 import type { WizardData } from "@/lib/wizard-types";
-import { THEME_LIST } from "@/lib/theme-constants";
+import { withWizardSnapshot } from "@/lib/funnel-snapshot";
+import { computeBrandProfile, buildBrandProfilePromptBlock } from "@/lib/brand-profile";
+
+export const maxDuration = 300;
+
+const GENERATION_MODEL =
+  process.env.ANTHROPIC_GENERATION_MODEL ?? "claude-sonnet-4-5";
+const GENERATION_MAX_TOKENS = 16_000;
+const CLAUDE_TIMEOUT_MS = 15 * 60 * 1000;
+const MAX_CLAUDE_RETRIES = 4;
+const VISION_MAX_IMAGES = 4;
+const VISION_MAX_EDGE_PX = 1092;
+const VISION_JPEG_QUALITY = 82;
+
+const EVENT_PAGE_KEYS = ["eventLanding", "eventCheckout", "upsell", "eventThankYou", "replay"] as const;
+const PROGRAMME_PAGE_KEYS = ["programmeLanding", "programmeCheckout", "programmeThankYou"] as const;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableClaudeError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { code?: string; cause?: { code?: string }; message?: string };
+  const code = e.code ?? e.cause?.code ?? "";
+  if (code === "ECONNRESET" || code === "ETIMEDOUT" || code === "ECONNABORTED") return true;
+  const msg = e.message ?? "";
+  return /connection error|socket hang up|timed out|timeout/i.test(msg);
+}
+
+async function createGenerationMessage(
+  anthropic: Anthropic,
+  messages: MessageParam[],
+): Promise<Awaited<ReturnType<Anthropic["messages"]["create"]>>> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= MAX_CLAUDE_RETRIES; attempt++) {
+    try {
+      // Streaming keeps the HTTP connection alive during long generations,
+      // which avoids proxy/socket idle timeouts on multi-minute requests.
+      const stream = anthropic.messages.stream({
+        model: GENERATION_MODEL,
+        max_tokens: GENERATION_MAX_TOKENS,
+        messages,
+      });
+      return await stream.finalMessage();
+    } catch (err) {
+      lastError = err;
+      if (!isRetryableClaudeError(err) || attempt === MAX_CLAUDE_RETRIES) break;
+      await sleep(3000 * attempt);
+    }
+  }
+
+  throw lastError;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnySupabase = any;
@@ -15,20 +69,6 @@ async function getServiceClient(): Promise<AnySupabase> {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-}
-
-// ── Rate-limit check ────────────────────────────────────────────────────
-const GENERATION_LIMIT = 10;
-
-async function checkRateLimit(supabase: AnySupabase, userId: string): Promise<boolean> {
-  const since = new Date();
-  since.setDate(since.getDate() - 30);
-  const { count } = await supabase
-    .from("generated_funnels")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .gte("created_at", since.toISOString());
-  return (count ?? 0) < GENERATION_LIMIT;
 }
 
 // ── Fetch uploaded documents and convert for Claude ─────────────────────
@@ -69,31 +109,80 @@ async function fetchDocumentBlocks(urls: string[]): Promise<(DocumentBlock | Tex
   return blocks;
 }
 
-// ── Build vision blocks so Claude can actually SEE all uploaded visuals ──
-// Returns interleaved [text-label, image, text-label, image, …] blocks
-// Cap at 8 total to keep token cost reasonable; prioritise hero > lifestyle > additional > headshot > logo
+// ── Build vision blocks so Claude can actually SEE key uploaded visuals ──
+// Returns interleaved [text-label, image, …] blocks.
+// Images are resized/compressed before upload — raw hero files can be 10MB+ each
+// and will cause connection resets if sent as full base64 payloads.
+async function compressImageForVision(
+  buffer: ArrayBuffer,
+  contentType: string,
+): Promise<{ data: string; media_type: "image/jpeg" | "image/png" | "image/webp" | "image/gif" } | null> {
+  try {
+    const sharp = (await import("sharp")).default;
+    const input = Buffer.from(buffer);
+    const resize = {
+      width: VISION_MAX_EDGE_PX,
+      height: VISION_MAX_EDGE_PX,
+      fit: "inside" as const,
+      withoutEnlargement: true,
+    };
+
+    const ct = contentType.toLowerCase();
+    if (ct.includes("png") || ct.includes("gif") || ct.includes("webp")) {
+      const png = await sharp(input).rotate().resize(resize).png({ compressionLevel: 8 }).toBuffer();
+      if (png.length <= 750_000) {
+        return { data: png.toString("base64"), media_type: "image/png" };
+      }
+    }
+
+    const jpeg = await sharp(input)
+      .rotate()
+      .resize(resize)
+      .flatten({ background: "#ffffff" })
+      .jpeg({ quality: VISION_JPEG_QUALITY, mozjpeg: true })
+      .toBuffer();
+    return { data: jpeg.toString("base64"), media_type: "image/jpeg" };
+  } catch {
+    return null;
+  }
+}
+
 async function buildVisionBlocks(d: WizardData): Promise<ContentBlockParam[]> {
   const blocks: ContentBlockParam[] = [];
 
-  const heroItems    = (d.heroImageUrls ?? []).map((url, i) => ({ url, label: `[hero-${i + 1}] HERO/BACKGROUND IMAGE ${i + 1} — reference its mood, atmosphere, and subject when writing hero sections` }));
-  const lifestyleItems = (d.lifestyleImageUrls ?? []).map((url, i) => ({ url, label: `[lifestyle-${i + 1}] LIFESTYLE IMAGE ${i + 1} — use what you observe to write specific, grounded copy about the experience or transformation` }));
-  const additionalItems = (d.additionalImageUrls ?? []).map((url, i) => ({ url, label: `[additional-${i + 1}] ADDITIONAL IMAGE ${i + 1}` }));
-  const headshotItem  = d.hostHeadshotUrl ? [{ url: d.hostHeadshotUrl, label: "[headshot] HOST HEADSHOT — use the person's appearance and energy to inform how you write about them" }] : [];
-  const logoItem      = d.logoUrl         ? [{ url: d.logoUrl,         label: "[logo] BRAND LOGO — note symbolic, colour, and typographic clues about the brand's identity" }]           : [];
+  const heroItems = (d.heroImageUrls ?? []).map((url, i) => ({
+    url,
+    label: `[hero-${i + 1}] HERO/BACKGROUND IMAGE ${i + 1} — reference its mood, atmosphere, and subject when writing hero sections`,
+  }));
+  const lifestyleItems = (d.lifestyleImageUrls ?? []).slice(0, 1).map((url, i) => ({
+    url,
+    label: `[lifestyle-${i + 1}] LIFESTYLE IMAGE ${i + 1} — use what you observe to write specific, grounded copy`,
+  }));
+  const headshotItem = d.hostHeadshotUrl
+    ? [{ url: d.hostHeadshotUrl, label: "[headshot] HOST HEADSHOT — use the person's appearance and energy to inform how you write about them" }]
+    : [];
+  const logoItem = d.logoUrl
+    ? [{ url: d.logoUrl, label: "[logo] BRAND LOGO — note colour and typographic clues about the brand's identity" }]
+    : [];
 
-  const toInclude = [...heroItems, ...lifestyleItems, ...additionalItems, ...headshotItem, ...logoItem].slice(0, 8);
+  const toInclude = [...heroItems.slice(0, 2), ...headshotItem, ...logoItem, ...lifestyleItems].slice(0, VISION_MAX_IMAGES);
 
   for (const item of toInclude) {
     try {
-      const res = await fetch(item.url, { signal: AbortSignal.timeout(10000) });
+      const res = await fetch(item.url, { signal: AbortSignal.timeout(15000) });
       if (!res.ok) continue;
       const contentType = res.headers.get("content-type") ?? "image/jpeg";
+      if (contentType.includes("svg")) continue;
+
       const buf = await res.arrayBuffer();
-      const base64 = Buffer.from(buf).toString("base64");
-      const mediaType = (contentType.startsWith("image/") ? contentType.split(";")[0] : "image/jpeg") as ImageBlockParam["source"]["media_type"];
-      // Label then image — so Claude associates each description with the correct visual
-      blocks.push({ type: "text", text: `[${item.label}]` } as TextBlockParam);
-      blocks.push({ type: "image", source: { type: "base64", media_type: mediaType, data: base64 } } as ImageBlockParam);
+      const compressed = await compressImageForVision(buf, contentType);
+      if (!compressed) continue;
+
+      blocks.push({ type: "text", text: item.label } as TextBlockParam);
+      blocks.push({
+        type: "image",
+        source: { type: "base64", media_type: compressed.media_type, data: compressed.data },
+      } as ImageBlockParam);
     } catch {
       // skip unreachable images silently
     }
@@ -112,12 +201,11 @@ export async function POST(req: NextRequest) {
     const userId = await getOrCreateUserId(session, supabase);
     if (!userId) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    const withinLimit = await checkRateLimit(supabase, userId);
-    if (!withinLimit) {
-      return NextResponse.json({ error: "Generation limit reached. Please contact support." }, { status: 429 });
-    }
-
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      timeout: CLAUDE_TIMEOUT_MS,
+      maxRetries: 0,
+    });
 
     // ── Fetch documents and vision blocks in parallel ──
     const [docBlocks, visionBlocks] = await Promise.all([
@@ -126,15 +214,24 @@ export async function POST(req: NextRequest) {
     ]);
 
     // ── Build shared brand context ──
-    const brandContext = buildBrandContext(wizardData);
+    const brandProfile = computeBrandProfile(wizardData);
+    const wizardForGen: WizardData = {
+      ...wizardData,
+      brandProfile,
+      referenceTheme: wizardData.referenceTheme ?? brandProfile.suggestedThemeSlug,
+    };
+    const brandContext = buildBrandContext(wizardForGen);
 
-    // ── Run both generation calls in parallel ──
-    const [eventResult, programmeResult] = await Promise.all([
-      generateEventPages(anthropic, wizardData, brandContext, docBlocks, visionBlocks),
-      generateProgrammePages(anthropic, wizardData, brandContext, docBlocks, visionBlocks),
-    ]);
+    // Run sequentially — two large vision+prompt calls in parallel often hit connection timeouts.
+    const eventResult = await generateEventPages(anthropic, wizardForGen, brandContext, docBlocks, visionBlocks);
+    // Programme copy uses image URLs from brand context — skip vision blocks to halve payload size.
+    const programmeResult = await generateProgrammePages(anthropic, wizardForGen, brandContext, docBlocks, []);
 
-    const content = { ...eventResult, ...programmeResult };
+    const pageContent = { ...eventResult, ...programmeResult };
+    assertFunnelContent(pageContent);
+    // Freeze wizard brand/fonts/images with this generation so previews never pick up
+    // live edits from another funnel entry or a later wizard session.
+    const content = withWizardSnapshot(pageContent, wizardForGen as Record<string, unknown>);
 
     // ── Store ──
     const { data: funnel, error } = await supabase
@@ -143,7 +240,7 @@ export async function POST(req: NextRequest) {
         user_id: userId,
         submission_id: submissionId ?? null,
         content,
-        theme_slug: wizardData.referenceTheme ?? "threshold",
+        theme_slug: wizardForGen.referenceTheme ?? brandProfile.suggestedThemeSlug,
       })
       .select("id")
       .single();
@@ -161,7 +258,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ funnelId: funnel.id });
   } catch (err) {
     console.error("Generate error:", err);
-    return NextResponse.json({ error: "Generation failed — please try again" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : "";
+    const userMessage =
+      /failed to parse|incomplete|empty response|no page content/i.test(msg)
+        ? `Generation failed: ${msg}`
+        : /connection error|socket hang up|timed out|timeout|ECONNRESET/i.test(msg)
+          ? "Generation timed out while contacting the AI service — please try again. If this keeps happening, try with fewer uploaded images."
+          : msg
+            ? `Generation failed: ${msg}`
+            : "Generation failed — please try again";
+    return NextResponse.json({ error: userMessage }, { status: 500 });
   }
 }
 
@@ -212,7 +318,7 @@ function buildColorProfile(d: WizardData): string {
     darkSectionRecommendation = "Alternate dark and light sections in roughly equal measure. Reserve dark sections for high-drama CTAs and final closes.";
   } else {
     brandMood = "LUMINOUS & ENERGETIC — this brand reads as bright, hopeful, expansive. Light-heavy sections will feel native. Dark sections become the dramatic contrast.";
-    darkSectionRecommendation = "Default to light sections. Use dark sections sparingly — only for hero, final CTA, and one mid-page moment of contrast.";
+    darkSectionRecommendation = "Default to light sections with warm canvas backgrounds. Use accent for hero and register bands; use dark (deep branded slate) sparingly for final VP and one mid-page moment.";
   }
 
   return `=== BRAND COLOUR PROFILE ===
@@ -269,9 +375,6 @@ function buildBrandContext(d: WizardData): string {
     ? (d.programPaymentPlans ?? []).map(p => `${p.installments}× $${p.amountPerInstallment} ${p.cadence} (total $${p.installments * p.amountPerInstallment})`).join("; ")
     : "No payment plans set — pay-in-full only";
 
-  const themeEntry = THEME_LIST.find(t => t.slug === (d.referenceTheme ?? "threshold")) ?? THEME_LIST[0];
-
-  // ── Tone descriptor → concrete writing guidance ─────────────────────────
   const toneDescriptors = d.toneDescriptors ?? [];
   const toneGuidance = toneDescriptors.length
     ? toneDescriptors.map(t => `  • ${t} → ${toneToWritingGuidance(t)}`).join("\n")
@@ -323,14 +426,14 @@ Pricing: ${formatPricing(d)}
 Recording policy: ${d.eventRecordingPolicy ?? "Assume recording included for 30 days"}
 Promo video URL: ${d.eventVideoUrl ?? "NOT PROVIDED"}
 
-=== UPSELL OFFER (one-time post-event offer) ===
-Product name: ${d.upsellOfferName ?? "NOT PROVIDED — generate a plausible name aligned with the event topic"}
-Headline: ${d.upsellHeadline ?? "NOT PROVIDED"}
-Description: ${d.upsellDescription ?? "NOT PROVIDED"}
+=== UPSELL OFFER (one-time post-event offer — wizard fields are SOURCE MATERIAL; rewrite for page) ===
+Product name (renders as page title — do not repeat in headline/description): ${d.upsellOfferName ?? "NOT PROVIDED — generate a plausible name aligned with the event topic"}
+Tagline source (rewrite to max 15 words): ${d.upsellHeadline ?? "NOT PROVIDED"}
+Description source (distill to max 2 sentences): ${d.upsellDescription ?? "NOT PROVIDED"}
 Included items:
 ${(d.upsellIncludedItems ?? []).map(it => `  • ${it.title}: ${it.description}`).join("\n") || "  Not provided — generate 3 compelling items that genuinely complement the live event topic. No generic 'bonus PDFs'."}
-Testimonial quote (if any): ${d.upsellQuote ?? "—"}
-Testimonial attribution: ${d.upsellQuoteAttribution ?? "—"}
+Upsell testimonials:
+${formatUpsellQuotes(d)}
 Regular value: ${d.upsellRegularValue ? `$${d.upsellRegularValue}` : "Not set — derive a believable anchor (~3× offer price)"}
 Offer price: ${d.upsellOfferPrice ? `$${d.upsellOfferPrice}` : "Not set — calculate ~40% off full price or cheapest payment plan total"}
 Price note: ${d.upsellPriceNote ?? "—"}
@@ -376,9 +479,7 @@ ${toneGuidance}
 Reference URL (copy style they love): ${d.copyLoveUrl ?? "None provided"}
 Copy patterns they dislike: ${d.copyHateDescription ?? "Avoid: generic life-coach clichés, 'unlock your potential', 'manifest your dreams', any spiritual buzzword soup."}
 
-=== REFERENCE THEME (aesthetic anchor) ===
-${themeEntry.label} — ${themeEntry.descriptor}
-Use this as a tonal anchor for word choice and rhythm. If user tone descriptors conflict, USER TONE WINS.
+${buildBrandProfilePromptBlock(d.brandProfile ?? computeBrandProfile(d), d)}
 
 === VISUAL ASSETS ===
 Images sent to you above as labelled vision blocks. Study each carefully.
@@ -451,7 +552,7 @@ TYPOGRAPHY RULES (affect every text field):
 - Price fields rendered at 42px+ contain ONE price only. No "or", no "from", no alternatives.
 - ORPHAN WORDS — CRITICAL: a sentence MUST NEVER break so that only one or two words fall on the final line. This is the most common visible failure. Specifically applies to all DISPLAY-class fields:
     • heroHeadline, heroSubheadline, subheadline (event/programme thank-you), headline (replay), label, ty-event-name copy
-    • offerHeadline, finalCtaHeadline, finalVpHeading, extraVpHeading, vpHeading, outcomesHeading
+    • offer-tagline (upsell), finalCtaHeadline, finalVpHeading, extraVpHeading, vpHeading, outcomesHeading
     • prog-hero-title, prog-hero-sub, replay-event-title, accessCardTitle
   These render at clamp(22px, 3vw, 30px) up to clamp(48px, 7vw, 88px) — large enough that 4–10 words is the entire visible line. RULE: rewrite copy so total word count is divisible cleanly across roughly even lines. If "Your seat is confirmed. Here's what happens next." would break as 8 words + "next.", REWRITE to "Your seat is confirmed — here's what happens next" (no period) or "Your seat is confirmed. Here is what comes next." so words distribute evenly. Aim for either ONE-LINE-FITS or BALANCED-MULTILINE. Never single-orphan.
 - Short labels (eyebrows, badges, pill text): under 6 words, single line, ALL-CAPS-able.
@@ -473,10 +574,29 @@ PAYMENT PLAN RULES (programmeCheckout.plans + plans modal):
 - Only ONE plan in the array may have isFeatured: true.
 - Never label multiple plans as "Most popular" — only one plan can be featured, and it's always Pay in full.
 
-SECTION THEME RULES (encourageNTheme, alreadyTriedTheme, finalCtaTheme):
+SECTION THEME RULES (heroTheme, encourageNTheme, finalVpTheme, registerTheme, alreadyTriedTheme, finalCtaTheme):
 - Values MUST be exactly one of: "dark" | "accent" | "light"
-- Vary the rhythm: don't pick "dark" for all three encourage sections — alternate.
-- Match the BRAND MOOD section above for guidance on bias.
+- "dark" = deep branded slate (NOT generic black) — high-drama moments
+- "accent" = mid slate/teal brand band — ideal for warm healing brands
+- "light" = peachy/cream canvas — default for luminous warm brands on content-heavy sections
+- Vary the rhythm: don't pick "dark" for every section — alternate per BRAND PROFILE section rhythm above
+- Warm luminous brands (bright coral/gold primary): heroTheme "accent", registerTheme "accent", finalVpTheme "dark", encourage bands mix accent + light
+- Dark literary brands (very dark primary): heroTheme "dark", registerTheme "dark", encourage bands alternate dark + light
+
+UPSELL PAGE COPY (upsell.headline + upsell.description):
+- Wizard upsell fields are SOURCE MATERIAL — rewrite for the page; do not paste verbatim.
+- Product name (upsellOfferName) is NOT output in JSON — it renders from wizard. Never repeat it in headline or description.
+- upsell.headline = TAGLINE ONLY: max 15 words, emotional promise beneath the product title. Rewrite wizard upsellHeadline tighter. No pricing, no bundle lists.
+- upsell.description = MAX 2 sentences: distill wizard upsellDescription to what the offer adds after the live event. NEVER include prices, "save $X", payment terms, or bullet lists — those live in price block and includedItems.
+- If wizard description is a long sales paste, extract the core promise into 2 sentences; move deliverable details into includedItems (if wizard items exist, keep titles/descriptions verbatim).
+- includedItems + upsellQuotes: use wizard upsellIncludedItems and upsellQuotes EXACTLY when provided (don't rephrase quotes or item titles).
+
+COLOR HIERARCHY RULES (visual rhythm — templates enforce automatically, but copy must not assume primary styling everywhere):
+- Never stack two primary-coloured emphasis elements in immediate succession. Specifically: urgency badges, deadline pills, and meta labels that sit directly above a primary CTA button MUST NOT use the primary/accent-light colour — templates assign secondary/tertiary emphasis dynamically based on panel background contrast.
+- programCtaUrgency (replay): copy only — enrolment deadline text. Do NOT imply it will render in primary colour. Keep under 8 words.
+- offerBarUrgency (replay sticky bar): muted meta text only — not a second primary CTA. Keep short.
+- Primary colour is reserved for ONE conversion action per visible block: the main button (program-cta-btn, offer-bar-cta, hero CTA, etc.).
+- When describing urgency in copy, use deadline language ("Enrolment closes Thursday…") — never duplicate the CTA verb ("Enrol now" in urgency + button).
 
 IMAGE-LED COPY:
 - Hero copy must echo the mood of the hero image (rich/intimate/expansive/serene — observe and reflect).
@@ -557,13 +677,9 @@ async function generateEventPages(
   topContent.push({ type: "text", text: buildEventPrompt(brandContext, hasVideo, d) } as TextBlockParam);
 
   const messages: MessageParam[] = [{ role: "user", content: topContent }];
-  const response = await anthropic.messages.create({
-    model: "claude-opus-4-5",
-    max_tokens: 8000,
-    messages,
-  });
+  const response = await createGenerationMessage(anthropic, messages);
 
-  return parseJsonResponse(response.content[0].type === "text" ? response.content[0].text : "{}");
+  return parseGenerationResponse(response, "Event pages", EVENT_PAGE_KEYS);
 }
 
 // ── Generate programme funnel pages ─────────────────────────────────────
@@ -587,13 +703,9 @@ async function generateProgrammePages(
   topContent.push({ type: "text", text: buildProgrammePrompt(brandContext, d) } as TextBlockParam);
 
   const messages: MessageParam[] = [{ role: "user", content: topContent }];
-  const response = await anthropic.messages.create({
-    model: "claude-opus-4-5",
-    max_tokens: 8000,
-    messages,
-  });
+  const response = await createGenerationMessage(anthropic, messages);
 
-  return parseJsonResponse(response.content[0].type === "text" ? response.content[0].text : "{}");
+  return parseGenerationResponse(response, "Programme pages", PROGRAMME_PAGE_KEYS);
 }
 
 // ── Event pages prompt + schema ──────────────────────────────────────────
@@ -640,6 +752,7 @@ The JSON must have exactly this structure:
     "heroPriceValue": "e.g. '$11 — $111' or '$97' or 'Free'",
     "heroCtaText": "CTA button text e.g. 'Register Now'",
     "heroMetaLine": "short reassurance below CTA e.g. 'No prerequisites · Recording included'",
+    "heroTheme": "MUST be exactly one of: \"dark\", \"accent\", or \"light\". Warm luminous brands: prefer \"accent\" (slate/teal hero). Dark literary brands: prefer \"dark\".",
     "credibilityQuote1": "opening testimonial — short and powerful, under 30 words",
     "credibilityAttribution1": "Full Name · Location",
     "videoSectionEyebrow": "eyebrow for video section e.g. 'A note from ${d.hostName ?? "the host"}'",
@@ -659,7 +772,7 @@ The JSON must have exactly this structure:
     "audienceClosingText": "closing italic line below the audience list e.g. 'Now is your time to step over the line.'",
     "audienceMicrocopy": "small line above CTA e.g. 'Some thresholds are crossed alone. This one isn't.'",
     "encourageText1": "CTA section text (encourage section) — punchy italic line",
-    "encourage1Theme": "MUST be exactly one of: \"dark\", \"accent\", or \"light\". Choose \"dark\" for high-drama urgency, \"accent\" for mid-energy variety, \"light\" for softer moments. Text colour is handled automatically.",
+    "encourage1Theme": "MUST be exactly one of: \"dark\", \"accent\", or \"light\". Warm brands: prefer \"light\" or \"accent\". Dark brands: \"dark\" for urgency. Must contrast with heroTheme.",
     "ctaText": "CTA button text used in all mid-page encourage sections",
     "vpEyebrow": "value prop section eyebrow e.g. 'The premise'",
     "vpHeading": "value prop heading (display-section class) — under 8 words",
@@ -753,6 +866,7 @@ The JSON must have exactly this structure:
     ],
     "finalVpClosing": "closing paragraph of final VP",
     "finalVpCtaMicrocopy": "italic line above final CTA button",
+    "finalVpTheme": "MUST be exactly one of: \"dark\", \"accent\", or \"light\". Default \"dark\" (deep branded slate) for the from/to transformation block.",
     "faqEyebrow": "e.g. 'Questions'",
     "faqItems": [
       { "question": "What if I can't attend live?", "answer": "Answer using the actual recording policy from brand context — be specific about timing and access." },
@@ -767,6 +881,7 @@ The JSON must have exactly this structure:
     ],
     "finalCtaLine": "one-line summary using the actual event name, date and time from brand context — no bracket placeholders",
     "finalCtaText": "final CTA button text",
+    "registerTheme": "MUST be exactly one of: \"dark\", \"accent\", or \"light\". Warm luminous brands: prefer \"accent\". Dark brands: prefer \"dark\".",
     "ftcDisclaimer": "FTC-compliant results disclaimer — 2–3 professional sentences"
   },
   "eventCheckout": {
@@ -799,15 +914,19 @@ The JSON must have exactly this structure:
     "productImageUrl": "copy the exact URL of an image that visually represents the upsell add-on product or experience — something that feels like a premium bonus, not the main event. Priority order: (1) any additional-N image (these are product/bonus shots), (2) lifestyle-2 if it shows a different context from lifestyle-1, (3) lifestyle-1 as last resort only if nothing else exists. DO NOT use a hero image. Set to null if no additional or lifestyle images were uploaded.",
     "confirmationBannerText": "short confirmation banner e.g. 'Your spot for ${d.eventName ?? "the event"} is confirmed — one more thing before you go.' — use the actual event name",
     "eyebrow": "e.g. 'One-time offer · Step 2 of 2'",
-    "headline": "upsell offer headline — use wizard upsellHeadline if provided",
-    "description": "1–2 sentences describing the product in context — use wizard upsellDescription if provided",
+    "headline": "TAGLINE ONLY (maps to .offer-tagline) — max 15 words. Rewrite wizard upsellHeadline as a tight emotional promise. Do NOT repeat upsellOfferName. No prices or bullet lists.",
+    "description": "MAX 2 sentences for .offer-desc — distill wizard upsellDescription to what this adds after the event. Never include pricing, savings, or deliverable bullets (those belong in price block + includedItems).",
     "includedTitle": "e.g. 'What's in the bundle'",
     "includedItems": [
       { "title": "item title — use wizard upsellIncludedItems verbatim if provided", "description": "item description — use wizard upsellIncludedItems verbatim if provided" }
     ],
     // RULE: includedItems should contain 3–5 items. If wizard provided upsellIncludedItems, use those EXACTLY (don't rephrase). Each item must be a real, specific deliverable — no generic "bonus PDF" entries.
-    "testimonialQuote": "testimonial supporting the upsell — use wizard upsellQuote if provided",
-    "testimonialAttribution": "Full Name · Location · Event, Month Year — use wizard upsellQuoteAttribution if provided",
+    "testimonialQuotes": [
+      { "quote": "testimonial supporting the upsell — use wizard upsellQuotes verbatim if provided", "attribution": "Full Name · Location · Event, Month Year" }
+    ],
+    // RULE: testimonialQuotes — if wizard provided upsellQuotes, output those EXACTLY (don't rephrase). Include every wizard quote in order. If none provided, generate 1–2 short upsell-specific testimonials. Also mirror the first entry in testimonialQuote / testimonialAttribution below for backward compatibility.
+    "testimonialQuote": "first testimonialQuotes[0].quote",
+    "testimonialAttribution": "first testimonialQuotes[0].attribution",
     "regularPrice": "regular value e.g. '$297' — use wizard upsellRegularValue if provided",
     "offerPrice": "discounted price e.g. '$97' — use wizard upsellOfferPrice if provided",
     "savingAmount": "savings callout e.g. 'Save $200 — today only' — the $ amount MUST equal (regularPrice − offerPrice). Do the math; never approximate.",
@@ -916,9 +1035,10 @@ The JSON must have exactly this structure:
     ],
     "programCtaPrice": "PRIMARY price ONLY — e.g. '$1,997'. Never combine two prices in this field. One price, no 'or', no alternatives. This renders at 42px and must fit on one line.",
     "programCtaPlanText": "Payment plan alternative if available — e.g. 'or 3 × $749/month'. Keep short. Never duplicate the primary price from programCtaPrice here.",
-    "programCtaUrgency": "urgency note using actual enrolment close date if available — no bracket placeholders",
+    "programCtaUrgency": "urgency note using actual enrolment close date if available — max 8 words, deadline language only (no CTA verbs). Renders as secondary emphasis above the primary Enrol button — never write copy that assumes primary colour styling",
     "programCtaEnrolText": "CTA button text",
-    "ftcText": "FTC disclaimer for replay page"
+    "ftcHeading": "Disclaimer section heading — REQUIRED. Short label, 2–5 words, e.g. 'Important disclaimer', 'Earnings & results disclaimer', or 'Legal notice'. Always output this field.",
+    "ftcText": "FTC disclaimer body for replay page — 2–3 professional sentences covering results vary, not medical/financial advice as appropriate, personal use of recordings, and legal entity name"
   },
   "imageSuggestions": {
     "FIELD_NAME_WHERE_NULL": "One sentence describing the SPECIFIC image to photograph or commission for this slot. Be actionable — describe subject, lighting, framing, mood. e.g. 'A warm three-quarter portrait of ${d.hostName ?? "the host"} in natural window light, mid-explanation, captured at golden hour against a soft neutral background.' Only include entries for fields you set to null."
@@ -1072,7 +1192,7 @@ The JSON must have exactly this structure:
     "finalCtaBody": "1–2 sentences",
     "finalCtaText": "final CTA button text",
     "finalCtaDeadline": "actual enrolment close date if available — no bracket placeholders; omit if not known",
-    "finalCtaTheme": "MUST be exactly one of: \"dark\", \"accent\", or \"light\". Default to \"dark\" — final CTAs convert best on near-black backgrounds.",
+    "finalCtaTheme": "MUST be exactly one of: \"dark\", \"accent\", or \"light\". Programme landing final CTA — warm brands: \"accent\" or \"dark\" (deep slate). Avoid assuming near-black; dark means branded slate.",
     "ftcDisclaimer": "FTC-compliant results disclaimer"
   },
   "programmeCheckout": {
@@ -1145,14 +1265,118 @@ ${plansSchema}
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
-function parseJsonResponse(raw: string): Record<string, unknown> {
-  try {
-    const jsonMatch = raw.match(/```json\n?([\s\S]*?)\n?```/) ?? raw.match(/(\{[\s\S]*\})/);
-    return jsonMatch ? JSON.parse(jsonMatch[1]) : JSON.parse(raw);
-  } catch {
-    console.error("JSON parse error — raw response:", raw.slice(0, 500));
-    return {};
+type ClaudeMessage = Awaited<ReturnType<Anthropic["messages"]["create"]>>;
+
+function extractResponseText(response: ClaudeMessage): string {
+  return response.content
+    .filter((b): b is { type: "text"; text: string } => b.type === "text" && typeof b.text === "string")
+    .map((b) => b.text)
+    .join("\n");
+}
+
+function extractJsonObject(raw: string): string {
+  const fenced = raw.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/i);
+  const candidate = (fenced ? fenced[1] : raw).trim();
+  const start = candidate.indexOf("{");
+  if (start === -1) throw new Error("No JSON object found in AI response");
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < candidate.length; i++) {
+    const ch = candidate[i];
+    if (inString) {
+      if (escape) escape = false;
+      else if (ch === "\\") escape = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') { inString = true; continue; }
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return candidate.slice(start, i + 1);
+    }
   }
+  return candidate.slice(start);
+}
+
+function repairTruncatedJson(json: string): string {
+  let repaired = json.replace(/,\s*([}\]])/g, "$1");
+  let open = 0;
+  for (const ch of json) {
+    if (ch === "{") open++;
+    else if (ch === "}") open--;
+  }
+  while (open > 0) { repaired += "}"; open--; }
+  return repaired;
+}
+
+function parseJsonResponse(raw: string, label: string): Record<string, unknown> {
+  const jsonStr = extractJsonObject(raw);
+  try {
+    const parsed = JSON.parse(jsonStr);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("Response is not a JSON object");
+    }
+    return parsed as Record<string, unknown>;
+  } catch {
+    try {
+      const repaired = repairTruncatedJson(jsonStr);
+      const parsed = JSON.parse(repaired);
+      console.warn(`${label}: recovered truncated JSON via repair`);
+      return parsed as Record<string, unknown>;
+    } catch {
+      console.error(`${label} JSON parse error — first 800 chars:`, raw.slice(0, 800));
+      throw new Error(`${label}: failed to parse AI response as JSON`);
+    }
+  }
+}
+
+function assertPageKeys(content: Record<string, unknown>, keys: readonly string[], label: string) {
+  const present = keys.filter((k) => content[k] && typeof content[k] === "object");
+  if (present.length === 0) {
+    throw new Error(`${label} generation returned no page content (expected at least one of: ${keys.join(", ")})`);
+  }
+}
+
+function parseGenerationResponse(
+  response: ClaudeMessage,
+  label: string,
+  expectedKeys: readonly string[],
+): Record<string, unknown> {
+  const raw = extractResponseText(response);
+  if (!raw.trim()) throw new Error(`${label}: AI returned an empty response`);
+
+  if (response.stop_reason === "max_tokens") {
+    console.warn(`${label}: hit max_tokens — output may be truncated`);
+  }
+
+  const parsed = parseJsonResponse(raw, label);
+  assertPageKeys(parsed, expectedKeys, label);
+  return parsed;
+}
+
+function assertFunnelContent(content: Record<string, unknown>) {
+  if (!content.eventLanding || typeof content.eventLanding !== "object") {
+    throw new Error("Generation incomplete — event landing page content is missing");
+  }
+  if (!content.programmeLanding || typeof content.programmeLanding !== "object") {
+    throw new Error("Generation incomplete — programme landing page content is missing");
+  }
+}
+
+function formatUpsellQuotes(d: WizardData): string {
+  const quotes = d.upsellQuotes?.filter((q) => q.quote?.trim()) ?? [];
+  if (quotes.length > 0) {
+    return quotes
+      .map((q, i) => `  ${i + 1}. "${q.quote}" — ${q.attribution?.trim() || "no attribution"}`)
+      .join("\n");
+  }
+  if (d.upsellQuote?.trim()) {
+    return `  1. "${d.upsellQuote}" — ${d.upsellQuoteAttribution?.trim() || "no attribution"}`;
+  }
+  return "  Not provided — generate 1–2 short testimonials specific to the upsell product if Step 8 testimonials don't fit.";
 }
 
 function formatPricing(d: WizardData): string {

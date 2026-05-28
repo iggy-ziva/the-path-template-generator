@@ -610,12 +610,14 @@ export function FileUpload({
   onUpload,
   currentUrl,
   bucket = "wizard-uploads",
+  requireTransparency = false,
 }: {
   label: string;
   accept: string;
   onUpload: (url: string) => void;
   currentUrl?: string;
   bucket?: string;
+  requireTransparency?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -626,9 +628,15 @@ export function FileUpload({
     setUploading(true);
     setError("");
     try {
+      if (requireTransparency) {
+        const { fileHasTransparency, LOGO_TRANSPARENCY_ERROR } = await import("@/lib/image-alpha");
+        const ok = await fileHasTransparency(file);
+        if (!ok) throw new Error(LOGO_TRANSPARENCY_ERROR);
+      }
       const formData = new FormData();
       formData.append("file", file);
       formData.append("bucket", bucket);
+      if (requireTransparency) formData.append("requireTransparency", "true");
       const res = await fetch("/api/wizard/upload", { method: "POST", body: formData });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Upload failed");
@@ -637,11 +645,24 @@ export function FileUpload({
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   }
 
+  const checkerboard = {
+    backgroundImage: "linear-gradient(45deg, #e8e0d4 25%, transparent 25%), linear-gradient(-45deg, #e8e0d4 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e8e0d4 75%), linear-gradient(-45deg, transparent 75%, #e8e0d4 75%)",
+    backgroundSize: "12px 12px",
+    backgroundPosition: "0 0, 0 6px, 6px -6px, -6px 0",
+    backgroundColor: "#FCF8EF",
+  };
+
   return (
     <div>
+      {currentUrl && !uploading && (
+        <div style={{ marginBottom: 10, padding: 12, borderRadius: 10, ...checkerboard, display: "inline-block", maxWidth: "100%" }}>
+          <img src={currentUrl} alt="" style={{ maxHeight: 80, maxWidth: 240, objectFit: "contain", display: "block" }} />
+        </div>
+      )}
       <label
         style={{
           display: "flex",

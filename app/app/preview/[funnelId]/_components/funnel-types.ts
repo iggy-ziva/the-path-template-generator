@@ -4,6 +4,18 @@ export function safeUrl(url: string | null | undefined): string | null {
   return url.startsWith("http://") || url.startsWith("https://") ? url : null;
 }
 
+/** Brand-tinted image overlays — use var(--surface-inverse) instead of hardcoded Threshold black */
+export function brandHeroOverlay(): string {
+  return "linear-gradient(to right, color-mix(in srgb, var(--surface-inverse) 95%, transparent) 40%, color-mix(in srgb, var(--surface-inverse) 40%, transparent) 100%)";
+}
+export function brandSectionOverlay(opacity = 0.82): string {
+  const pct = Math.round(opacity * 100);
+  return `linear-gradient(color-mix(in srgb, var(--surface-inverse) ${pct}%, transparent), color-mix(in srgb, var(--surface-inverse) ${pct}%, transparent))`;
+}
+export function brandImageBackground(overlay: string, url: string): string {
+  return `${overlay}, url(${url})`;
+}
+
 // Section background theme — Claude decides; components apply the right CSS classes.
 // "dark"   → surface-inverse background  (near-black)  use on-dark for light text
 // "accent" → surface-accent background   (dark teal)   use on-dark for light text
@@ -21,6 +33,7 @@ export interface WizardSnapshot {
   hostHeadshotUrl?: string;
   businessName?: string;
   logoUrl?: string;
+  logoTransparent?: boolean;
   contactEmail?: string;
   websiteUrl?: string;
   privacyPolicyUrl?: string;
@@ -48,6 +61,7 @@ export interface WizardSnapshot {
   upsellHeadline?: string;
   upsellDescription?: string;
   upsellIncludedItems?: { title: string; description: string }[];
+  upsellQuotes?: { quote: string; attribution: string }[];
   upsellQuote?: string;
   upsellQuoteAttribution?: string;
   upsellRegularValue?: string;
@@ -85,6 +99,8 @@ export interface WizardSnapshot {
       accent?: string;
     };
     googleFonts?: string[];
+    fontDisplay?: string;
+    fontBody?: string;
   };
 }
 
@@ -107,6 +123,8 @@ export interface EventLandingContent {
   heroPriceValue?: string;
   heroCtaText?: string;
   heroMetaLine?: string;
+  /** Structural section theme — AI or brand-aware default */
+  heroTheme?: SectionTheme;
   // 03 Credibility 1
   credibilityQuote1?: string;
   credibilityAttribution1?: string;
@@ -184,12 +202,14 @@ export interface EventLandingContent {
   finalVpFromTo?: { from: string; to: string }[];
   finalVpClosing?: string;
   finalVpCtaMicrocopy?: string;
+  finalVpTheme?: SectionTheme;
   // 19 FAQ
   faqEyebrow?: string;
   faqItems?: { question: string; answer: string }[];
   // Final CTA
   finalCtaLine?: string;
   finalCtaText?: string;
+  registerTheme?: SectionTheme;
   // 20 FTC
   ftcDisclaimer?: string;
 }
@@ -222,6 +242,7 @@ export interface UpsellContent {
   description?: string;
   includedTitle?: string;
   includedItems?: { title: string; description: string }[];
+  testimonialQuotes?: { quote: string; attribution?: string }[];
   testimonialQuote?: string;
   testimonialAttribution?: string;
   regularPrice?: string;
@@ -293,6 +314,7 @@ export interface ReplayContent {
   programCtaPlanText?: string;
   programCtaUrgency?: string;
   programCtaEnrolText?: string;
+  ftcHeading?: string;
   ftcText?: string;
 }
 

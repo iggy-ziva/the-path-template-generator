@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { FunnelContent, WizardSnapshot } from "./funnel-types";
+import { resolveFontRoles, buildGoogleFontsImport, fontFamilyCss } from "@/lib/font-roles";
+import { computeBrandSurfaces, darkenHex, hexLuminance, lightenHex } from "@/lib/brand-surfaces";
+import { ensureContrast, inversePanelBg, mutedOnSurface, panelEmphasisStyle } from "@/lib/contrast-colors";
 import EventLandingPage from "./pages/EventLandingPage";
 import EventCheckoutPage from "./pages/EventCheckoutPage";
 import UpsellPage from "./pages/UpsellPage";
@@ -33,55 +36,9 @@ interface Props {
   wizardData: Record<string, unknown>;
 }
 
-/** Lighten a hex colour by mixing it with white (ratio 0 = original, 1 = white) */
-function lightenHex(hex: string, ratio: number): string {
-  const clean = hex.replace("#", "");
-  if (clean.length !== 6) return hex;
-  const r = parseInt(clean.slice(0, 2), 16);
-  const g = parseInt(clean.slice(2, 4), 16);
-  const b = parseInt(clean.slice(4, 6), 16);
-  const lr = Math.min(255, Math.round(r + (255 - r) * ratio));
-  const lg = Math.min(255, Math.round(g + (255 - g) * ratio));
-  const lb = Math.min(255, Math.round(b + (255 - b) * ratio));
-  return `#${lr.toString(16).padStart(2, "0")}${lg.toString(16).padStart(2, "0")}${lb.toString(16).padStart(2, "0")}`;
-}
-
-/** Darken a hex colour by mixing it toward black (ratio 0 = original, 1 = black) */
-function darkenHex(hex: string, ratio: number): string {
-  const clean = hex.replace("#", "");
-  if (clean.length !== 6) return hex;
-  const r = parseInt(clean.slice(0, 2), 16);
-  const g = parseInt(clean.slice(2, 4), 16);
-  const b = parseInt(clean.slice(4, 6), 16);
-  const dr = Math.round(r * (1 - ratio));
-  const dg = Math.round(g * (1 - ratio));
-  const db = Math.round(b * (1 - ratio));
-  return `#${dr.toString(16).padStart(2, "0")}${dg.toString(16).padStart(2, "0")}${db.toString(16).padStart(2, "0")}`;
-}
-
 /** Perceived lightness of a hex colour (0 = black, 1 = white) */
 function luminance(hex: string): number {
-  const clean = hex.replace("#", "");
-  if (clean.length !== 6) return 0.5;
-  const r = parseInt(clean.slice(0, 2), 16) / 255;
-  const g = parseInt(clean.slice(2, 4), 16) / 255;
-  const b = parseInt(clean.slice(4, 6), 16) / 255;
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-/**
- * Lift a colour until it has enough luminance to be readable on a near-black surface.
- * Threshold: luminance > 0.18 (≈ 3:1 contrast ratio against a very dark surface).
- */
-function makeOnDark(hex: string): string {
-  if (luminance(hex) > 0.18) return hex;
-  // Progressive lighten passes until bright enough
-  let result = hex;
-  for (let i = 0; i < 6; i++) {
-    result = lightenHex(result, 0.35);
-    if (luminance(result) > 0.18) break;
-  }
-  return result;
+  return hexLuminance(hex);
 }
 
 /**
@@ -128,11 +85,16 @@ interface BrandTokens {
   surfaceCanvas: string;
   surfaceSunken: string;
   surfaceRaised: string;
+  surfaceAccent: string;
   surfaceInverse: string;
   textPrimary: string;
   textSecondary: string;
   textTertiary: string;
   textInverse: string;
+  textMutedOnInverse: string;
+  panelUrgencyFg: string;
+  panelUrgencyBg: string;
+  panelUrgencyBorder: string;
   borderSubtle: string;
 }
 
@@ -165,31 +127,33 @@ function computeBrandTokens(wizard: WizardSnapshot): BrandTokens {
   // accent field = "Link / accent — Hyperlinks and highlights". It is NEVER used for CTA buttons.
   const linkColor = sg?.brandColors?.accent ?? primary;
   const fonts     = sg?.googleFonts ?? [];
+  const { display: displayFont, body: bodyFont } = resolveFontRoles(fonts, {
+    fontDisplay: sg?.fontDisplay,
+    fontBody: sg?.fontBody,
+  });
 
-  // Surface & text tokens — derived first so textPrimary/textInverse can be used in contrast decisions below
-  const surfaceCanvas  = lightenHex(secondary, 0.95);   // very subtle page background tint
-  const surfaceSunken  = lightenHex(secondary, 0.89);   // slightly deeper for recessed blocks
-  const surfaceRaised  = lightenHex(secondary, 0.98);   // near-white elevated panels
-  const surfaceInverse = darkenHex(secondary, 0.93);    // near-black dark sections & footers
-  const textPrimary    = darkenHex(secondary, 0.80);    // deep brand-tinted dark body text
-  const textSecondary  = darkenHex(secondary, 0.60);    // medium secondary text
-  const textTertiary   = darkenHex(secondary, 0.42);    // lighter supporting text
-  const textInverse    = lightenHex(secondary, 0.94);   // light text on dark surfaces
-  const borderSubtle   = lightenHex(primary, 0.82);     // subtle borders (primary-tinted)
+  // Surface & text tokens — brand-aware inverse (warm brands → deep slate, not near-black)
+  const surfaces = computeBrandSurfaces({ primary, secondary, tertiary });
+  const {
+    surfaceCanvas, surfaceSunken, surfaceRaised, surfaceAccent, surfaceInverse,
+    textPrimary, textSecondary, textTertiary, borderSubtle,
+  } = surfaces;
+
+  // Text on inverse surfaces — verified against actual surface-inverse (branded slate),
+  // not a generic near-black threshold. Same-hue accents (e.g. blue on blue slate) get lifted.
+  const textInverse = ensureContrast(lightenHex(secondary, 0.94), surfaceInverse, 4.5);
+  const textMutedOnInverse = mutedOnSurface(textInverse, surfaceInverse, 4.5);
 
   // ── Contrast-safe accent variants ────────────────────────────────────────
-  // For each brand colour: compute a version safe for dark surfaces, a version safe for
-  // light surfaces, and the appropriate text colour to put ON TOP of that colour as a BG.
-
-  const accentPrimaryOnDark  = makeOnDark(primary);
+  const accentPrimaryOnDark  = ensureContrast(primary, surfaceInverse, 3.0);
   const accentPrimaryOnLight = makeOnLight(primary);
   const textOnPrimary        = luminance(primary) > 0.35 ? textPrimary : textInverse;
 
-  const accentSecondaryOnDark  = makeOnDark(secondary);
+  const accentSecondaryOnDark  = ensureContrast(secondary, surfaceInverse, 4.5);
   const accentSecondaryOnLight = makeOnLight(secondary);
   const textOnSecondary        = luminance(secondary) > 0.35 ? textPrimary : textInverse;
 
-  const accentTertiaryOnDark  = makeOnDark(tertiary);
+  const accentTertiaryOnDark  = ensureContrast(tertiary, surfaceInverse, 3.0);
   const accentTertiaryOnLight = makeOnLight(tertiary);
   const textOnTertiary        = luminance(tertiary) > 0.35 ? textPrimary : textInverse;
 
@@ -201,19 +165,24 @@ function computeBrandTokens(wizard: WizardSnapshot): BrandTokens {
   // Text on top of the CTA button — contrast-safe against the (possibly lifted) accentLight
   const textOnAccent = luminance(accentLight) > 0.35 ? textPrimary : textInverse;
 
+  // Panel urgency (replay program CTA): distinct from primary button, contrast-safe on panel bg
+  const panelBg = inversePanelBg(surfaceInverse, textInverse, 0.04);
+  const panelUrgency = panelEmphasisStyle(
+    panelBg,
+    accentLight,
+    [accentSecondaryOnDark, accentTertiaryOnDark, textMutedOnInverse],
+    4.5,
+  );
+
   const rP = parseInt(primary.replace("#", "").slice(0, 2), 16);
   const gP = parseInt(primary.replace("#", "").slice(2, 4), 16);
   const bP = parseInt(primary.replace("#", "").slice(4, 6), 16);
   const darkenedPrimary = `#${Math.max(0, rP - 30).toString(16).padStart(2, "0")}${Math.max(0, gP - 24).toString(16).padStart(2, "0")}${Math.max(0, bP - 16).toString(16).padStart(2, "0")}`;
 
-  const fontDisplay = fonts[1] ? `"${fonts[1]}", "GT Sectra", Georgia, serif`
-                                : '"Source Serif 4", "GT Sectra", Georgia, serif';
-  const fontBody    = fonts[0] ? `"${fonts[0]}", -apple-system, system-ui, sans-serif`
-                                : '"Inter", -apple-system, system-ui, sans-serif';
+  const fontDisplay = fontFamilyCss(displayFont, '"GT Sectra", Georgia, serif');
+  const fontBody    = fontFamilyCss(bodyFont, "-apple-system, system-ui, sans-serif");
 
-  const fontImport = fonts.length > 0
-    ? `@import url('https://fonts.googleapis.com/css2?family=${fonts.map((f: string) => f.replace(/ /g, "+") + ":wght@400;500;600;700").join("&family=")}&display=swap');`
-    : "";
+  const fontImport = buildGoogleFontsImport([displayFont, bodyFont, ...fonts]);
 
   // Logo tint filter: greyscale → sepia → hue-rotate to brand secondary hue
   // Sepia baseline is ~35°; rotate to secondary hue. Saturate proportional to secondary saturation.
@@ -229,8 +198,12 @@ function computeBrandTokens(wizard: WizardSnapshot): BrandTokens {
     accentSecondaryOnDark, accentSecondaryOnLight, textOnSecondary,
     accentTertiaryOnDark, accentTertiaryOnLight, textOnTertiary,
     logoHueRotate, logoSaturate, fontDisplay, fontBody, fontImport,
-    surfaceCanvas, surfaceSunken, surfaceRaised, surfaceInverse,
-    textPrimary, textSecondary, textTertiary, textInverse, borderSubtle,
+    surfaceCanvas, surfaceSunken, surfaceRaised, surfaceAccent, surfaceInverse,
+    textPrimary, textSecondary, textTertiary, textInverse, textMutedOnInverse,
+    panelUrgencyFg: panelUrgency.fg,
+    panelUrgencyBg: panelUrgency.bg,
+    panelUrgencyBorder: panelUrgency.border,
+    borderSubtle,
   };
 }
 
@@ -244,8 +217,10 @@ function buildBrandCSS(tokens: BrandTokens): string {
     accentSecondaryOnDark, accentSecondaryOnLight, textOnSecondary,
     accentTertiaryOnDark, accentTertiaryOnLight, textOnTertiary,
     fontDisplay, fontBody, fontImport,
-    surfaceCanvas, surfaceSunken, surfaceRaised, surfaceInverse,
-    textPrimary, textSecondary, textTertiary, textInverse, borderSubtle,
+    surfaceCanvas, surfaceSunken, surfaceRaised, surfaceAccent, surfaceInverse,
+    textPrimary, textSecondary, textTertiary, textInverse, textMutedOnInverse,
+    panelUrgencyFg, panelUrgencyBg, panelUrgencyBorder,
+    borderSubtle,
   } = tokens;
   return `${fontImport ? fontImport + "\n" : ""}/* =====================================================================
    brand.css — per-funnel brand overrides
@@ -284,6 +259,7 @@ function buildBrandCSS(tokens: BrandTokens): string {
   --surface-canvas:        ${surfaceCanvas};
   --surface-sunken:        ${surfaceSunken};
   --surface-raised:        ${surfaceRaised};
+  --surface-accent:        ${surfaceAccent};
   --surface-inverse:       ${surfaceInverse};
 
   /* Text colours — derived from brand secondary */
@@ -291,6 +267,12 @@ function buildBrandCSS(tokens: BrandTokens): string {
   --text-secondary:        ${textSecondary};
   --text-tertiary:         ${textTertiary};
   --text-inverse:          ${textInverse};
+  --text-muted-on-inverse: ${textMutedOnInverse};
+
+  /* Panel urgency — distinct from primary CTA, tuned to price-block panel bg */
+  --panel-urgency-fg:      ${panelUrgencyFg};
+  --panel-urgency-bg:      ${panelUrgencyBg};
+  --panel-urgency-border:  ${panelUrgencyBorder};
 
   /* Borders */
   --border-subtle:         ${borderSubtle};
@@ -306,33 +288,9 @@ function buildBrandCSS(tokens: BrandTokens): string {
 `;
 }
 
-/** Wrap an HTML body fragment into a full standalone HTML document */
-function wrapPage(title: string, body: string, funnelId: string): string {
-  return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${title}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="pages.css" />
-  <link rel="stylesheet" href="brand.css" />
-</head>
-<body>
-${body}
-<script src="funnel-nav.js"></script>
-</body>
-</html>`;
-}
-
 export default function PreviewClient({ funnelId, content, themeSlug, createdAt, wizardData }: Props) {
   const [activePage, setActivePage] = useState<PageKey>("eventLanding");
   const [downloading, setDownloading] = useState(false);
-
-  const pageRefs = useRef<Partial<Record<PageKey, HTMLDivElement | null>>>({});
 
   const fc = content as FunnelContent;
   const wizard = wizardData as WizardSnapshot;
@@ -345,13 +303,48 @@ export default function PreviewClient({ funnelId, content, themeSlug, createdAt,
     accentSecondaryOnDark, accentSecondaryOnLight, textOnSecondary,
     accentTertiaryOnDark, accentTertiaryOnLight, textOnTertiary,
     logoHueRotate, logoSaturate, fontDisplay, fontBody, fontImport,
-    surfaceCanvas, surfaceSunken, surfaceRaised, surfaceInverse,
-    textPrimary, textSecondary, textTertiary, textInverse, borderSubtle,
+    surfaceCanvas, surfaceSunken, surfaceRaised, surfaceAccent, surfaceInverse,
+    textPrimary, textSecondary, textTertiary, textInverse, textMutedOnInverse,
+    panelUrgencyFg, panelUrgencyBg, panelUrgencyBorder,
+    borderSubtle,
   } = tokens;
   // Text colour to use on top of the brand primary (ensures contrast on the active tab)
   const primaryTextColor = luminance(primary) > 0.35 ? "#0A0A0A" : "#F8F8F8";
 
   const brandCSS = buildBrandCSS(tokens);
+
+  useEffect(() => {
+    setActivePage("eventLanding");
+  }, [funnelId]);
+
+  // Inject per-funnel brand tokens on :root so global funnel-pages.css rules
+  // (e.g. body { background: var(--surface-inverse) }) resolve to THIS funnel's
+  // palette — not Threshold defaults or another generation's leftover state.
+  useEffect(() => {
+    const styleId = `preview-brand-${funnelId}`;
+    const css = `${brandCSS}
+body {
+  background: var(--surface-canvas) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-body) !important;
+}`;
+
+    document.querySelectorAll('style[id^="preview-brand-"]').forEach((node) => {
+      if (node.id !== styleId) node.remove();
+    });
+
+    let el = document.getElementById(styleId) as HTMLStyleElement | null;
+    if (!el) {
+      el = document.createElement("style");
+      el.id = styleId;
+      document.head.appendChild(el);
+    }
+    el.textContent = css;
+
+    return () => {
+      el?.remove();
+    };
+  }, [funnelId, brandCSS]);
 
   // Map funnel URL paths → preview tab keys so CTA clicks navigate within the preview
   // instead of sending the browser to a 404.
@@ -383,55 +376,9 @@ export default function PreviewClient({ funnelId, content, themeSlug, createdAt,
   async function handleDownload() {
     setDownloading(true);
     try {
-      const { default: JSZip } = await import("jszip");
-      const zip = new JSZip();
-
-      // ── Static CSS assets ──────────────────────────────────────────────
-      // Fetch the actual files from public/
-      const [styleRes, pagesRes, navRes] = await Promise.all([
-        fetch("/funnel-style.css"),
-        fetch("/funnel-pages.css"),
-        fetch("/funnel-nav.js"),
-      ]);
-      zip.file("style.css",   await styleRes.text());
-      zip.file("pages.css",   await pagesRes.text());
-      zip.file("brand.css",   brandCSS);
-      zip.file("funnel-nav.js", await navRes.text());
-
-      // ── HTML pages ────────────────────────────────────────────────────
-      for (const p of PAGES) {
-        const el = pageRefs.current[p.key];
-        const body = el?.innerHTML ?? `<!-- ${p.label}: no content generated -->`;
-        zip.file(p.file, wrapPage(p.label, body, funnelId));
-      }
-
-      // ── README ────────────────────────────────────────────────────────
-      zip.file("README.txt", `The Path Funnel Export
-Generated: ${new Date().toISOString()}
-Funnel ID: ${funnelId}
-
-Files:
-  index.html               — Event landing page
-  event-checkout.html      — Event checkout
-  upsell.html              — Upsell offer
-  event-thank-you.html     — Event confirmation
-  replay.html              — Event replay
-  programme.html           — Programme landing page
-  programme-checkout.html  — Programme checkout
-  programme-thank-you.html — Programme enrolment confirmation
-
-  style.css                — Shared design system (do not edit)
-  pages.css                — Page-specific styles (do not edit)
-  brand.css                — Your brand overrides (colours & fonts)
-  funnel-nav.js            — Dev preview navigation
-
-Notes:
-  - Fonts load from Google Fonts CDN — internet connection required
-  - Replace placeholder payment forms with your processor embed code
-  - brand.css contains your CSS custom properties — edit to fine-tune colours
-`);
-
-      const blob = await zip.generateAsync({ type: "blob" });
+      const res = await fetch(`/api/wizard/export/${funnelId}`);
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -490,11 +437,16 @@ Notes:
     "--surface-canvas":              surfaceCanvas,
     "--surface-sunken":              surfaceSunken,
     "--surface-raised":              surfaceRaised,
+    "--surface-accent":              surfaceAccent,
     "--surface-inverse":             surfaceInverse,
     "--text-primary":                textPrimary,
     "--text-secondary":              textSecondary,
     "--text-tertiary":               textTertiary,
     "--text-inverse":                textInverse,
+    "--text-muted-on-inverse":       textMutedOnInverse,
+    "--panel-urgency-fg":            panelUrgencyFg,
+    "--panel-urgency-bg":              panelUrgencyBg,
+    "--panel-urgency-border":          panelUrgencyBorder,
     "--border-subtle":               borderSubtle,
   } as React.CSSProperties;
 
@@ -510,13 +462,6 @@ Notes:
         #stickyBar.is-visible { top: 52px !important; }
         section.credibility.inline { padding: 40px 0 !important; border: none !important; margin-bottom: 40px !important; }
         section.credibility.inline .quote-glyph { font-size: 64px !important; line-height: 1 !important; margin-bottom: 16px !important; }
-        /* Scope .ty-hero .inner max-width per page — prevents programme-TY (720px) from narrowing event-TY (760px) */
-        [data-page="eventThankYou"] .ty-hero .inner { max-width: 760px !important; }
-        [data-page="programmeThankYou"] .ty-hero .inner { max-width: 720px !important; }
-        /* Prevent programme-TY fadeUp animation from bleeding into event-TY hero children */
-        [data-page="eventThankYou"] .ty-hero .inner > * { animation: none !important; }
-        /* Programme checkout has a dark page canvas — enforce it in the preview wrapper */
-        [data-page="programmeCheckout"] { background: var(--surface-inverse) !important; }
       ` }} />
 
       {/* Toolbar — fixed so it sits above everything including the app header */}
@@ -577,24 +522,21 @@ Notes:
         </button>
       </div>
 
-      {/* Page content — brand CSS custom properties set HERE as inline style so they cascade
-          to every descendant element, guaranteed to override :root stylesheet values. */}
+      {/* Only mount the active page — all 8 pages share one document and global CSS,
+          so mounting them together causes rules from upsell/programme to bleed across tabs. */}
       <div onClick={handlePreviewClick} style={{ paddingTop: 52, ...brandVars }}>
-        {PAGES.map((p) => (
-          <div
-            key={p.key}
-            data-page={p.key}
-            ref={(el) => { pageRefs.current[p.key] = el; }}
-            style={{
-              display: activePage === p.key ? "block" : "none",
-              background: "var(--surface-canvas)",
-              color: "var(--text-primary)",
-              fontFamily: "var(--font-body)",
-            }}
-          >
-            {pageComponent(p.key)}
-          </div>
-        ))}
+        <div
+          key={activePage}
+          data-page={activePage}
+          style={{
+            background: activePage === "programmeCheckout" ? "var(--surface-inverse)" : "var(--surface-canvas)",
+            color: activePage === "programmeCheckout" ? "var(--text-inverse)" : "var(--text-primary)",
+            fontFamily: "var(--font-body)",
+            minHeight: "calc(100vh - 52px)",
+          }}
+        >
+          {pageComponent(activePage)}
+        </div>
       </div>
     </>
   );

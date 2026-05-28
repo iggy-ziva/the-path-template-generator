@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import type { EventLandingContent, WizardSnapshot } from "../funnel-types";
-import { safeUrl } from "../funnel-types";
+import { safeUrl, brandHeroOverlay, brandSectionOverlay, brandImageBackground } from "../funnel-types";
+import BrandLogo from "../BrandLogo";
+import {
+  defaultHeroTheme,
+  defaultRegisterTheme,
+  defaultFinalVpTheme,
+  structuralSectionClass,
+} from "@/lib/brand-surfaces";
 
 interface Props {
   content: EventLandingContent;
@@ -87,15 +94,23 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
   const eventTarget = parseEventDate(w.eventDate, w.eventTime, w.eventTimezone);
   const countdown = useCountdown(eventTarget);
 
+  const brandPrimary = w.styleGuide?.brandColors?.primary;
+  const heroTheme = c.heroTheme ?? defaultHeroTheme(brandPrimary);
+  const finalVpTheme = c.finalVpTheme ?? defaultFinalVpTheme(brandPrimary);
+  const registerTheme = c.registerTheme ?? defaultRegisterTheme(brandPrimary);
+
   return (
     <div>
       {/* ── 01 Sticky Bar ── */}
       <div className="sticky-bar is-visible" id="stickyBar" aria-label="Registration bar">
         <div className="container">
-          {w.logoUrl
-            ? <img src={w.logoUrl} alt={brandName} style={{ height: 96, objectFit: "contain" }} />
-            : <div className="logo">{brandName}</div>
-          }
+          <BrandLogo
+            logoUrl={w.logoUrl}
+            logoTransparent={w.logoTransparent}
+            name={brandName}
+            className="logo"
+            imgStyle={{ height: 96, objectFit: "contain" }}
+          />
           <div className="event-title">{w.eventName}</div>
           <div className="countdown" aria-label="Time until event">
             {countdown.expired || !eventTarget ? (
@@ -120,10 +135,10 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
 
       {/* ── 02 Hero ── */}
       <section
-        className="hero on-dark"
+        className={structuralSectionClass("hero", heroTheme)}
         id="hero"
         style={hero1Url ? {
-          backgroundImage: `linear-gradient(to right, rgba(15,14,12,0.95) 40%, rgba(15,14,12,0.4) 100%), url(${hero1Url})`,
+          backgroundImage: brandImageBackground(brandHeroOverlay(), hero1Url),
           backgroundSize: "cover",
           backgroundPosition: "center",
         } : undefined}
@@ -245,8 +260,8 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
             <div className="logo-wall" aria-label="Press logos">
               {(w.pressLogos ?? []).filter(p => p.name || p.logoUrl).map((p, i) => (
                 p.logoUrl
-                  ? <div key={i} className="logo-slot" style={{ minWidth: 120 }}>
-                      <img src={p.logoUrl} alt={p.name} style={{ height: 52, minWidth: 100, maxWidth: "100%", objectFit: "contain", display: "block" }} />
+                  ? <div key={i} className="logo-slot">
+                      <img src={p.logoUrl} alt={p.name} style={{ height: 52, maxWidth: "100%", objectFit: "contain", display: "block" }} />
                     </div>
                   : <div key={i} className="logo-slot">{p.name}</div>
               ))}
@@ -286,7 +301,7 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       {c.encourageText1 && (
         <section
           className={encourageClass(c.encourage1Theme, "dark")}
-          style={safeUrl(c.encourage1BackgroundUrl) ? { backgroundImage: `linear-gradient(rgba(15,14,12,0.82),rgba(15,14,12,0.82)), url(${safeUrl(c.encourage1BackgroundUrl)})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+          style={safeUrl(c.encourage1BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage1BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
             <p className="line">{c.encourageText1}</p>
@@ -409,7 +424,7 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       {c.encourageText2 && (
         <section
           className={encourageClass(c.encourage2Theme, "accent")}
-          style={safeUrl(c.encourage2BackgroundUrl) ? { backgroundImage: `linear-gradient(rgba(15,14,12,0.82),rgba(15,14,12,0.82)), url(${safeUrl(c.encourage2BackgroundUrl)})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+          style={safeUrl(c.encourage2BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage2BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
             <p className="line">{c.encourageText2}</p>
@@ -536,7 +551,7 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       {c.encourageText3 && (
         <section
           className={encourageClass(c.encourage3Theme, "light")}
-          style={safeUrl(c.encourage3BackgroundUrl) ? { backgroundImage: `linear-gradient(rgba(15,14,12,0.82),rgba(15,14,12,0.82)), url(${safeUrl(c.encourage3BackgroundUrl)})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+          style={safeUrl(c.encourage3BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage3BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
             <p className="line">{c.encourageText3}</p>
@@ -600,7 +615,7 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
 
       {/* ── 18 Final VP ── */}
       {c.finalVpHeading && (
-        <section className="final-vp on-dark">
+        <section className={structuralSectionClass("final-vp", finalVpTheme)}>
           <div className="container">
             <h2>{c.finalVpHeading}</h2>
             <div className="reading">
@@ -650,7 +665,7 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       )}
 
       {/* ── Final CTA (dark) ── */}
-      <section className="encourage dark-bg on-dark" id="register">
+      <section className={structuralSectionClass("encourage", registerTheme)} id="register">
         <div className="container">
           <p className="line">{c.finalCtaLine ?? w.eventName}</p>
           <a href="/checkout" className="btn btn-primary btn-xl">{c.finalCtaText ?? ctaText}</a>
@@ -673,10 +688,13 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       <footer className="ty-footer">
         <div className="inner">
           <div className="ty-footer-left">
-            {safeUrl(w.logoUrl)
-              ? <img src={safeUrl(w.logoUrl)!} alt={brandName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              : <div className="ty-footer-brand">{brandName}</div>
-            }
+            <BrandLogo
+              logoUrl={w.logoUrl}
+              logoTransparent={w.logoTransparent}
+              name={brandName}
+              className="ty-footer-brand"
+              imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}
+            />
             <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {brandName}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--s-5)", flexWrap: "wrap" }}>

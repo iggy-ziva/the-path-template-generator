@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { createClient } from "@supabase/supabase-js";
 import { nanoid } from "nanoid";
+import { bufferHasTransparency, LOGO_TRANSPARENCY_ERROR } from "@/lib/image-alpha";
 
 function getServiceClient() {
   return createClient(
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const bucket = (formData.get("bucket") as string) ?? "wizard-uploads";
+    const requireTransparency = formData.get("requireTransparency") === "true";
 
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -45,11 +47,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File too large (max 20 MB)" }, { status: 400 });
     }
 
+    const arrayBuffer = await file.arrayBuffer();
+    if (requireTransparency && !bufferHasTransparency(arrayBuffer, file.type)) {
+      return NextResponse.json({ error: LOGO_TRANSPARENCY_ERROR }, { status: 400 });
+    }
+
     const ext = file.name.split(".").pop() ?? "bin";
     const path = `${session.userId}/${nanoid()}.${ext}`;
 
     const supabase = getServiceClient();
-    const arrayBuffer = await file.arrayBuffer();
     const { error } = await supabase.storage
       .from(bucket)
       .upload(path, arrayBuffer, {

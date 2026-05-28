@@ -56,18 +56,14 @@ export default function WizardClient({ userEmail }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [nameModalOpen, setNameModalOpen] = useState(false);
   const [funnels, setFunnels] = useState<FunnelSummary[]>([]);
-  const [generationsUsed, setGenerationsUsed] = useState(0);
-  const [generationLimit, setGenerationLimit] = useState(10);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetch the sidebar funnel list
   function refreshFunnels() {
     fetch("/api/wizard/funnels")
       .then((r) => r.json())
-      .then(({ funnels: f, generationsUsed: used, generationLimit: limit }) => {
+      .then(({ funnels: f }) => {
         if (Array.isArray(f)) setFunnels(f);
-        if (typeof used === "number") setGenerationsUsed(used);
-        if (typeof limit === "number") setGenerationLimit(limit);
       })
       .catch(() => {});
   }
@@ -297,8 +293,6 @@ export default function WizardClient({ userEmail }: Props) {
         onFunnelsChange={setFunnels}
         onSwitch={handleSwitchFunnel}
         onDelete={handleDeleteFunnel}
-        generationsUsed={generationsUsed}
-        generationLimit={generationLimit}
       />
 
       {nameModalOpen && (

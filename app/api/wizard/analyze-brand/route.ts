@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { detectFontRolesFromCss, resolveFontRoles } from "@/lib/font-roles";
 
 // ── Font alternatives ──────────────────────────────────────────────────────
 const FONT_ALTERNATIVES: Record<string, string[]> = {
@@ -422,6 +423,158 @@ function htmlColorSweep(html: string): string[] {
 }
 
 // ── Font detection ────────────────────────────────────────────────────────
+
+/**
+ * Well-known Google Fonts by name.
+ * Used to identify self-hosted Google Fonts (served via @font-face without a googleapis.com
+ * link — common when WP caching plugins like OMGF / Autoptimize self-host them).
+ */
+const GOOGLE_FONTS_SET = new Set([
+  // Sans-serif
+  "Open Sans","Lato","Roboto","Montserrat","Source Sans 3","Source Sans Pro",
+  "Oswald","Raleway","Poppins","Ubuntu","Merriweather Sans","Nunito",
+  "PT Sans","Noto Sans","Exo 2","Josefin Sans","Titillium Web",
+  "Fira Sans","Barlow","Inter","DM Sans","Plus Jakarta Sans","Outfit",
+  "Karla","Mulish","Quicksand","Work Sans","Cabin","Jost","Nunito Sans",
+  "Lexend","Be Vietnam Pro","Manrope","Sora","Figtree","Onest",
+  "Barlow Condensed","Barlow Semi Condensed","Roboto Condensed","Roboto Flex",
+  "Exo","Asap","Hind","Arimo","Encode Sans","Sarabun","Libre Franklin",
+  "Heebo","IBM Plex Sans","IBM Plex Mono","Space Grotesk","Space Mono",
+  "Albert Sans","Bricolage Grotesque","Rubik","Rajdhani","Khand","Kanit",
+  "Teko","Catamaran","Dosis","Assistant","Questrial","Signika",
+  "Varela Round","Hanken Grotesk","Geologica","Urbanist","Spline Sans",
+  "Spline Sans Mono","Instrument Sans",
+  // Serif
+  "Playfair Display","Lora","Merriweather","PT Serif","Libre Baskerville",
+  "Crimson Text","Crimson Pro","EB Garamond","Cormorant Garamond","Cormorant",
+  "Domine","Libre Caslon Text","Libre Caslon Display","Zilla Slab",
+  "DM Serif Display","DM Serif Text","Quattrocento","Cardo","Spectral",
+  "Alegreya","Alegreya Sans","Alfa Slab One","Arvo","Bitter",
+  "Roboto Slab","Source Serif 4","Source Serif Pro","Noto Serif",
+  "IBM Plex Serif","Vollkorn","Noticia Text","Old Standard TT",
+  "Unna","Lusitana","Tinos","Frank Ruhl Libre","Yeseva One","Cinzel",
+  "Forum","Marcellus","Martel","Neuton","GFS Didot","Noto Serif Display",
+  "Instrument Serif","Cormorant Infant","Faustina",
+  // Display / decorative
+  "Abril Fatface","Righteous","Pacifico","Lobster","Fredoka One",
+  "Boogaloo","Comfortaa","Secular One","Audiowide","Bebas Neue",
+  "Anton","Big Shoulders Display","Big Shoulders Text","Squada One",
+  "Bree Serif","Fjalla One","Oleo Script","Dancing Script",
+  "Permanent Marker","Sacramento","Great Vibes","Caveat","Kalam",
+  "Patrick Hand","Satisfy","Parisienne","Allura","Alex Brush",
+  "Architects Daughter","Rock Salt","Shadows Into Light","Indie Flower",
+  "Amatic SC","Special Elite","Bangers","Ultra","Black Ops One",
+  "Rubik Mono One","Francois One","Yanone Kaffeesatz","Archivo Narrow",
+  "PT Sans Narrow","Oswald","Cuprum","Philosopher",
+  // Monospace
+  "Source Code Pro","Inconsolata","Fira Code","Fira Mono",
+  "Roboto Mono","Courier Prime","Anonymous Pro","JetBrains Mono",
+  "Share Tech Mono","PT Mono",
+  // Commonly used misc
+  "Red Hat Display","Red Hat Text","Red Hat Mono",
+  "Acme","Julius Sans One","Tenor Sans","Cantarell",
+  "Varela","Exo","Muli",
+].map(n => n.toLowerCase()));
+
+/**
+ * Known commercial (paid-licence) font families.
+ * Only fonts in this set show the "Likely licensed" warning badge.
+ */
+const COMMERCIAL_FONTS_SET = new Set([
+  "proxima nova","proxima nova condensed","proxima nova extra condensed",
+  "brandon grotesque","brandon text",
+  "freight sans","freight text","freight display","freight big","freight micro",
+  "futura","futura pt","futura now",
+  "gotham","gotham narrow","gotham rounded","gotham condensed",
+  "avenir","avenir next","avenir next condensed",
+  "gill sans","gill sans nova","gill sans mt",
+  "trade gothic","trade gothic next","trade gothic bold condensed",
+  "din","din 2014","din pro","din next",
+  "helvetica","helvetica neue","helvetica now",
+  "frutiger","frutiger next",
+  "myriad","myriad pro",
+  "garamond","adobe garamond","adobe garamond pro",
+  "caslon","adobe caslon","big caslon","itc caslon",
+  "minion","minion pro",
+  "chronicle","chronicle display","chronicle text",
+  "canela","canela condensed","canela deck",
+  "recoleta",
+  "circular","circular std","circular pro",
+  "calibre","calibre light",
+  "national","national 2",
+  "acumin",
+  "skolar","skolar sans",
+  "tiempos","tiempos headline","tiempos text",
+  "graphik","graphik condensed","graphik wide",
+  "neue haas grotesk","neue haas unica",
+  "apercu","apercu mono","apercu condensed",
+  "aktiv grotesk","aktiv grotesk condensed","aktiv grotesk extended",
+  "sofia pro","sofia",
+  "museo","museo sans","museo slab",
+  "clarendon",
+  "rockwell",
+  "brown","brown ll",
+  "pangram","pangram sans","pangram serif",
+  "larsseit",
+  "p22 underground","itc avant garde","itc franklin gothic",
+  "univers",
+]);
+
+/**
+ * Icon / UI symbol fonts — @font-face declarations for these should be ignored entirely.
+ * They are not brand typefaces.
+ */
+const ICON_FONT_NAMES = new Set([
+  "woocommerce","woocommerce-smallscreen","woocommerce-font",
+  "dashicons","genericons","genericons neue",
+  "fontawesome","font awesome 4","font awesome 5 free","font awesome 5 brands",
+  "font awesome 6 free","font awesome 6 brands","font awesome 6 pro",
+  "fa","fas","far","fab","fal","fad",
+  "material icons","material icons outlined","material icons round",
+  "material icons sharp","material icons two tone",
+  "material symbols outlined","material symbols rounded","material symbols sharp",
+  "ionicons","feather","remixicon","remix icon",
+  "linearicons","lineicons","simple-line-icons","icomoon","icomoonfree",
+  "etline","entypo","themify","themify icons",
+  "bootstrap icons","bi","pe-icon-7-stroke",
+  "revicons","swiper-icons","flaticon","elegant-icons",
+  "stroke-gap-icons","nucleo","tabler-icons",
+  "wpforms icons","eicon","eicons","e-font-icon-svg",
+  "jost icons","jet-blog","jet-elements","jet-tabs","premium-addons",
+  "noto color emoji","noto emoji","twemoji",
+]);
+
+/** Returns true if the name looks like a real typeface, not an icon font or plugin slug. */
+function isTypographicFont(name: string): boolean {
+  const lower = name.toLowerCase().trim();
+
+  // Known icon / symbol fonts
+  if (ICON_FONT_NAMES.has(lower)) return false;
+
+  // Slug-like names: all-lowercase with 2+ hyphen segments, often containing digits
+  // e.g. "dw-dev-doh1-parallel-lines", "ziva-collection-quotes-1"
+  if (/^[a-z][a-z0-9]*(-[a-z0-9]+){2,}$/.test(name.trim())) return false;
+
+  // Names ending in a digit suffix after a hyphen: "something-1", "quotes-1"
+  if (/^[a-z][a-z-]+-\d+$/.test(name.trim())) return false;
+
+  // Very short (likely aliases or internal IDs)
+  if (name.trim().length <= 2) return false;
+
+  return true;
+}
+
+/** Returns true only if the font name is a known commercial typeface that needs a licence. */
+function isLikelyPaidFont(name: string): boolean {
+  const lower = name.toLowerCase().trim();
+  if (COMMERCIAL_FONTS_SET.has(lower)) return true;
+  // Partial-match for families like "Proxima Nova Alt", "Gotham Book" etc.
+  for (const k of COMMERCIAL_FONTS_SET) {
+    if (lower.startsWith(k + " ") || lower.startsWith(k + "-")) return true;
+  }
+  return false;
+}
+
 function extractGoogleFonts(html: string): string[] {
   const fonts: string[] = [];
   for (const m of html.matchAll(/fonts\.googleapis\.com\/css[^"']*[?&]family=([^&"']+)/gi)) {
@@ -438,13 +591,24 @@ function extractGoogleFonts(html: string): string[] {
   return fonts;
 }
 
-function extractCustomFonts(html: string): string[] {
-  const fonts: string[] = [];
-  for (const m of html.matchAll(/@font-face\s*\{[^}]*font-family:\s*["']?([^;"'\n}]+)/gi)) {
-    const name = m[1].replace(/["']/g, "").trim();
-    if (name && !fonts.includes(name)) fonts.push(name);
+/** Extract @font-face declarations, capturing both the font-family name and src URL fragment. */
+function extractCustomFonts(html: string): Array<{ name: string; srcHint: string }> {
+  const seen = new Set<string>();
+  const results: Array<{ name: string; srcHint: string }> = [];
+
+  for (const m of html.matchAll(/@font-face\s*\{([^}]+)\}/gi)) {
+    const block = m[1];
+    const familyM = block.match(/font-family:\s*["']?([^;"'\n}]+)/i);
+    if (!familyM) continue;
+    const name = familyM[1].replace(/["']/g, "").trim();
+    if (!name || seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase());
+
+    const srcM = block.match(/src\s*:\s*([^;]+)/i);
+    const srcHint = srcM ? srcM[1].slice(0, 300) : "";
+    results.push({ name, srcHint });
   }
-  return fonts;
+  return results;
 }
 
 // ── Fetch helpers ──────────────────────────────────────────────────────────
@@ -526,11 +690,43 @@ export async function POST(req: NextRequest) {
   const allCss = inlineStyles + "\n" + externalCss;
 
   // ── Fonts
-  const googleFonts  = extractGoogleFonts(html + allCss);
-  const rawCustom    = extractCustomFonts(html + allCss).filter(f => !googleFonts.some(g => g.toLowerCase() === f.toLowerCase()));
-  const customFonts  = rawCustom.map(font => ({
-    detected: font, isLikelyPaid: true, googleAlternatives: findGoogleAlternative(font),
-  }));
+  const googleFonts = extractGoogleFonts(html + allCss);
+  const googleFontsLower = new Set(googleFonts.map(g => g.toLowerCase()));
+
+  // Process @font-face declarations:
+  //   1. Ignore icon fonts and plugin slugs entirely
+  //   2. Self-hosted Google Fonts (detected by name match or Google CDN src) → googleFonts
+  //   3. Remaining typographic fonts → customFonts with accurate isLikelyPaid flag
+  const customFonts: { detected: string; isLikelyPaid: boolean; googleAlternatives: string[] }[] = [];
+
+  for (const { name, srcHint } of extractCustomFonts(html + allCss)) {
+    // Skip if already in googleFonts
+    if (googleFontsLower.has(name.toLowerCase())) continue;
+
+    // Skip non-typographic fonts (icon sets, plugin kit slugs)
+    if (!isTypographicFont(name)) continue;
+
+    const lower = name.toLowerCase();
+
+    // Classify as Google Font if:
+    //   a) name matches our Google Fonts reference list, OR
+    //   b) the @font-face src URL points to Google CDN (self-hosted via caching plugin)
+    const srcPointsToGoogle = /fonts\.gstatic\.com|googleapis\.com/.test(srcHint);
+    const nameMatchesGoogle = GOOGLE_FONTS_SET.has(lower);
+
+    if (nameMatchesGoogle || srcPointsToGoogle) {
+      googleFonts.push(name);
+      googleFontsLower.add(lower);
+      continue;
+    }
+
+    // Custom / potentially paid font
+    customFonts.push({
+      detected: name,
+      isLikelyPaid: isLikelyPaidFont(name),
+      googleAlternatives: findGoogleAlternative(name),
+    });
+  }
 
   // ── meta[name="theme-color"] — reliable primary hint for PWAs & mobile-optimised sites
   let metaThemeColor: string | undefined;
@@ -549,10 +745,17 @@ export async function POST(req: NextRequest) {
 
   // ── Layer 3: CSS selector scoring  (catch-all — works for any site)
   // Fresh regex each call to avoid lastIndex state issues
-  const ctaFromCss     = extractFromCss(allCss, buttonScore,  /background(?:-color)?\s*:\s*([^;]+)/gi, varMap, true);
-  const headingFromCss = extractFromCss(allCss, headingScore, /\bcolor\s*:\s*([^;]+)/gi,              varMap, true);
-  const linkFromCss    = extractFromCss(allCss, linkScore,    /\bcolor\s*:\s*([^;]+)/gi,              varMap, true);
-  const bodyFromCss    = extractFromCss(allCss, bodyScore,    /\bcolor\s*:\s*([^;]+)/gi,              varMap, false);
+  // Scan both background AND border-color on button selectors:
+  // Many modern Elementor/page-builder CTAs use transparent backgrounds + a coloured border,
+  // so border-color is a first-class signal for the primary brand CTA colour.
+  const ctaBgFromCss     = extractFromCss(allCss, buttonScore,  /background(?:-color)?\s*:\s*([^;]+)/gi,                            varMap, true);
+  const ctaBorderFromCss = extractFromCss(allCss, buttonScore,  /border(?:-(?:top|right|bottom|left))?-color\s*:\s*([^;]+)/gi,       varMap, true);
+  const headingFromCss   = extractFromCss(allCss, headingScore, /\bcolor\s*:\s*([^;]+)/gi,                                          varMap, true);
+  const linkFromCss      = extractFromCss(allCss, linkScore,    /\bcolor\s*:\s*([^;]+)/gi,                                          varMap, true);
+  const bodyFromCss      = extractFromCss(allCss, bodyScore,    /\bcolor\s*:\s*([^;]+)/gi,                                          varMap, false);
+
+  // Alias for backwards-compat with assembly below
+  const ctaFromCss = ctaBgFromCss;
 
   // ── Layer 4: inline HTML style= attributes (Elementor supplement)
   const ctaFromHtml     = htmlCtaColors(html, varMap);
@@ -600,14 +803,51 @@ export async function POST(req: NextRequest) {
     return undefined;
   };
 
-  // CSS selector evidence wins over generic named-var guesses.
-  // Named vars (Elementor defaults) are only a last resort.
-  // metaThemeColor is a reliable signal from any platform — but only use it if no element-level
-  // evidence is found, since theme-color sometimes reflects the nav bar, not the CTA button
-  const primary   = pick(ctaFromHtml[0], ctaFromCss, headingFromHtml[0], headingFromCss, sweepColors[0], metaThemeColor, namedRoles.primary);
-  const accent    = pick(linkFromHtml[0],    linkFromCss,    ctaFromHtml[1],     sweepColors.find(h => !reserved.has(h)), namedRoles.accent);
-  const secondary = pick(headingFromHtml.find(h => !reserved.has(h)), headingFromCss !== primary ? headingFromCss : undefined, namedRoles.secondary, ctaFromHtml.find(h => !reserved.has(h)), sweepColors.find(h => !reserved.has(h)));
-  const tertiary  = pick([...headingFromHtml, ...ctaFromHtml, ...linkFromHtml].find(h => !reserved.has(h)), sweepColors.find(h => !reserved.has(h)), namedRoles.tertiary);
+  // ── Assemble: priority rationale
+  //
+  // PRIMARY — the main CTA action colour.
+  //   1. Inline CTA background (most specific evidence)
+  //   2. CSS button background (general rule-based evidence)
+  //   3. CSS button border-color — many modern Elementor/builder CTAs use transparent
+  //      backgrounds + a coloured border, making this a first-class CTA signal
+  //   4. Named accent var — Elementor/WP "accent" is more often the CTA colour than
+  //      the misleadingly-named "primary" slot (which designers frequently repurpose
+  //      for headings or supporting brand colours)
+  //   5. Heading colours and sweep as progressively weaker fallbacks
+  //   6. Named "primary" var LAST — unreliable; sites routinely store heading/bg
+  //      colours there rather than the real action colour
+  //
+  // SECONDARY — supporting brand colour (often a heading or section background hue).
+  //   namedRoles.primary is tried here because on Elementor sites the designer often
+  //   puts a brand supporting colour in the "primary" slot.
+  //
+  // ACCENT — link / highlight colour.
+  //   namedRoles.accent is the fallback; may already be consumed by primary above.
+
+  const primary   = pick(
+    ctaFromHtml[0],
+    ctaFromCss,
+    ctaBorderFromCss,      // transparent-bg CTA buttons signal their brand colour via border
+    namedRoles.accent,     // named accent is usually more "CTA-like" than named primary
+    headingFromHtml[0], headingFromCss,
+    sweepColors[0], metaThemeColor,
+    namedRoles.primary,    // last resort: named primary is often a heading/supporting colour
+  );
+  const accent    = pick(linkFromHtml[0], linkFromCss, ctaFromHtml[1], sweepColors.find(h => !reserved.has(h)), namedRoles.accent);
+  const secondary = pick(
+    headingFromHtml.find(h => !reserved.has(h)),
+    headingFromCss !== primary ? headingFromCss : undefined,
+    namedRoles.primary,    // try named primary here — often belongs in the supporting role
+    namedRoles.secondary,
+    ctaFromHtml.find(h => !reserved.has(h)),
+    sweepColors.find(h => !reserved.has(h)),
+  );
+  const tertiary  = pick(
+    [...headingFromHtml, ...ctaFromHtml, ...linkFromHtml].find(h => !reserved.has(h)),
+    sweepColors.find(h => !reserved.has(h)),
+    namedRoles.secondary,  // named secondary as last resort
+    namedRoles.tertiary,
+  );
   const textLight = pick(bodyFromCss, namedRoles.textLight);
 
   const brandColors = {
@@ -621,5 +861,14 @@ export async function POST(req: NextRequest) {
     accent,
   };
 
-  return NextResponse.json({ googleFonts, customFonts, brandColors });
+  const cssFontHints = detectFontRolesFromCss(allCss);
+  const roles = resolveFontRoles(googleFonts, cssFontHints);
+
+  return NextResponse.json({
+    googleFonts,
+    customFonts,
+    brandColors,
+    fontDisplay: roles.display,
+    fontBody: roles.body,
+  });
 }

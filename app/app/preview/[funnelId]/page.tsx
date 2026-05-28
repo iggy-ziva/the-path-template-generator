@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/session";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
+import { splitFunnelContent } from "@/lib/funnel-snapshot";
 import PreviewClient from "./_components/PreviewClient";
 
 const ADMIN_EMAILS = ["hello@ziva.marketing", "ignusvermaak@gmail.com"];
@@ -38,9 +39,13 @@ export default async function PreviewPage({
 
   if (!funnel) notFound();
 
-  // Load the wizard submission so we have brand data, images, etc.
-  let wizardData: Record<string, unknown> = {};
-  if (funnel.submission_id) {
+  const { pageContent, wizardSnapshot } = splitFunnelContent(
+    funnel.content as Record<string, unknown>,
+  );
+
+  // Prefer the frozen snapshot from generation; fall back to live submission for older funnels.
+  let wizardData: Record<string, unknown> = wizardSnapshot ?? {};
+  if (!wizardSnapshot && funnel.submission_id) {
     const subQuery = supabase
       .from("wizard_submissions")
       .select("step_data")
@@ -52,8 +57,9 @@ export default async function PreviewPage({
 
   return (
     <PreviewClient
+      key={funnel.id}
       funnelId={funnel.id}
-      content={funnel.content as Record<string, unknown>}
+      content={pageContent}
       themeSlug={funnel.theme_slug}
       createdAt={funnel.created_at}
       wizardData={wizardData}

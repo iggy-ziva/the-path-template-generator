@@ -18,7 +18,7 @@ export default async function ProgramThankYouPage({
   return (
     <>
       {/* 01 — Confirmation hero */}
-      <section className="ty-hero">
+      <section className="ty-hero on-dark">
         <div className="inner">
           <div className="ty-celebration">
             <div className="ty-celebration-ring" />

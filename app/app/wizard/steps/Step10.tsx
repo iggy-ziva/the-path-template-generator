@@ -3,6 +3,12 @@ import type { WizardData } from "@/lib/wizard-types";
 import { Field, TextInput, Section } from "../WizardField";
 import { TONE_DESCRIPTORS } from "../wizard-constants";
 
+const Z = {
+  pink: "#FF007E", coral: "#FA2A45", charcoal: "#2E2E2E", muted: "#8A7A6A",
+  faint: "#C8B8A4", creamMid: "#FCF8EF", creamDeep: "#F5EEE0", white: "#FFFFFF",
+  font: 'var(--font-barlow), -apple-system, sans-serif',
+};
+
 interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; }
 
 export default function Step10({ data, onChange }: Props) {
@@ -19,9 +25,9 @@ export default function Step10({ data, onChange }: Props) {
   return (
     <div>
       <Section title="Choose your 3 tone descriptors">
-        <p style={{ fontSize: "13px", color: "#666", marginBottom: "20px", lineHeight: 1.6 }}>
+        <p style={{ fontFamily: Z.font, fontSize: "13px", color: Z.muted, marginBottom: "20px", lineHeight: 1.6 }}>
           Select exactly 3 words that describe how you naturally communicate. The AI uses these to calibrate the voice of every page it writes.
-          {selected.length > 0 && <span style={{ color: "#D4A878", fontWeight: 700 }}> {selected.length}/3 selected.</span>}
+          {selected.length > 0 && <span style={{ color: Z.pink, fontWeight: 700 }}> {selected.length}/3 selected.</span>}
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
           {TONE_DESCRIPTORS.map((d) => {
@@ -35,13 +41,15 @@ export default function Step10({ data, onChange }: Props) {
                 style={{
                   padding: "10px 18px",
                   borderRadius: "100px",
-                  border: isSelected ? "2px solid #D4A878" : isDisabled ? "1px solid #2a2926" : "1px solid #3d3a36",
-                  background: isSelected ? "#D4A87825" : "#1a1917",
-                  color: isSelected ? "#D4A878" : isDisabled ? "#6a6662" : "#f5f1ea",
+                  border: isSelected ? `2px solid ${Z.pink}` : `1.5px solid ${Z.creamDeep}`,
+                  background: isSelected ? "rgba(255,0,126,0.07)" : isDisabled ? Z.creamMid : Z.white,
+                  color: isSelected ? Z.pink : isDisabled ? Z.faint : Z.charcoal,
                   cursor: isDisabled ? "not-allowed" : "pointer",
                   fontSize: "14px",
+                  fontFamily: Z.font,
                   fontWeight: isSelected ? 700 : 400,
-                  transition: "all 0.1s",
+                  opacity: isDisabled ? 0.6 : 1,
+                  transition: "all 0.15s",
                 }}
               >
                 {isSelected && "✓ "}{d}

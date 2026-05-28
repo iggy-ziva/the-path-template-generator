@@ -1,3 +1,5 @@
+import type { BrandProfile } from "@/lib/brand-profile";
+
 export interface WizardData {
   // Step 1 — About You
   hostName?: string;
@@ -10,6 +12,8 @@ export interface WizardData {
   // Step 2 — Your Brand
   businessName?: string;
   logoUrl?: string;
+  /** Set when logo uploaded with transparent background validation */
+  logoTransparent?: boolean;
   contactEmail?: string;
   legalEntityName?: string;
   websiteUrl?: string;
@@ -41,7 +45,10 @@ export interface WizardData {
   upsellHeadline?: string;
   upsellDescription?: string;
   upsellIncludedItems?: { title: string; description: string }[];
+  upsellQuotes?: { quote: string; attribution: string }[];
+  /** @deprecated use upsellQuotes */
   upsellQuote?: string;
+  /** @deprecated use upsellQuotes */
   upsellQuoteAttribution?: string;
   upsellRegularValue?: number;
   upsellOfferPrice?: number;
@@ -90,6 +97,10 @@ export interface WizardData {
   // Step 9 — Tone & Voice
   toneDescriptors?: string[];
   referenceTheme?: string;
+  /** Who picked referenceTheme — ai auto-suggest vs manual override */
+  referenceThemeSource?: "ai" | "user";
+  /** Computed at generation time; stored in snapshot for preview consistency */
+  brandProfile?: BrandProfile;
   copyLoveUrl?: string;
   copyHateDescription?: string;
 
@@ -105,6 +116,10 @@ export interface WizardData {
       accent?: string;
     };
     googleFonts: string[];
+    /** Explicit headline font — from CSS detection or user override */
+    fontDisplay?: string;
+    /** Explicit body font — from CSS detection or user override */
+    fontBody?: string;
     customFonts: { detected: string; isLikelyPaid: boolean; googleAlternatives: string[] }[];
     uploadedFontUrls?: string[];
   };

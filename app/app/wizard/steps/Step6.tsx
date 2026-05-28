@@ -3,6 +3,57 @@ import { useState } from "react";
 import type { WizardData } from "@/lib/wizard-types";
 import { Field, TextInput, Textarea, Section } from "../WizardField";
 
+const Z = {
+  pink: "#FF007E", coral: "#FA2A45", charcoal: "#2E2E2E", muted: "#8A7A6A",
+  faint: "#C8B8A4", creamMid: "#FCF8EF", creamDeep: "#F5EEE0", white: "#FFFFFF",
+  font: 'var(--font-barlow), -apple-system, sans-serif',
+};
+
+const CARD: React.CSSProperties = {
+  background: Z.creamMid,
+  border: `1.5px solid ${Z.creamDeep}`,
+  borderRadius: 12,
+  padding: 20,
+  marginBottom: 12,
+};
+
+const MINI_LABEL: React.CSSProperties = {
+  display: "block",
+  fontFamily: Z.font,
+  fontSize: 11,
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  color: Z.charcoal,
+  marginBottom: 6,
+};
+
+const INLINE_INPUT: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 12px",
+  background: Z.white,
+  border: `1.5px solid ${Z.creamDeep}`,
+  borderRadius: 8,
+  color: Z.charcoal,
+  fontSize: 13,
+  fontFamily: Z.font,
+  outline: "none",
+  boxSizing: "border-box",
+};
+
+const ADD_BTN: React.CSSProperties = {
+  padding: "12px 20px",
+  background: "none",
+  border: `1.5px dashed ${Z.faint}`,
+  borderRadius: 10,
+  color: Z.pink,
+  fontFamily: Z.font,
+  cursor: "pointer",
+  fontSize: 14,
+  fontWeight: 600,
+  width: "100%",
+};
+
 interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; }
 
 export default function Step6({ data, onChange }: Props) {
@@ -48,51 +99,56 @@ export default function Step6({ data, onChange }: Props) {
       </Section>
 
       <Section title="Curriculum — week by week">
-        <p style={{ fontSize: "13px", color: "#666", marginBottom: "20px" }}>Add each module or week. The AI will use these titles and descriptions to write the full curriculum section.</p>
+        <p style={{ fontFamily: Z.font, fontSize: 13, color: Z.muted, marginBottom: 20 }}>Add each module or week. The AI will use these titles and descriptions to write the full curriculum section.</p>
         {weeks.map((week, i) => (
-          <div key={i} style={{ background: "#1a1917", border: "1px solid #2a2926", borderRadius: "12px", padding: "20px", marginBottom: "12px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <span style={{ fontSize: "12px", fontWeight: 700, color: "#D4A878" }}>Module {i + 1}</span>
-              <button onClick={() => removeWeek(i)} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "18px" }}>×</button>
+          <div key={i} style={CARD}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontFamily: Z.font, fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.08em", color: Z.pink }}>Module {i + 1}</span>
+              <button onClick={() => removeWeek(i)} style={{ background: "none", border: "none", color: Z.faint, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: 0 }} title="Remove module">×</button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: "12px", marginBottom: "12px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 12, marginBottom: 12 }}>
               <div>
-                <label style={{ display: "block", fontSize: "12px", color: "#666", marginBottom: "4px" }}>Label</label>
-                <input value={week.week} onChange={(e) => updateWeek(i, "week", e.target.value)} placeholder="Week 1" style={{ width: "100%", padding: "10px", background: "#0f0e0c", border: "1px solid #2a2926", borderRadius: "8px", color: "#f5f1ea", fontSize: "13px", outline: "none", boxSizing: "border-box" }} />
+                <label style={MINI_LABEL}>Label</label>
+                <input value={week.week} onChange={(e) => updateWeek(i, "week", e.target.value)} placeholder="Week 1" style={INLINE_INPUT} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "12px", color: "#666", marginBottom: "4px" }}>Title</label>
-                <input value={week.title} onChange={(e) => updateWeek(i, "title", e.target.value)} placeholder="Module title" style={{ width: "100%", padding: "10px", background: "#0f0e0c", border: "1px solid #2a2926", borderRadius: "8px", color: "#f5f1ea", fontSize: "13px", outline: "none", boxSizing: "border-box" }} />
+                <label style={MINI_LABEL}>Title</label>
+                <input value={week.title} onChange={(e) => updateWeek(i, "title", e.target.value)} placeholder="Module title" style={INLINE_INPUT} />
               </div>
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "12px", color: "#666", marginBottom: "4px" }}>Description / bullet points</label>
-              <textarea value={week.description} onChange={(e) => updateWeek(i, "description", e.target.value)} placeholder="What will participants learn or experience in this week?" rows={2} style={{ width: "100%", padding: "10px", background: "#0f0e0c", border: "1px solid #2a2926", borderRadius: "8px", color: "#f5f1ea", fontSize: "13px", outline: "none", resize: "vertical", lineHeight: 1.5, boxSizing: "border-box", fontFamily: "inherit" }} />
+              <label style={MINI_LABEL}>Description / bullet points</label>
+              <textarea value={week.description} onChange={(e) => updateWeek(i, "description", e.target.value)} placeholder="What will participants learn or experience in this week?" rows={2} style={{ ...INLINE_INPUT, resize: "vertical", lineHeight: 1.5 }} />
             </div>
           </div>
         ))}
-        <button onClick={addWeek} style={{ padding: "12px 20px", background: "none", border: "1px dashed #2a2926", borderRadius: "10px", color: "#D4A878", cursor: "pointer", fontSize: "14px", fontWeight: 600, width: "100%" }}>
-          + Add module / week
-        </button>
+        <button onClick={addWeek} style={ADD_BTN}>+ Add module / week</button>
       </Section>
 
       <Section title="Bonuses (optional)">
         {bonuses.map((bonus, i) => (
-          <div key={i} style={{ background: "#1a1917", border: "1px solid #2a2926", borderRadius: "12px", padding: "20px", marginBottom: "12px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
-              <span style={{ fontSize: "12px", fontWeight: 700, color: "#D4A878" }}>Bonus {i + 1}</span>
-              <button onClick={() => onChange({ bonuses: bonuses.filter((_, idx) => idx !== i) })} style={{ background: "none", border: "none", color: "#555", cursor: "pointer" }}>×</button>
+          <div key={i} style={CARD}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontFamily: Z.font, fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.08em", color: Z.pink }}>Bonus {i + 1}</span>
+              <button onClick={() => onChange({ bonuses: bonuses.filter((_, idx) => idx !== i) })} style={{ background: "none", border: "none", color: Z.faint, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: 0 }} title="Remove bonus">×</button>
             </div>
-            <div style={{ display: "grid", gap: "10px" }}>
-              <input value={bonus.title} onChange={(e) => updateBonus(i, "title", e.target.value)} placeholder="Bonus title" style={{ padding: "10px", background: "#0f0e0c", border: "1px solid #2a2926", borderRadius: "8px", color: "#f5f1ea", fontSize: "13px", outline: "none" }} />
-              <input value={bonus.description} onChange={(e) => updateBonus(i, "description", e.target.value)} placeholder="What it includes and why it's valuable" style={{ padding: "10px", background: "#0f0e0c", border: "1px solid #2a2926", borderRadius: "8px", color: "#f5f1ea", fontSize: "13px", outline: "none" }} />
-              <input type="number" value={bonus.value} onChange={(e) => updateBonus(i, "value", e.target.value)} placeholder="Value in $ (e.g. 297)" style={{ padding: "10px", background: "#0f0e0c", border: "1px solid #2a2926", borderRadius: "8px", color: "#f5f1ea", fontSize: "13px", outline: "none", width: "160px" }} />
+            <div style={{ display: "grid", gap: 10 }}>
+              <div>
+                <label style={MINI_LABEL}>Title</label>
+                <input value={bonus.title} onChange={(e) => updateBonus(i, "title", e.target.value)} placeholder="Bonus title" style={INLINE_INPUT} />
+              </div>
+              <div>
+                <label style={MINI_LABEL}>Description</label>
+                <input value={bonus.description} onChange={(e) => updateBonus(i, "description", e.target.value)} placeholder="What it includes and why it's valuable" style={INLINE_INPUT} />
+              </div>
+              <div>
+                <label style={MINI_LABEL}>Value ($)</label>
+                <input type="number" value={bonus.value} onChange={(e) => updateBonus(i, "value", e.target.value)} placeholder="e.g. 297" style={{ ...INLINE_INPUT, width: 160 }} />
+              </div>
             </div>
           </div>
         ))}
-        <button onClick={addBonus} style={{ padding: "12px 20px", background: "none", border: "1px dashed #2a2926", borderRadius: "10px", color: "#D4A878", cursor: "pointer", fontSize: "14px", fontWeight: 600, width: "100%" }}>
-          + Add bonus
-        </button>
+        <button onClick={addBonus} style={ADD_BTN}>+ Add bonus</button>
       </Section>
     </div>
   );

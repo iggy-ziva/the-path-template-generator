@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import type { EventThankYouContent, WizardSnapshot } from "../funnel-types";
-import { safeUrl } from "../funnel-types";
+import { safeUrl, brandSectionOverlay, brandImageBackground } from "../funnel-types";
+import BrandLogo from "../BrandLogo";
 
 interface Props {
   content: EventThankYouContent;
@@ -54,9 +55,9 @@ export default function EventThankYouPage({ content: c, wizard: w }: Props) {
 
       {/* 01 — Confirmation Hero */}
       <section
-        className={`ty-hero${safeUrl(c.backgroundImageUrl ?? w.heroImageUrls?.[0]) ? " on-dark" : ""}`}
+        className="ty-hero on-dark"
         style={safeUrl(c.backgroundImageUrl ?? w.heroImageUrls?.[0]) ? {
-          backgroundImage: `linear-gradient(rgba(15,14,12,0.88),rgba(15,14,12,0.88)), url(${safeUrl(c.backgroundImageUrl ?? w.heroImageUrls![0])})`,
+          backgroundImage: brandImageBackground(brandSectionOverlay(0.88), safeUrl(c.backgroundImageUrl ?? w.heroImageUrls![0])!),
           backgroundSize: "cover",
           backgroundPosition: "center",
         } : undefined}
@@ -280,10 +281,13 @@ export default function EventThankYouPage({ content: c, wizard: w }: Props) {
       <footer className="ty-footer">
         <div className="inner">
           <div className="ty-footer-left">
-            {safeUrl(c.logoUrl ?? w.logoUrl)
-              ? <img src={safeUrl(c.logoUrl ?? w.logoUrl)!} alt={businessName || hostName} style={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              : <div className="ty-footer-brand">{businessName || hostName}</div>
-            }
+            <BrandLogo
+              logoUrl={c.logoUrl ?? w.logoUrl}
+              logoTransparent={w.logoTransparent}
+              name={businessName || hostName}
+              className="ty-footer-brand"
+              imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}
+            />
             <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {businessName || hostName}</span>
           </div>
           <nav className="ty-footer-links">
