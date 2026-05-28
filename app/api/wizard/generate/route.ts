@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import type { MessageParam, ContentBlockParam, ImageBlockParam, TextBlockParam } from "@anthropic-ai/sdk/resources/messages/messages";
+import type { Message, MessageParam, ContentBlockParam, ImageBlockParam, TextBlockParam, TextBlock } from "@anthropic-ai/sdk/resources/messages/messages";
 import { getSession } from "@/lib/session";
 import { getOrCreateUserId } from "@/lib/getOrCreateUserId";
 import type { WizardData } from "@/lib/wizard-types";
@@ -37,7 +37,7 @@ function isRetryableClaudeError(err: unknown): boolean {
 async function createGenerationMessage(
   anthropic: Anthropic,
   messages: MessageParam[],
-): Promise<Awaited<ReturnType<Anthropic["messages"]["create"]>>> {
+): Promise<Message> {
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= MAX_CLAUDE_RETRIES; attempt++) {
@@ -1265,11 +1265,9 @@ ${plansSchema}
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
-type ClaudeMessage = Awaited<ReturnType<Anthropic["messages"]["create"]>>;
-
-function extractResponseText(response: ClaudeMessage): string {
+function extractResponseText(response: Message): string {
   return response.content
-    .filter((b): b is { type: "text"; text: string } => b.type === "text" && typeof b.text === "string")
+    .filter((b): b is TextBlock => b.type === "text")
     .map((b) => b.text)
     .join("\n");
 }
@@ -1341,7 +1339,7 @@ function assertPageKeys(content: Record<string, unknown>, keys: readonly string[
 }
 
 function parseGenerationResponse(
-  response: ClaudeMessage,
+  response: Message,
   label: string,
   expectedKeys: readonly string[],
 ): Record<string, unknown> {
