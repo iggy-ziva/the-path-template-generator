@@ -108,6 +108,9 @@ export interface WizardSnapshot {
 // Page 1 — Event Landing  (index.html, 21 sections)
 // ─────────────────────────────────────────────────────────────────────────────
 export interface EventLandingContent {
+  // Per-section theme overrides — keyed by section id (see editor/section-theme.ts).
+  // Takes priority over the legacy per-section *Theme fields below.
+  sectionThemes?: Partial<Record<string, SectionTheme>>;
   // Image assignments — Claude picks from available uploaded images
   heroBackgroundImageUrl?:  string | null;   // primary hero background
   valuePropImageUrl?:        string | null;   // lifestyle/supporting image alongside VP text
@@ -330,6 +333,9 @@ export interface ReplayContent {
 // Page 6 — Programme Landing  (program.html)
 // ─────────────────────────────────────────────────────────────────────────────
 export interface ProgrammeLandingContent {
+  // Per-section theme overrides — keyed by section id (see editor/section-theme.ts).
+  // Takes priority over the legacy per-section *Theme fields below.
+  sectionThemes?: Partial<Record<string, SectionTheme>>;
   // Image assignments
   heroBackgroundImageUrl?:   string | null;   // programme hero background
   programmeFeatureImageUrl?: string | null;   // lifestyle image alongside programme content

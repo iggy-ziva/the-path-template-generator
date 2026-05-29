@@ -574,7 +574,7 @@ PAYMENT PLAN RULES (programmeCheckout.plans + plans modal):
 - Only ONE plan in the array may have isFeatured: true.
 - Never label multiple plans as "Most popular" — only one plan can be featured, and it's always Pay in full.
 
-SECTION THEME RULES (heroTheme, encourageNTheme, finalVpTheme, registerTheme, alreadyTriedTheme, finalCtaTheme):
+SECTION THEME RULES (heroTheme, encourageNTheme, finalVpTheme, registerTheme, alreadyTriedTheme, finalCtaTheme + the sectionThemes map):
 - Values MUST be exactly one of: "dark" | "accent" | "light"
 - "dark" = deep branded slate (NOT generic black) — high-drama moments
 - "accent" = mid slate/teal brand band — ideal for warm healing brands
@@ -582,6 +582,14 @@ SECTION THEME RULES (heroTheme, encourageNTheme, finalVpTheme, registerTheme, al
 - Vary the rhythm: don't pick "dark" for every section — alternate per BRAND PROFILE section rhythm above
 - Warm luminous brands (bright coral/gold primary): heroTheme "accent", registerTheme "accent", finalVpTheme "dark", encourage bands mix accent + light
 - Dark literary brands (very dark primary): heroTheme "dark", registerTheme "dark", encourage bands alternate dark + light
+
+PER-SECTION THEME MAP (sectionThemes) — applies to EVERY section, including the header:
+- Each landing page has an OPTIONAL "sectionThemes" object: a map of sectionId -> "dark" | "accent" | "light". It controls the background/contrast of ANY section and takes priority over the legacy per-section *Theme fields.
+- Event Landing section ids (top to bottom): stickyBar, hero, credibility1, video, audience, encourage1, valueProp, credibility2, outcomes, personalMessage, encourage2, howItWorks, eventOverview, credibility3, extraVp, encourage3, outcomes2, testimonials, finalVp, bio, faq, register, ftc.
+- Programme Landing section ids (top to bottom): progHero, vision, alreadyTried, promise, includes, session, videoTestimonials, credibility, bonuses, priceRepeat, outcomes, testimonials, pricing, host, faq, finalCta.
+- The HEADER sets the tone: stickyBar (Event) and progHero (Programme) are the first thing visitors see — pick a confident theme there.
+- Rhythm: ALTERNATE themes down the page. Never make everything "dark". Adjacent sections should contrast (a "dark" section should be followed by a "light" or "accent" one, and vice versa). Aim for mostly light/accent content sections punctuated by 2-4 dark/accent "moment" sections (hero, an encourage band, final CTA).
+- Only include the ids you want to set; omit a section to use its sensible default. Keep the legacy *Theme fields in sync with sectionThemes when you set both.
 
 UPSELL PAGE COPY (upsell.headline + upsell.description):
 - Wizard upsell fields are SOURCE MATERIAL — rewrite for the page; do not paste verbatim.
@@ -739,6 +747,17 @@ The JSON must have exactly this structure:
 
 {
   "eventLanding": {
+    "sectionThemes": {
+      "stickyBar": "MUST be \"dark\", \"accent\", or \"light\". Header bar — sets the tone.",
+      "hero": "MUST be \"dark\", \"accent\", or \"light\". Keep in sync with heroTheme.",
+      "credibility1": "\"dark\" | \"accent\" | \"light\"", "video": "\"dark\" | \"accent\" | \"light\"", "audience": "\"dark\" | \"accent\" | \"light\"",
+      "encourage1": "keep in sync with encourage1Theme", "valueProp": "\"dark\" | \"accent\" | \"light\"", "credibility2": "\"dark\" | \"accent\" | \"light\"",
+      "outcomes": "\"dark\" | \"accent\" | \"light\"", "personalMessage": "\"dark\" | \"accent\" | \"light\"", "encourage2": "keep in sync with encourage2Theme",
+      "howItWorks": "\"dark\" | \"accent\" | \"light\"", "eventOverview": "\"dark\" | \"accent\" | \"light\"", "credibility3": "\"dark\" | \"accent\" | \"light\"",
+      "extraVp": "\"dark\" | \"accent\" | \"light\"", "encourage3": "keep in sync with encourage3Theme", "outcomes2": "\"dark\" | \"accent\" | \"light\"",
+      "testimonials": "\"dark\" | \"accent\" | \"light\"", "finalVp": "keep in sync with finalVpTheme", "bio": "\"dark\" | \"accent\" | \"light\"",
+      "faq": "\"dark\" | \"accent\" | \"light\"", "register": "keep in sync with registerTheme", "ftc": "\"dark\" | \"accent\" | \"light\". Alternate the rhythm down the page; never make every section dark."
+    },
     "heroBackgroundImageUrl": "REQUIRED if hero images exist — copy the exact URL of the most atmospheric hero image from the IMAGES AVAILABLE list (e.g. the hero-1 URL). Set to null only if no hero images were uploaded.",
     "valuePropImageUrl": "copy the exact URL of the best lifestyle or supporting image for the value prop section. Prefer lifestyle-1, else lifestyle-2, else additional-1. Set to null if none exist.",
     "outcomesImageUrl": "copy the exact URL of a supporting image for the outcomes section. Prefer a different image from valuePropImageUrl — try lifestyle-2 or additional-1. Set to null if none available.",
@@ -1087,6 +1106,14 @@ The JSON must have exactly this structure:
 
 {
   "programmeLanding": {
+    "sectionThemes": {
+      "progHero": "MUST be \"dark\", \"accent\", or \"light\". Header/hero — sets the tone.",
+      "vision": "\"dark\" | \"accent\" | \"light\"", "alreadyTried": "keep in sync with alreadyTriedTheme", "promise": "\"dark\" | \"accent\" | \"light\"",
+      "includes": "\"dark\" | \"accent\" | \"light\"", "session": "\"dark\" | \"accent\" | \"light\"", "videoTestimonials": "\"dark\" | \"accent\" | \"light\"",
+      "credibility": "\"dark\" | \"accent\" | \"light\"", "bonuses": "\"dark\" | \"accent\" | \"light\"", "priceRepeat": "\"dark\" | \"accent\" | \"light\"",
+      "outcomes": "\"dark\" | \"accent\" | \"light\"", "testimonials": "\"dark\" | \"accent\" | \"light\"", "pricing": "\"dark\" | \"accent\" | \"light\"",
+      "host": "\"dark\" | \"accent\" | \"light\"", "faq": "\"dark\" | \"accent\" | \"light\"", "finalCta": "keep in sync with finalCtaTheme. Alternate the rhythm down the page; never make every section dark."
+    },
     "heroBackgroundImageUrl": "REQUIRED if hero images exist — copy the exact URL of the most powerful hero image from IMAGES AVAILABLE (prefer hero-1). Set to null only if no hero images were uploaded.",
     "programmeFeatureImageUrl": "copy the exact URL of the best lifestyle or supporting image to use alongside programme content sections. Prefer lifestyle-1 or lifestyle-2. Set to null if none available.",
     "finalCtaBackgroundUrl": "copy the exact URL of an atmospheric image for the final CTA section background, or null if no suitable unused image exists",

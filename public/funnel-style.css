@@ -26,6 +26,10 @@
   --accent-primary-hover:  #5C3A20;
   --accent-secondary:      #3A4A3F;
   --accent-tertiary:       #9C5C3F;
+  /* Context-aware secondary accent — flips with .on-dark / .on-light so a
+     section toggled between themes keeps a contrast-safe accent. Falls back
+     to the light-context brand token (set by brand.css). */
+  --accent-secondary-ctx:  var(--accent-secondary-on-light, var(--accent-secondary));
   /* Light-on-dark accent — overridable by brand.css */
   --accent-light:       #D4A878;
   --accent-light-hover: #E8C896;
@@ -181,6 +185,7 @@ strong { font-weight: 600; color: var(--text-primary); }
   --text-secondary:  rgba(245, 241, 234, 0.75);
   --text-tertiary:   rgba(245, 241, 234, 0.50);
   --text-accent:     var(--accent-light);
+  --accent-secondary-ctx: var(--accent-secondary-on-dark, var(--accent-light));
   --border-subtle:   rgba(245, 241, 234, 0.10);
   --border-strong:   rgba(245, 241, 234, 0.25);
   --surface-raised:  rgba(255, 255, 255, 0.06);
@@ -219,6 +224,7 @@ strong { font-weight: 600; color: var(--text-primary); }
   --text-secondary:  #3D3A36;
   --text-tertiary:   #6B665E;
   --text-accent:     var(--accent-primary);
+  --accent-secondary-ctx: var(--accent-secondary-on-light, var(--accent-secondary));
   --border-subtle:   color-mix(in srgb, var(--accent-primary) 14%, #E5E0D5);
   --border-strong:   color-mix(in srgb, var(--accent-primary) 35%, #0F0E0C);
   --surface-raised:  #FFFFFF;
@@ -236,10 +242,7 @@ strong { font-weight: 600; color: var(--text-primary); }
 .sunken-bg,
 .form-card,
 .testimonial-card,
-.includes,
 .includes-item,
-.event-overview,
-.personal-message,
 .price-block,
 .offer-quote,
 .live-comments-section,
@@ -252,6 +255,7 @@ strong { font-weight: 600; color: var(--text-primary); }
   --text-secondary:  #3D3A36;
   --text-tertiary:   #6B665E;
   --text-accent:     var(--accent-primary);
+  --accent-secondary-ctx: var(--accent-secondary-on-light, var(--accent-secondary));
   --border-subtle:   color-mix(in srgb, var(--accent-primary) 14%, #E5E0D5);
   --border-strong:   color-mix(in srgb, var(--accent-primary) 35%, #0F0E0C);
   color: #0F0E0C;
@@ -467,6 +471,26 @@ section {
   color: var(--accent-secondary-on-dark);
   font-weight: 700;
 }
+/* Per-section theme variants for the sticky header bar.
+   Preserve the translucent + blur aesthetic while allowing dark/accent/light.
+   Compound selectors win over the generic .dark-bg/.accent-bg/.light-bg utils. */
+.sticky-bar.dark-bg {
+  background: color-mix(in srgb, var(--surface-inverse) 92%, transparent);
+  color: var(--text-inverse);
+}
+.sticky-bar.accent-bg {
+  background: color-mix(in srgb, var(--surface-accent) 92%, transparent);
+  color: var(--text-inverse);
+}
+.sticky-bar.light-bg {
+  background: color-mix(in srgb, var(--surface-canvas) 92%, transparent);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.sticky-bar.light-bg .logo { color: var(--text-primary); }
+.sticky-bar.light-bg .event-title { color: var(--text-primary); }
+.sticky-bar.light-bg .countdown { color: var(--text-tertiary); }
+.sticky-bar.light-bg .countdown b { color: var(--accent-secondary-on-light); }
 @media (max-width: 768px) {
   .sticky-bar { transform: translateY(0); }
   .sticky-bar .container {
@@ -964,6 +988,7 @@ section {
   --text-secondary:  rgba(245, 241, 234, 0.75);
   --text-tertiary:   rgba(245, 241, 234, 0.50);
   --text-accent:     var(--accent-light);
+  --accent-secondary-ctx: var(--accent-secondary-on-dark, var(--accent-light));
   --border-subtle:   rgba(245, 241, 234, 0.10);
   --border-strong:   rgba(245, 241, 234, 0.25);
   --surface-raised:  rgba(255, 255, 255, 0.06);
@@ -975,12 +1000,28 @@ section {
   --text-secondary:  rgba(245, 241, 234, 0.75);
   --text-tertiary:   rgba(245, 241, 234, 0.50);
   --text-accent:     var(--accent-light);
+  --accent-secondary-ctx: var(--accent-secondary-on-dark, var(--accent-light));
   --border-subtle:   rgba(245, 241, 234, 0.10);
   --border-strong:   rgba(245, 241, 234, 0.25);
   --surface-raised:  rgba(255, 255, 255, 0.06);
   color: #F5F1EA;
 }
 .sunken-bg { background: var(--surface-sunken); }
+
+/* light-bg: force a section to the cream canvas with dark-context tokens.
+   Used by the per-section theme toggle so any section can flip to Light. */
+.light-bg {
+  background: var(--surface-canvas);
+  --text-primary:    #0F0E0C;
+  --text-secondary:  #3D3A36;
+  --text-tertiary:   #6B665E;
+  --text-accent:     var(--accent-primary);
+  --accent-secondary-ctx: var(--accent-secondary-on-light, var(--accent-secondary));
+  --border-subtle:   color-mix(in srgb, var(--accent-primary) 14%, #E5E0D5);
+  --border-strong:   color-mix(in srgb, var(--accent-primary) 35%, #0F0E0C);
+  --surface-raised:  #FFFFFF;
+  color: #0F0E0C;
+}
 
 /* Encourage-specific overrides (keep for backwards compat) */
 .encourage.dark-bg  .btn-primary { background: var(--accent-light); color: var(--text-on-accent); }
@@ -1335,23 +1376,22 @@ section {
 /* =====================================================================
    Extra Value Proposition (15)
    ===================================================================== */
-.extra-vp { background: var(--surface-accent); color: var(--text-inverse); }
 .extra-vp .reading { text-align: left; }
 .extra-vp .h2 {
-  color: var(--text-inverse);
+  color: var(--text-primary);
   max-width: 24ch;
   margin: 0 auto var(--s-7);
   text-align: center;
 }
-.extra-vp p { color: rgba(245,241,234,0.8); font-size: 18px; line-height: 1.7; }
-.extra-vp p strong { color: var(--text-inverse); }
+.extra-vp p { color: var(--text-secondary); font-size: 18px; line-height: 1.7; }
+.extra-vp p strong { color: var(--text-primary); }
 .extra-vp .closing {
   margin-top: var(--s-7);
   text-align: center;
   font-family: var(--font-display);
   font-size: clamp(22px, 2.4vw, 28px);
   font-style: italic;
-  color: var(--accent-light);
+  color: var(--text-accent);
   max-width: 28ch;
   margin-inline: auto;
   line-height: 1.4;

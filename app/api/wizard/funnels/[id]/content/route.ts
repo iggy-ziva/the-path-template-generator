@@ -29,6 +29,21 @@ function isPageKey(k: string): k is PageKey {
   return (PAGE_KEYS as readonly string[]).includes(k);
 }
 
+const VALID_THEMES = new Set(["dark", "accent", "light"]);
+
+/** Drop any sectionThemes values that aren't a valid theme enum (defensive). */
+function clampSectionThemes(page: unknown): unknown {
+  if (!page || typeof page !== "object" || Array.isArray(page)) return page;
+  const obj = page as Record<string, unknown>;
+  const themes = obj.sectionThemes;
+  if (!themes || typeof themes !== "object" || Array.isArray(themes)) return page;
+  const cleaned: Record<string, string> = {};
+  for (const [id, value] of Object.entries(themes as Record<string, unknown>)) {
+    if (typeof value === "string" && VALID_THEMES.has(value)) cleaned[id] = value;
+  }
+  return { ...obj, sectionThemes: cleaned };
+}
+
 /** Update generated funnel page content after AI generation (editor saves). */
 export async function PATCH(
   req: NextRequest,
@@ -67,9 +82,12 @@ export async function PATCH(
   if (body.content && typeof body.content === "object" && !Array.isArray(body.content)) {
     const incoming = body.content as Record<string, unknown>;
     const { [WIZARD_SNAPSHOT_KEY]: _s, ...pages } = incoming;
+    const cleanPages = Object.fromEntries(
+      Object.entries(pages).map(([k, v]) => [k, clampSectionThemes(v)]),
+    );
     nextContent = wizardSnapshot
-      ? { [WIZARD_SNAPSHOT_KEY]: wizardSnapshot, ...pages }
-      : { ...pages };
+      ? { [WIZARD_SNAPSHOT_KEY]: wizardSnapshot, ...cleanPages }
+      : { ...cleanPages };
   }
 
   // Single page patch: { pageKey, patch }

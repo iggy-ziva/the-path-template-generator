@@ -148,6 +148,18 @@ export function structuralSectionClass(
   return "encourage sunken-bg";
 }
 
+/**
+ * Generic background + foreground context classes for ANY section.
+ * Unlike structuralSectionClass, this always carries an explicit background
+ * utility so a section can be flipped between themes regardless of its base
+ * CSS. Text/accents recolor via the .on-dark / .on-light token cascades.
+ */
+export function sectionThemeClass(theme: SectionTheme): string {
+  if (theme === "dark")   return "dark-bg on-dark";
+  if (theme === "accent") return "accent-bg on-dark";
+  return "light-bg on-light";
+}
+
 /** CSS variables block for export / standalone HTML. */
 export function buildSurfaceCSSVars(input: BrandSurfaceInput): string {
   const s = computeBrandSurfaces(input);

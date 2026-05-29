@@ -8,11 +8,12 @@ import EditableText from "../editor/EditableText";
 import { useEditorOptional } from "../editor/EditorContext";
 import { PageText, useEditMode } from "../editor/page-editable";
 import EditablePressLogos from "../editor/EditablePressLogos";
+import EditableSection from "../editor/EditableSection";
+import { resolveSectionTheme, EVENT_LANDING_LEGACY_FIELD, type SectionTheme as SectionThemeT } from "../editor/section-theme";
 import {
   defaultHeroTheme,
   defaultRegisterTheme,
   defaultFinalVpTheme,
-  structuralSectionClass,
 } from "@/lib/brand-surfaces";
 
 interface Props {
@@ -75,14 +76,6 @@ const ChevronDown = () => (
   </svg>
 );
 
-/** Map a SectionTheme to the CSS class string for an encourage section */
-function encourageClass(theme?: string, defaultTheme = "dark"): string {
-  const t = theme ?? defaultTheme;
-  if (t === "dark")   return "encourage dark-bg on-dark";
-  if (t === "accent") return "encourage accent-bg on-dark";
-  return "encourage sunken-bg";  // light — matches mockup section 07c (.encourage.sunken-bg)
-}
-
 export default function EventLandingPage({ content: c, wizard: w, exportMode = false }: Props) {
   // Claude's assigned URLs take priority; fall back to wizard arrays; safeUrl guards against instruction strings
   const hero1Url      = safeUrl(c.heroBackgroundImageUrl  ?? w.heroImageUrls?.[0]);
@@ -111,9 +104,15 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
   const countdown = useCountdown(eventTarget, exportMode);
 
   const brandPrimary = w.styleGuide?.brandColors?.primary;
-  const heroTheme = c.heroTheme ?? defaultHeroTheme(brandPrimary);
-  const finalVpTheme = c.finalVpTheme ?? defaultFinalVpTheme(brandPrimary);
-  const registerTheme = c.registerTheme ?? defaultRegisterTheme(brandPrimary);
+  // Per-section theme resolution: manual override > legacy AI field > default.
+  const themeFor = (id: string, fallback: SectionThemeT): SectionThemeT => {
+    const legacyField = EVENT_LANDING_LEGACY_FIELD[id];
+    const legacy = legacyField ? (c as Record<string, unknown>)[legacyField] : undefined;
+    return resolveSectionTheme(id, c.sectionThemes, legacy, fallback);
+  };
+  const heroTheme = themeFor("hero", defaultHeroTheme(brandPrimary));
+  const finalVpTheme = themeFor("finalVp", defaultFinalVpTheme(brandPrimary));
+  const registerTheme = themeFor("register", defaultRegisterTheme(brandPrimary));
   const editor = useEditorOptional();
   const editMode = useEditMode();
   const showPriceLine = Boolean(priceValue || priceLabel || editor?.isEditMode);
@@ -133,7 +132,17 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
   return (
     <div>
       {/* ── 01 Sticky Bar ── */}
-      <div className="sticky-bar is-visible" id="stickyBar" aria-label="Registration bar">
+      <EditableSection
+        pageKey="eventLanding"
+        sectionId="stickyBar"
+        theme={themeFor("stickyBar", "dark")}
+        base="plain"
+        bgViaClass
+        as="div"
+        id="stickyBar"
+        className="sticky-bar is-visible"
+        exportMode={exportMode}
+      >
         <div className="container">
           <BrandLogo
             logoUrl={w.logoUrl}
@@ -162,12 +171,16 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
           </div>
           {ctaLink("btn btn-primary btn-sm")}
         </div>
-      </div>
+      </EditableSection>
 
       {/* ── 02 Hero ── */}
-      <section
-        className={structuralSectionClass("hero", heroTheme)}
+      <EditableSection
+        pageKey="eventLanding"
+        sectionId="hero"
+        theme={heroTheme}
+        base="hero"
         id="hero"
+        exportMode={exportMode}
         style={hero1Url ? {
           backgroundImage: brandImageBackground(brandHeroOverlay(), hero1Url),
           backgroundSize: "cover",
@@ -285,11 +298,11 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
             </div>
           </div>
         </div>
-      </section>
+      </EditableSection>
 
       {/* ── 03 Credibility 1 ── */}
       {(c.credibilityQuote1 || editMode) && (
-        <section className="credibility">
+        <EditableSection pageKey="eventLanding" sectionId="credibility1" theme={themeFor("credibility1", "light")} className="credibility" exportMode={exportMode}>
           <div className="container">
             <div className="quote-glyph" aria-hidden="true">&ldquo;</div>
             <blockquote>
@@ -303,11 +316,11 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               </PageText>
             </cite>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 04 Video ── */}
-      <section className="video-section" style={{ background: "var(--surface-sunken)" }}>
+      <EditableSection pageKey="eventLanding" sectionId="video" theme={themeFor("video", "light")} className="video-section" exportMode={exportMode}>
         <div className="container">
           <div className="section-header">
             <PageText pageKey="eventLanding" path="videoSectionEyebrow" as="span" className="eyebrow">
@@ -342,7 +355,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
             </p>
           )}
         </div>
-      </section>
+      </EditableSection>
 
       {/* ── 05 As Seen On ── */}
       <EditablePressLogos
@@ -354,7 +367,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
 
       {/* ── 06 Audience Callouts ── */}
       {(c.audienceItems ?? []).length > 0 && (
-        <section className="audience">
+        <EditableSection pageKey="eventLanding" sectionId="audience" theme={themeFor("audience", "light")} className="audience" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               <PageText pageKey="eventLanding" path="audienceEyebrow" as="span" className="eyebrow">
@@ -394,13 +407,17 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               {ctaLink("btn btn-primary btn-xl")}
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 07 Encourage CTA 1 — text band only, no button ── */}
       {(c.encourageText1 || editMode) && (
-        <section
-          className={encourageClass(c.encourage1Theme, "dark")}
+        <EditableSection
+          pageKey="eventLanding"
+          sectionId="encourage1"
+          theme={themeFor("encourage1", "dark")}
+          base="encourage"
+          exportMode={exportMode}
           style={safeUrl(c.encourage1BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage1BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
@@ -410,12 +427,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               </PageText>
             </p>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 08 Value Proposition ── */}
       {(c.vpHeading || editMode) && (
-        <section>
+        <EditableSection pageKey="eventLanding" sectionId="valueProp" theme={themeFor("valueProp", "light")} exportMode={exportMode}>
           <div className="container">
             <div className="value-prop">
               <div className="vp-text">
@@ -450,12 +467,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               </div>
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 09 Credibility 2 (inline) ── */}
       {(c.credibilityQuote2 || editMode) && (
-        <section className="credibility inline" style={{ paddingTop: 40, paddingBottom: 40, marginBottom: 40 }}>
+        <EditableSection pageKey="eventLanding" sectionId="credibility2" theme={themeFor("credibility2", "light")} className="credibility inline" style={{ paddingTop: 40, paddingBottom: 40, marginBottom: 40 }} exportMode={exportMode}>
           <div className="container" style={{ paddingTop: 40, paddingBottom: 40 }}>
             <div className="quote-glyph" aria-hidden="true">&ldquo;</div>
             <blockquote>
@@ -473,12 +490,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               </PageText>
             </cite>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 10 Outcomes (Edward style) ── */}
       {((c.outcomesItems ?? []).length > 0 || editMode) && (
-        <section className="outcomes" style={{ background: "var(--surface-sunken)" }}>
+        <EditableSection pageKey="eventLanding" sectionId="outcomes" theme={themeFor("outcomes", "light")} className="outcomes" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               <PageText pageKey="eventLanding" path="outcomesEyebrow" as="span" className="eyebrow">
@@ -533,12 +550,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               {ctaLink("btn btn-primary btn-xl")}
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 11 Personal Message ── */}
       {((c.personalMessageParagraphs ?? []).length > 0 || editMode) && (
-        <section className="personal-message">
+        <EditableSection pageKey="eventLanding" sectionId="personalMessage" theme={themeFor("personalMessage", "light")} className="personal-message" exportMode={exportMode}>
           <div className="container">
             <h2 className="h2">
               <PageText pageKey="eventLanding" path="personalMessageHeading" as="span">
@@ -560,7 +577,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               </p>
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── Testimonials ── */}
@@ -569,13 +586,19 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
           testimonials={w.testimonials ?? []}
           eyebrow={c.testimonialsEyebrow}
           heading={c.testimonialsHeading ?? "What people say"}
+          theme={themeFor("testimonials", "light")}
+          exportMode={exportMode}
         />
       )}
 
       {/* ── 07b Encourage CTA 2 ── */}
       {(c.encourageText2 || editMode) && (
-        <section
-          className={encourageClass(c.encourage2Theme, "accent")}
+        <EditableSection
+          pageKey="eventLanding"
+          sectionId="encourage2"
+          theme={themeFor("encourage2", "accent")}
+          base="encourage"
+          exportMode={exportMode}
           style={safeUrl(c.encourage2BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage2BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
@@ -586,12 +609,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
             </p>
             {ctaLink("btn btn-primary btn-xl")}
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 13 How It Works ── */}
       {((c.howItWorksParagraphs ?? []).length > 0 || editMode) && (
-        <section className="how-it-works">
+        <EditableSection pageKey="eventLanding" sectionId="howItWorks" theme={themeFor("howItWorks", "light")} className="how-it-works" exportMode={exportMode}>
           <div className="container">
             <h2 className="h2 display-section">
               <PageText pageKey="eventLanding" path="howItWorksHeading" as="span">
@@ -611,11 +634,11 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               </PageText>
             </p>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 14 Event Overview ── */}
-      <section className="event-overview">
+      <EditableSection pageKey="eventLanding" sectionId="eventOverview" theme={themeFor("eventOverview", "light")} className="event-overview" exportMode={exportMode}>
         <div className="container">
           <div className="overview-top">
             <h2 className="h2 display-section">
@@ -711,11 +734,11 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
             )}
           </div>
         </div>
-      </section>
+      </EditableSection>
 
       {/* ── Credibility 3 (post-overview) ── */}
       {(c.credibilityQuote3 || editMode) && (
-        <section className="credibility inline" style={{ paddingTop: 40, paddingBottom: 40, marginBottom: 40 }}>
+        <EditableSection pageKey="eventLanding" sectionId="credibility3" theme={themeFor("credibility3", "light")} className="credibility inline" style={{ paddingTop: 40, paddingBottom: 40, marginBottom: 40 }} exportMode={exportMode}>
           <div className="container" style={{ paddingTop: 40, paddingBottom: 40 }}>
             <div className="quote-glyph" aria-hidden="true">&ldquo;</div>
             <blockquote>
@@ -733,12 +756,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               </PageText>
             </cite>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 15 Extra VP ── */}
       {(c.extraVpHeading || editMode) && (
-        <section className="extra-vp on-dark">
+        <EditableSection pageKey="eventLanding" sectionId="extraVp" theme={themeFor("extraVp", "accent")} className="extra-vp" exportMode={exportMode}>
           <div className="container">
             <h2 className="h2 display-section">
               <PageText pageKey="eventLanding" path="extraVpHeading" as="span">
@@ -758,13 +781,17 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               </PageText>
             </p>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 07c Encourage CTA 3 ── */}
       {(c.encourageText3 || editMode) && (
-        <section
-          className={encourageClass(c.encourage3Theme, "light")}
+        <EditableSection
+          pageKey="eventLanding"
+          sectionId="encourage3"
+          theme={themeFor("encourage3", "light")}
+          base="encourage"
+          exportMode={exportMode}
           style={safeUrl(c.encourage3BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage3BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
@@ -775,12 +802,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
             </p>
             {ctaLink("btn btn-primary btn-xl")}
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 16 Outcomes 2 (icon grid) ── */}
       {((c.outcomes2Items ?? []).length > 0 || editMode) && (
-        <section className="outcomes-grid">
+        <EditableSection pageKey="eventLanding" sectionId="outcomes2" theme={themeFor("outcomes2", "light")} className="outcomes-grid" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               <PageText pageKey="eventLanding" path="outcomes2Eyebrow" as="span" className="eyebrow">
@@ -814,12 +841,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               ))}
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 17 Bio ── */}
       {((c.bioParagraphs ?? []).length > 0 || editMode) && (
-        <section style={{ background: "var(--surface-sunken)" }}>
+        <EditableSection pageKey="eventLanding" sectionId="bio" theme={themeFor("bio", "light")} exportMode={exportMode}>
           <div className="container">
             <div className="bio">
               <div className="bio-image">
@@ -852,12 +879,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               </div>
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 18 Final VP ── */}
       {(c.finalVpHeading || editMode) && (
-        <section className={structuralSectionClass("final-vp", finalVpTheme)}>
+        <EditableSection pageKey="eventLanding" sectionId="finalVp" theme={finalVpTheme} base="final-vp" exportMode={exportMode}>
           <div className="container">
             <h2>
               <PageText pageKey="eventLanding" path="finalVpHeading" as="span">
@@ -905,12 +932,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               {ctaLink("btn btn-primary btn-xl")}
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 19 FAQ ── */}
       {(c.faqItems ?? []).length > 0 && (
-        <section className="faq">
+        <EditableSection pageKey="eventLanding" sectionId="faq" theme={themeFor("faq", "light")} className="faq" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               <PageText pageKey="eventLanding" path="faqEyebrow" as="span" className="eyebrow">
@@ -940,11 +967,11 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               ))}
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── Final CTA (dark) ── */}
-      <section className={structuralSectionClass("encourage", registerTheme)} id="register">
+      <EditableSection pageKey="eventLanding" sectionId="register" theme={registerTheme} base="encourage" id="register" exportMode={exportMode}>
         <div className="container">
           <p className="line">
             <EditableText pageKey="eventLanding" path="finalCtaLine" as="span">
@@ -957,11 +984,11 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
             </EditableText>
           </a>
         </div>
-      </section>
+      </EditableSection>
 
       {/* ── 20 FTC ── */}
       {c.ftcDisclaimer && (
-        <section className="ftc">
+        <EditableSection pageKey="eventLanding" sectionId="ftc" theme={themeFor("ftc", "light")} className="ftc" exportMode={exportMode}>
           <div className="container">
             <h2>FTC Disclaimer</h2>
             <div className="reading">
@@ -970,7 +997,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               </p>
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 21 Footer ── */}
@@ -1003,13 +1030,15 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
 interface Testimonial { quote: string; name: string; location?: string; context?: string; }
 
 function TestimonialCarousel({
-  testimonials, eyebrow, heading,
+  testimonials, eyebrow, heading, theme, exportMode,
 }: {
   testimonials: Testimonial[];
   perSlide?: number;
   totalSlides?: number;
   eyebrow?: string;
   heading: string;
+  theme: SectionThemeT;
+  exportMode?: boolean;
 }) {
   const n = testimonials.length;
   const [start, setStart] = useState(0);
@@ -1028,7 +1057,7 @@ function TestimonialCarousel({
   const showControls = n > 3;
 
   return (
-    <section className="testimonials">
+    <EditableSection pageKey="eventLanding" sectionId="testimonials" theme={theme} className="testimonials" exportMode={exportMode}>
       <div className="container">
         <div className="section-header">
           <PageText pageKey="eventLanding" path="testimonialsEyebrow" as="span" className="eyebrow">
@@ -1086,6 +1115,6 @@ function TestimonialCarousel({
           </div>
         )}
       </div>
-    </section>
+    </EditableSection>
   );
 }

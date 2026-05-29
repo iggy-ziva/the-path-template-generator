@@ -6,13 +6,8 @@ import BrandLogo from "../BrandLogo";
 import EditableText from "../editor/EditableText";
 import { PageText } from "../editor/page-editable";
 import { useEditorOptional } from "../editor/EditorContext";
-
-function themeClasses(theme?: SectionTheme, defaultTheme: SectionTheme = "dark"): string {
-  const t = theme ?? defaultTheme;
-  if (t === "dark")   return "dark-bg on-dark";
-  if (t === "accent") return "accent-bg on-dark";
-  return "";  // light
-}
+import EditableSection from "../editor/EditableSection";
+import { resolveSectionTheme, PROGRAMME_LANDING_LEGACY_FIELD } from "../editor/section-theme";
 
 interface Props {
   content: ProgrammeLandingContent;
@@ -37,6 +32,13 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
   const [openWeek, setOpenWeek] = useState<number | null>(0);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const editor = useEditorOptional();
+
+  // Per-section theme resolution: manual override > legacy AI field > default.
+  const themeFor = (id: string, fallback: SectionTheme): SectionTheme => {
+    const legacyField = PROGRAMME_LANDING_LEGACY_FIELD[id];
+    const legacy = legacyField ? (c as Record<string, unknown>)[legacyField] : undefined;
+    return resolveSectionTheme(id, c.sectionThemes, legacy, fallback);
+  };
 
   const sessionWeeksFromContent = (c.sessionWeeks ?? []).length > 0;
   const bonusesFromContent = (c.bonusesItems ?? []).length > 0;
@@ -73,8 +75,13 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
   return (
     <>
       {/* ── 01 HERO ── */}
-      <section
+      <EditableSection
+        pageKey="programmeLanding"
+        sectionId="progHero"
+        theme={themeFor("progHero", "dark")}
+        base="plain"
         className="prog-hero"
+        exportMode={exportMode}
         style={heroImageUrl ? {
           backgroundImage: brandImageBackground(
             "linear-gradient(to right, color-mix(in srgb, var(--surface-inverse) 92%, transparent) 45%, color-mix(in srgb, var(--surface-inverse) 50%, transparent) 100%)",
@@ -128,11 +135,11 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
             )}
           </div>
         </div>
-      </section>
+      </EditableSection>
 
       {/* ── 02 VISION ── */}
       {(c.visionEyebrow || c.visionHeading || (c.visionItems ?? []).length > 0) && (
-        <section className="vision">
+        <EditableSection pageKey="programmeLanding" sectionId="vision" theme={themeFor("vision", "light")} className="vision" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               {c.visionEyebrow && (
@@ -157,16 +164,16 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
                 </a>
                 {c.visionCtaNote && (
                   <PageText pageKey="programmeLanding" path="visionCtaNote" as="span" className="vision-cta-note">{c.visionCtaNote}</PageText>
-                )}
-              </div>
             )}
           </div>
-        </section>
+        )}
+          </div>
+        </EditableSection>
       )}
 
       {/* ── 03 ALREADY TRIED ── */}
       {(c.alreadyTriedHeading || (c.alreadyTriedTags ?? []).length > 0) && (
-        <section className={`already-tried ${themeClasses(c.alreadyTriedTheme, "dark")}`}>
+        <EditableSection pageKey="programmeLanding" sectionId="alreadyTried" theme={themeFor("alreadyTried", "dark")} className="already-tried" exportMode={exportMode}>
           <div className="container">
             <div className="already-tried-inner">
               <div>
@@ -187,12 +194,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               </div>
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 04 PROMISE ── */}
       {(c.promiseHeading || (c.promiseBullets ?? []).length > 0) && (
-        <section className="promise">
+        <EditableSection pageKey="programmeLanding" sectionId="promise" theme={themeFor("promise", "light")} className="promise" exportMode={exportMode}>
           <div className="container">
             <div className="promise-left">
               {c.promiseHeading && (
@@ -215,7 +222,7 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               ))}
             </ul>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── Programme feature image ── */}
@@ -231,7 +238,7 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
 
       {/* ── 05 INCLUDES ── */}
       {(c.includesHeading || (c.includesItems ?? []).length > 0) && (
-        <section className="includes">
+        <EditableSection pageKey="programmeLanding" sectionId="includes" theme={themeFor("includes", "light")} className="includes" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               {c.includesEyebrow && (
@@ -261,12 +268,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               ))}
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 06 SESSION BREAKDOWN ── */}
       {(c.sessionHeading || (sessionWeeks ?? []).length > 0) && (
-        <section className="session-breakdown">
+        <EditableSection pageKey="programmeLanding" sectionId="session" theme={themeFor("session", "light")} className="session-breakdown" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               {c.sessionEyebrow && (
@@ -316,12 +323,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               ))}
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 07 VIDEO TESTIMONIALS ── */}
       {(c.videoTestimonialsHeading || videoUrls.length > 0) && (
-        <section className="video-testimonials">
+        <EditableSection pageKey="programmeLanding" sectionId="videoTestimonials" theme={themeFor("videoTestimonials", "dark")} className="video-testimonials" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               {c.videoTestimonialsEyebrow && (
@@ -369,12 +376,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
                   ))}
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 08 CREDIBILITY PULL QUOTE ── */}
       {(c.credibilityQuote || c.credibilityAttribution) && (
-        <section className="credibility">
+        <EditableSection pageKey="programmeLanding" sectionId="credibility" theme={themeFor("credibility", "light")} className="credibility" exportMode={exportMode}>
           <div className="container">
             <div className="quote-glyph" aria-hidden="true">"</div>
             {c.credibilityQuote && (
@@ -388,12 +395,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               </cite>
             )}
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 09 BONUSES ── */}
       {(c.bonusesHeading || (bonuses ?? []).length > 0) && (
-        <section className="bonuses">
+        <EditableSection pageKey="programmeLanding" sectionId="bonuses" theme={themeFor("bonuses", "light")} className="bonuses" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               {c.bonusesEyebrow && (
@@ -437,12 +444,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               </div>
             )}
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 10 PRICE REPEAT ── */}
       {(c.midPriceLabel || c.midPriceCtaText) && (
-        <section className="price-repeat">
+        <EditableSection pageKey="programmeLanding" sectionId="priceRepeat" theme={themeFor("priceRepeat", "dark")} className="price-repeat" exportMode={exportMode}>
           <div className="container">
             {c.midPriceLabel && (
               <PageText pageKey="programmeLanding" path="midPriceLabel" as="span" className="price-repeat-label">{c.midPriceLabel}</PageText>
@@ -465,12 +472,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               <PageText pageKey="programmeLanding" path="midPriceUrgency" as="p" className="price-repeat-urgency">{c.midPriceUrgency}</PageText>
             )}
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 11 OUTCOMES ── */}
       {(c.outcomesHeading || (c.outcomesItems ?? []).length > 0) && (
-        <section className="outcomes" style={{ background: "var(--surface-sunken)" }}>
+        <EditableSection pageKey="programmeLanding" sectionId="outcomes" theme={themeFor("outcomes", "light")} className="outcomes" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               {c.outcomesEyebrow && (
@@ -508,12 +515,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               </div>
             )}
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 12 TESTIMONIALS ── */}
       {testimonials.length > 0 && (
-        <section className="testimonials">
+        <EditableSection pageKey="programmeLanding" sectionId="testimonials" theme={themeFor("testimonials", "light")} className="testimonials" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               {c.testimonialsEyebrow && (
@@ -554,11 +561,11 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               </div>
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 13 PRICING ── */}
-      <section className="pricing" id="pricing">
+      <EditableSection pageKey="programmeLanding" sectionId="pricing" theme={themeFor("pricing", "light")} className="pricing" id="pricing" exportMode={exportMode}>
         <div className="container">
           <div className="section-header">
             {c.pricingEyebrow && (
@@ -602,11 +609,11 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
             </p>
           )}
         </div>
-      </section>
+      </EditableSection>
 
       {/* ── 14 HOST ── */}
       {(c.bioName ?? w.hostName) && (
-        <section className="host">
+        <EditableSection pageKey="programmeLanding" sectionId="host" theme={themeFor("host", "light")} className="host" exportMode={exportMode}>
           <div className="container">
             <div className="host-photo">
               {w.hostHeadshotUrl ? (
@@ -643,12 +650,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               )}
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 15 FAQ ── */}
       {(c.faqItems ?? []).length > 0 && (
-        <section className="faq">
+        <EditableSection pageKey="programmeLanding" sectionId="faq" theme={themeFor("faq", "light")} className="faq" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
               {c.faqEyebrow && (
@@ -680,13 +687,18 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               ))}
             </div>
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── 16 FINAL CTA ── */}
       {(c.finalCtaHeadline || c.finalCtaText) && (
-        <section
-          className={`final-cta ${themeClasses(c.finalCtaTheme, "dark")}`}
+        <EditableSection
+          pageKey="programmeLanding"
+          sectionId="finalCta"
+          theme={themeFor("finalCta", "accent")}
+          base="plain"
+          className="final-cta"
+          exportMode={exportMode}
           style={finalCtaBgUrl ? { backgroundImage: brandImageBackground(brandSectionOverlay(0.88), finalCtaBgUrl), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
@@ -705,7 +717,7 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               <PageText pageKey="programmeLanding" path="finalCtaDeadline" as="p" className="final-cta-deadline">{c.finalCtaDeadline}</PageText>
             )}
           </div>
-        </section>
+        </EditableSection>
       )}
 
       {/* ── DISCLAIMER + FOOTER ── */}

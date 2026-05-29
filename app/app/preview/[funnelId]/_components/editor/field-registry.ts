@@ -1,6 +1,6 @@
 import type { FunnelPageKey } from "@/lib/funnel-export/config";
 
-export type FieldType = "text" | "html" | "list" | "image" | "object-list";
+export type FieldType = "text" | "html" | "list" | "image" | "object-list" | "theme-map";
 
 export interface FieldDef {
   path: string;
@@ -11,6 +11,7 @@ export interface FieldDef {
 /** Editable content paths per page — editor only touches registered fields. */
 export const FIELD_REGISTRY: Record<FunnelPageKey, FieldDef[]> = {
   eventLanding: [
+    { path: "sectionThemes", type: "theme-map", label: "Per-section themes (dark/accent/light)" },
     { path: "heroHeadline", type: "text", label: "Hero headline" },
     { path: "heroSubheadline", type: "text", label: "Hero subheadline" },
     { path: "heroPriceLabel", type: "text", label: "Hero price label" },
@@ -104,6 +105,7 @@ export const FIELD_REGISTRY: Record<FunnelPageKey, FieldDef[]> = {
     { path: "heroBackgroundImageUrl", type: "image", label: "Header background" },
   ],
   programmeLanding: [
+    { path: "sectionThemes", type: "theme-map", label: "Per-section themes (dark/accent/light)" },
     // Hero
     { path: "heroEyebrow", type: "text", label: "Hero eyebrow" },
     { path: "heroHeadline", type: "text", label: "Hero headline" },

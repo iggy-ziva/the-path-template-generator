@@ -2415,6 +2415,23 @@
       background: radial-gradient(ellipse 70% 60% at 50% 0%, color-mix(in srgb, var(--accent-light) 6%, transparent) 0%, transparent 70%);
       pointer-events: none;
     }
+    /* Per-section theme variants for the programme hero (header).
+       Compound selectors override the loaded-later .prog-hero base background. */
+    .prog-hero.accent-bg {
+      background: var(--surface-accent);
+      color: var(--text-inverse);
+    }
+    .prog-hero.light-bg {
+      background: var(--surface-canvas);
+      color: var(--text-primary);
+    }
+    .prog-hero.light-bg::before { display: none; }
+    .prog-hero.light-bg .prog-hero-title { color: var(--text-primary); }
+    .prog-hero.light-bg .prog-hero-sub { color: var(--text-secondary); }
+    .prog-hero.light-bg .prog-hero-eyebrow { color: var(--accent-secondary-on-light); }
+    .prog-hero.light-bg .prog-hero-meta-item { color: var(--text-tertiary); }
+    .prog-hero.light-bg .prog-hero-meta-item strong { color: var(--text-secondary); }
+    .prog-hero.light-bg .prog-hero-meta-dot { background: color-mix(in srgb, var(--text-primary) 25%, transparent); }
     .prog-hero .container {
       max-width: var(--content-max);
       margin-inline: auto;
@@ -2777,8 +2794,6 @@
        04 — Video testimonials
        ===================================================================== */
     .video-testimonials {
-      background: var(--surface-inverse);
-      color: var(--text-inverse);
       padding: var(--s-11) 0;
     }
     .video-testimonials .container {
@@ -2794,8 +2809,8 @@
       max-width: 560px;
       margin-bottom: var(--s-9);
     }
-    .video-testimonials .section-header .eyebrow { color: var(--accent-secondary-on-dark); }
-    .video-testimonials .section-header h2 { color: var(--text-inverse); }
+    .video-testimonials .section-header .eyebrow { color: var(--accent-secondary-ctx); }
+    .video-testimonials .section-header h2 { color: var(--text-primary); }
     .vt-track {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -2806,14 +2821,14 @@
     .vt-card {
       border-radius: 12px;
       overflow: hidden;
-      background: color-mix(in srgb, var(--text-inverse) 4%, transparent);
-      border: 1px solid color-mix(in srgb, var(--text-inverse) 8%, transparent);
+      background: color-mix(in srgb, currentColor 5%, transparent);
+      border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
       display: flex;
       flex-direction: column;
     }
     .vt-thumb {
       aspect-ratio: 16/9;
-      background: color-mix(in srgb, var(--text-inverse) 6%, transparent);
+      background: color-mix(in srgb, currentColor 7%, transparent);
       position: relative;
       display: grid;
       place-items: center;
@@ -2821,15 +2836,15 @@
     .vt-play {
       width: 52px; height: 52px;
       border-radius: 50%;
-      background: color-mix(in srgb, var(--text-inverse) 12%, transparent);
-      border: 1.5px solid color-mix(in srgb, var(--text-inverse) 20%, transparent);
+      background: color-mix(in srgb, currentColor 12%, transparent);
+      border: 1.5px solid color-mix(in srgb, currentColor 22%, transparent);
       display: grid;
       place-items: center;
       cursor: pointer;
       transition: background 150ms ease, transform 150ms ease;
     }
-    .vt-play:hover { background: color-mix(in srgb, var(--text-inverse) 20%, transparent); transform: scale(1.06); }
-    .vt-play svg { width: 20px; height: 20px; fill: color-mix(in srgb, var(--text-inverse) 85%, transparent); margin-left: 2px; }
+    .vt-play:hover { background: color-mix(in srgb, currentColor 20%, transparent); transform: scale(1.06); }
+    .vt-play svg { width: 20px; height: 20px; fill: currentColor; margin-left: 2px; }
     .vt-duration {
       position: absolute;
       bottom: var(--s-3);
@@ -2837,7 +2852,7 @@
       font-family: var(--font-body);
       font-size: 11px;
       font-weight: 600;
-      color: color-mix(in srgb, var(--text-inverse) 60%, transparent);
+      color: #F5F1EA;
       background: rgba(0,0,0,0.4);
       padding: 2px 7px;
       border-radius: 4px;
@@ -2853,13 +2868,13 @@
       font-size: 14px;
       font-style: italic;
       line-height: 1.55;
-      color: color-mix(in srgb, var(--text-inverse) 70%, transparent);
+      color: var(--text-secondary);
     }
     .vt-author {
       font-family: var(--font-body);
       font-size: 12px;
       font-weight: 600;
-      color: color-mix(in srgb, var(--text-inverse) 40%, transparent);
+      color: var(--text-tertiary);
     }
 
     /* =====================================================================
@@ -3583,8 +3598,6 @@
        ===================================================================== */
     .already-tried {
       padding: var(--s-11) 0;
-      background: var(--surface-inverse);
-      color: var(--text-inverse);
     }
     .already-tried .container {
       max-width: 1080px;
@@ -3608,7 +3621,7 @@
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: color-mix(in srgb, var(--accent-light) 70%, transparent);
+      color: var(--text-accent);
       margin-bottom: var(--s-4);
     }
     .already-tried-headline {
@@ -3616,14 +3629,14 @@
       font-size: clamp(24px, 3vw, 36px);
       font-weight: 700;
       line-height: 1.15;
-      color: var(--text-inverse);
+      color: var(--text-primary);
       margin-bottom: var(--s-5);
     }
     .already-tried-body {
       font-family: var(--font-body);
       font-size: 15px;
       line-height: 1.75;
-      color: color-mix(in srgb, var(--text-inverse) 60%, transparent);
+      color: var(--text-secondary);
     }
     .tried-cloud {
       display: flex;
@@ -3634,13 +3647,13 @@
       font-family: var(--font-body);
       font-size: 13px;
       font-weight: 500;
-      color: color-mix(in srgb, var(--text-inverse) 45%, transparent);
-      background: color-mix(in srgb, var(--text-inverse) 5%, transparent);
-      border: 1px solid color-mix(in srgb, var(--text-inverse) 10%, transparent);
+      color: var(--text-tertiary);
+      background: color-mix(in srgb, currentColor 7%, transparent);
+      border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
       border-radius: 9999px;
       padding: 6px 14px;
       text-decoration: line-through;
-      text-decoration-color: var(--accent-secondary-on-dark);
+      text-decoration-color: var(--accent-secondary-ctx);
     }
 
     /* =====================================================================
@@ -3880,8 +3893,6 @@
        12 — Mid-page price repeat
        ===================================================================== */
     .price-repeat {
-      background: var(--surface-inverse);
-      color: var(--text-inverse);
       padding: var(--s-10) 0;
     }
     .price-repeat .container {
@@ -3904,32 +3915,32 @@
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--accent-secondary-on-dark);
+      color: var(--accent-secondary-ctx);
     }
     .price-repeat-name {
       font-family: var(--font-display);
       font-size: clamp(24px, 3vw, 34px);
       font-weight: 700;
-      color: var(--text-inverse);
+      color: var(--text-primary);
       line-height: 1.1;
     }
     .price-repeat-amount {
       font-family: var(--font-body);
       font-size: 52px;
       font-weight: 800;
-      color: var(--text-inverse);
+      color: var(--text-primary);
       line-height: 1;
     }
     .price-repeat-amount sup { font-size: 26px; vertical-align: super; line-height: 0; }
     .price-repeat-plan {
       font-family: var(--font-body);
       font-size: 14px;
-      color: color-mix(in srgb, var(--text-inverse) 40%, transparent);
+      color: var(--text-tertiary);
     }
     .price-repeat-plan button {
       background: none;
       border: none;
-      color: var(--accent-secondary-on-dark);
+      color: var(--accent-secondary-ctx);
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
@@ -3957,15 +3968,13 @@
     .price-repeat-urgency {
       font-family: var(--font-body);
       font-size: 12px;
-      color: color-mix(in srgb, var(--text-inverse) 30%, transparent);
+      color: var(--text-tertiary);
     }
 
     /* =====================================================================
        16 — Final CTA
        ===================================================================== */
     .final-cta {
-      background: var(--surface-accent);
-      color: var(--text-inverse);
       padding: var(--s-11) 0;
     }
     .final-cta .container {
@@ -3987,13 +3996,13 @@
       font-size: clamp(28px, 4vw, 44px);
       font-weight: 700;
       line-height: 1.1;
-      color: var(--text-inverse);
+      color: var(--text-primary);
     }
     .final-cta-body {
       font-family: var(--font-body);
       font-size: 16px;
       line-height: 1.7;
-      color: color-mix(in srgb, var(--text-inverse) 65%, transparent);
+      color: var(--text-secondary);
       max-width: 520px;
     }
     .final-cta-btn {
@@ -4015,7 +4024,7 @@
     .final-cta-deadline {
       font-family: var(--font-body);
       font-size: 13px;
-      color: color-mix(in srgb, var(--text-inverse) 35%, transparent);
+      color: var(--text-tertiary);
     }
     /* =====================================================================
        Mobile — consolidated overrides (must stay at end to win cascade)
