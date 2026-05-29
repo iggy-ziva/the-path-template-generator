@@ -21,10 +21,31 @@ export async function POST(req: NextRequest) {
     if (!userId) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     if (submissionId) {
+      // Defensive merge: never let an incoming payload DROP fields that already
+      // exist on the server. A client-side load/switch race could briefly leave
+      // local state with only a handful of keys (e.g. the brand-analysis fields);
+      // a blind replace then wiped the entire submission. Shallow-merging keeps
+      // any field absent from the payload intact while still allowing present
+      // fields (including cleared values and edited arrays) to update normally.
+      const { data: existing } = await supabase
+        .from("wizard_submissions")
+        .select("step_data")
+        .eq("id", submissionId)
+        .eq("user_id", userId)
+        .single();
+
+      const existingStepData =
+        existing?.step_data && typeof existing.step_data === "object"
+          ? (existing.step_data as Record<string, unknown>)
+          : {};
+      const incomingStepData =
+        stepData && typeof stepData === "object" ? (stepData as Record<string, unknown>) : {};
+      const mergedStepData = { ...existingStepData, ...incomingStepData };
+
       const { data, error } = await supabase
         .from("wizard_submissions")
         .update({
-          step_data: stepData,
+          step_data: mergedStepData,
           current_step: currentStep,
           updated_at: new Date().toISOString(),
         })
