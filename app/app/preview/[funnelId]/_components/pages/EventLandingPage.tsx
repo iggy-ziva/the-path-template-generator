@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import type { EventLandingContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl, brandHeroOverlay, brandSectionOverlay, brandImageBackground } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
@@ -9,6 +9,8 @@ import { useEditorOptional } from "../editor/EditorContext";
 import { PageText, useEditMode } from "../editor/page-editable";
 import EditablePressLogos from "../editor/EditablePressLogos";
 import EditableSection from "../editor/EditableSection";
+import EditableBackgroundImage from "../editor/EditableBackgroundImage";
+import { EditableImage } from "../editor/EditableList";
 import { resolveSectionTheme, EVENT_LANDING_LEGACY_FIELD, type SectionTheme as SectionThemeT } from "../editor/section-theme";
 import {
   defaultHeroTheme,
@@ -21,6 +23,47 @@ interface Props {
   wizard: WizardSnapshot;
   exportMode?: boolean;
 }
+
+/** Inline editor-only pill controls for add/remove rows.
+ *  Inlined (not CSS) so they render reliably regardless of stylesheet caching
+ *  and never leak into the exported/published page (only mounted in edit mode). */
+const EDIT_PILL_REMOVE: CSSProperties = {
+  position: "static",
+  alignSelf: "center",
+  justifySelf: "end",
+  flexShrink: 0,
+  whiteSpace: "nowrap",
+  display: "inline-flex",
+  alignItems: "center",
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: "#b91c1c",
+  background: "rgba(220,38,38,0.08)",
+  border: "1px solid rgba(220,38,38,0.35)",
+  borderRadius: 999,
+  padding: "4px 10px",
+  cursor: "pointer",
+  lineHeight: 1,
+};
+const EDIT_PILL_ADD: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  marginTop: 14,
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  color: "var(--accent-secondary-ctx, var(--accent-secondary))",
+  background: "none",
+  border: "1px dashed var(--border-subtle)",
+  borderRadius: 999,
+  padding: "6px 14px",
+  cursor: "pointer",
+  lineHeight: 1,
+};
 
 /** Parse wizard date/time strings into a target Date.
  *  eventDate can be "Friday 19 June 2026", "19/06/2026", ISO, etc.
@@ -284,9 +327,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               )}
             </div>
 
-            <div
+            <EditableBackgroundImage
+              pageKey="eventLanding"
+              path="heroBackgroundImageUrl"
               className="hero-visual"
-              aria-hidden="false"
+              ariaHidden={false}
+              hasImage={Boolean(hero1Url)}
               style={hero1Url ? { backgroundImage: `url(${hero1Url})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
             >
               {!hero1Url && (
@@ -295,7 +341,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                   <strong>Your hero image will appear here.</strong>
                 </div>
               )}
-            </div>
+            </EditableBackgroundImage>
           </div>
         </div>
       </EditableSection>
@@ -366,7 +412,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
       />
 
       {/* ── 06 Audience Callouts ── */}
-      {(c.audienceItems ?? []).length > 0 && (
+      {((c.audienceItems ?? []).length > 0 || editMode) && (
         <EditableSection pageKey="eventLanding" sectionId="audience" theme={themeFor("audience", "light")} className="audience" exportMode={exportMode}>
           <div className="container">
             <div className="section-header">
@@ -381,7 +427,11 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
             </div>
             <div className="audience-list">
               {(c.audienceItems ?? []).map((item, i) => (
-                <div key={i} className="audience-item">
+                <div
+                  key={i}
+                  className="audience-item"
+                  style={editMode ? { gridTemplateColumns: "auto 1fr auto", alignItems: "center", columnGap: 16 } : undefined}
+                >
                   <div className="audience-icon" aria-hidden="true">
                     <CheckIcon />
                   </div>
@@ -390,8 +440,31 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                       {item.replace(/<[^>]+>/g, "")}
                     </EditableText>
                   </p>
+                  {editMode && editor && (
+                    <button
+                      type="button"
+                      contentEditable={false}
+                      title="Remove this row"
+                      onClick={() => editor.removeListItem("eventLanding", "audienceItems", i)}
+                      style={EDIT_PILL_REMOVE}
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               ))}
+              {editMode && editor && (
+                <button
+                  type="button"
+                  contentEditable={false}
+                  onClick={() =>
+                    editor.addListItem("eventLanding", "audienceItems", "New point — describe who this is for")
+                  }
+                  style={EDIT_PILL_ADD}
+                >
+                  + Add row
+                </button>
+              )}
             </div>
             <p className="audience-close">
               <PageText pageKey="eventLanding" path="audienceClosingText" as="span">
@@ -458,12 +531,17 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                 </div>
               </div>
               <div className="vp-image">
-                {lifestyle1Url
-                  ? <img src={lifestyle1Url} alt="" style={{ width: "100%", aspectRatio: "4/5", objectFit: "cover", borderRadius: "var(--r-xl)" }} />
-                  : <div className="img-placeholder tint-forest">
-                      <span className="img-label">Supporting image · 4:5</span>
-                    </div>
-                }
+                <EditableImage
+                  pageKey="eventLanding"
+                  path="valuePropImageUrl"
+                  url={lifestyle1Url}
+                  alt=""
+                  imgStyle={{ width: "100%", aspectRatio: "4/5", objectFit: "cover", borderRadius: "var(--r-xl)" }}
+                >
+                  <div className="img-placeholder tint-forest">
+                    <span className="img-label">Supporting image · 4:5</span>
+                  </div>
+                </EditableImage>
               </div>
             </div>
           </div>
@@ -531,10 +609,15 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               ))}
             </div>
             <div className="outcomes-image">
-              {outcomes1Url
-                ? <img src={outcomes1Url} alt="" style={{ width: "100%", aspectRatio: "21/9", objectFit: "cover", borderRadius: "var(--r-xl)" }} />
-                : <div className="img-placeholder tint-stone"><span className="img-label">Supporting image · 21:9</span></div>
-              }
+              <EditableImage
+                pageKey="eventLanding"
+                path="outcomesImageUrl"
+                url={outcomes1Url}
+                alt=""
+                imgStyle={{ width: "100%", aspectRatio: "21/9", objectFit: "cover", borderRadius: "var(--r-xl)" }}
+              >
+                <div className="img-placeholder tint-stone"><span className="img-label">Supporting image · 21:9</span></div>
+              </EditableImage>
             </div>
             <p className="outcomes-close">
               <PageText pageKey="eventLanding" path="outcomesClosingText" as="span">

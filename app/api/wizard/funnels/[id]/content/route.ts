@@ -78,16 +78,20 @@ export async function PATCH(
     nextContent = { [WIZARD_SNAPSHOT_KEY]: wizardSnapshot, ...nextContent };
   }
 
-  // Full content replace
+  // Full content replace. Defensive: merge incoming pages OVER the existing
+  // ones rather than wholesale-replacing, so a payload that is missing a page
+  // (e.g. a partial/raced client save) can never drop pages that already exist.
+  // The editor always sends the complete draft, so normal saves are unaffected.
   if (body.content && typeof body.content === "object" && !Array.isArray(body.content)) {
     const incoming = body.content as Record<string, unknown>;
     const { [WIZARD_SNAPSHOT_KEY]: _s, ...pages } = incoming;
     const cleanPages = Object.fromEntries(
       Object.entries(pages).map(([k, v]) => [k, clampSectionThemes(v)]),
     );
+    const mergedPages = { ...pageContent, ...cleanPages };
     nextContent = wizardSnapshot
-      ? { [WIZARD_SNAPSHOT_KEY]: wizardSnapshot, ...cleanPages }
-      : { ...cleanPages };
+      ? { [WIZARD_SNAPSHOT_KEY]: wizardSnapshot, ...mergedPages }
+      : { ...mergedPages };
   }
 
   // Single page patch: { pageKey, patch }
