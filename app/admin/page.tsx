@@ -101,7 +101,7 @@ export default async function AdminPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid #2a2926" }}>
-                  {["Funnel ID", "User", "Theme", "Pages generated", "Created", "Actions"].map(h => (
+                  {["Funnel ID", "User", "Theme", "Pages", "Created", "Actions"].map(h => (
                     <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#555" }}>
                       {h}
                     </th>
@@ -134,13 +134,19 @@ export default async function AdminPage() {
                         {new Date(funnel.created_at).toLocaleDateString()}<br />
                         <span style={{ fontSize: 11 }}>{new Date(funnel.created_at).toLocaleTimeString()}</span>
                       </td>
-                      <td style={{ padding: "14px 20px" }}>
+                      <td style={{ padding: "14px 20px", display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <Link
                           href={`/app/preview/${funnel.id}`}
                           style={{ fontSize: 12, fontWeight: 700, color: "#D4A878", textDecoration: "none", padding: "5px 10px", border: "1px solid #D4A87840", borderRadius: 6 }}
                         >
                           Preview →
                         </Link>
+                        <a
+                          href={`/api/wizard/export/${funnel.id}`}
+                          style={{ fontSize: 12, fontWeight: 700, color: "#888", textDecoration: "none", padding: "5px 10px", border: "1px solid #444", borderRadius: 6 }}
+                        >
+                          Export ZIP
+                        </a>
                       </td>
                     </tr>
                   );

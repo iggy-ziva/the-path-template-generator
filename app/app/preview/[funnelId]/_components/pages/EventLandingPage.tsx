@@ -1,7 +1,13 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import type { EventLandingContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl, brandHeroOverlay, brandSectionOverlay, brandImageBackground } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
+import EditableText from "../editor/EditableText";
+import { useEditorOptional } from "../editor/EditorContext";
+import { PageText, useEditMode } from "../editor/page-editable";
+import EditablePressLogos from "../editor/EditablePressLogos";
 import {
   defaultHeroTheme,
   defaultRegisterTheme,
@@ -12,6 +18,7 @@ import {
 interface Props {
   content: EventLandingContent;
   wizard: WizardSnapshot;
+  exportMode?: boolean;
 }
 
 /** Parse wizard date/time strings into a target Date.
@@ -34,7 +41,7 @@ function parseEventDate(dateStr?: string, timeStr?: string, tz?: string): Date |
   }
 }
 
-function useCountdown(target: Date | null) {
+function useCountdown(target: Date | null, paused = false) {
   const calc = () => {
     if (!target) return { days: 0, hours: 0, mins: 0, secs: 0, expired: true };
     const diff = target.getTime() - Date.now();
@@ -47,11 +54,11 @@ function useCountdown(target: Date | null) {
   };
   const [tick, setTick] = useState(calc);
   useEffect(() => {
-    if (!target) return;
+    if (!target || paused) return;
     const id = setInterval(() => setTick(calc()), 1000);
     return () => clearInterval(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target?.getTime()]);
+  }, [target?.getTime(), paused]);
   return tick;
 }
 
@@ -76,7 +83,7 @@ function encourageClass(theme?: string, defaultTheme = "dark"): string {
   return "encourage sunken-bg";  // light — matches mockup section 07c (.encourage.sunken-bg)
 }
 
-export default function EventLandingPage({ content: c, wizard: w }: Props) {
+export default function EventLandingPage({ content: c, wizard: w, exportMode = false }: Props) {
   // Claude's assigned URLs take priority; fall back to wizard arrays; safeUrl guards against instruction strings
   const hero1Url      = safeUrl(c.heroBackgroundImageUrl  ?? w.heroImageUrls?.[0]);
   const lifestyle1Url = safeUrl(c.valuePropImageUrl        ?? w.lifestyleImageUrls?.[0]);
@@ -91,13 +98,37 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
     w.eventPriceFixed ? `$${w.eventPriceFixed}` : null
   );
 
-  const eventTarget = parseEventDate(w.eventDate, w.eventTime, w.eventTimezone);
-  const countdown = useCountdown(eventTarget);
+  const heroHostName = c.heroHostName ?? w.hostName ?? "";
+  const heroHostTitle = c.heroHostTitle ?? w.hostTitle ?? "";
+  const heroEventDate = c.heroEventDate ?? w.eventDate ?? "";
+  const heroEventTime = c.heroEventTime ?? w.eventTime ?? "";
+  const heroEventTimezone = c.heroEventTimezone ?? w.eventTimezone ?? "";
+
+  const pressLogos = c.pressLogos ?? w.pressLogos ?? [];
+  const asSeenOnEyebrow = c.asSeenOnEyebrow ?? "As featured in";
+
+  const eventTarget = parseEventDate(heroEventDate, heroEventTime, heroEventTimezone);
+  const countdown = useCountdown(eventTarget, exportMode);
 
   const brandPrimary = w.styleGuide?.brandColors?.primary;
   const heroTheme = c.heroTheme ?? defaultHeroTheme(brandPrimary);
   const finalVpTheme = c.finalVpTheme ?? defaultFinalVpTheme(brandPrimary);
   const registerTheme = c.registerTheme ?? defaultRegisterTheme(brandPrimary);
+  const editor = useEditorOptional();
+  const editMode = useEditMode();
+  const showPriceLine = Boolean(priceValue || priceLabel || editor?.isEditMode);
+
+  const ctaLink = (className: string) => (
+    <a
+      href="/checkout"
+      className={className}
+      onClick={(e) => {
+        if (editor?.isEditMode) e.preventDefault();
+      }}
+    >
+      <EditableText pageKey="eventLanding" path="ctaText" as="span">{ctaText}</EditableText>
+    </a>
+  );
 
   return (
     <div>
@@ -129,7 +160,7 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
               </>
             )}
           </div>
-          <a href="/checkout" className="btn btn-primary btn-sm">{ctaText}</a>
+          {ctaLink("btn btn-primary btn-sm")}
         </div>
       </div>
 
@@ -150,46 +181,94 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
                 <span className="dot" aria-hidden="true" />
                 LIVE ONLINE
               </span>
-              <h1 className="display-hero">{c.heroHeadline ?? w.eventName}</h1>
-              <p className="subtitle">{c.heroSubheadline ?? w.eventTagline}</p>
+              <h1 className="display-hero">
+                <EditableText pageKey="eventLanding" path="heroHeadline" as="span">
+                  {c.heroHeadline ?? w.eventName ?? ""}
+                </EditableText>
+              </h1>
+              <p className="subtitle">
+                <EditableText pageKey="eventLanding" path="heroSubheadline" as="span">
+                  {c.heroSubheadline ?? w.eventTagline ?? ""}
+                </EditableText>
+              </p>
 
-              {priceValue && (
+              {showPriceLine && (
                 <div className="price-line">
-                  {priceLabel && <span className="price-label">{priceLabel}</span>}
-                  <span className="price-value">{priceValue}</span>
+                  {(priceLabel || editor?.isEditMode) && (
+                    <span className="price-label">
+                      <EditableText pageKey="eventLanding" path="heroPriceLabel" as="span">
+                        {priceLabel ?? ""}
+                      </EditableText>
+                    </span>
+                  )}
+                  {(priceValue || editor?.isEditMode) && (
+                    <span className="price-value">
+                      <EditableText pageKey="eventLanding" path="heroPriceValue" as="span">
+                        {priceValue ?? ""}
+                      </EditableText>
+                    </span>
+                  )}
                 </div>
               )}
 
               <div className="hero-cta-row">
-                <a href="/checkout" className="btn btn-primary btn-xl">{ctaText}</a>
+                {ctaLink("btn btn-primary btn-xl")}
                 {c.heroMetaLine && (
-                  <span className="meta" style={{ color: "color-mix(in srgb, var(--text-inverse) 55%, transparent)" }}>{c.heroMetaLine}</span>
+                  <span className="meta" style={{ color: "color-mix(in srgb, var(--text-inverse) 55%, transparent)" }}>
+                    <EditableText pageKey="eventLanding" path="heroMetaLine" as="span">{c.heroMetaLine}</EditableText>
+                  </span>
                 )}
               </div>
 
               <div className="hero-host-badge">
-                <div className="hero-host-name">With <strong>{w.hostName}</strong></div>
-                {w.hostTitle && (
-                  <span className="hero-host-title">{w.hostTitle}</span>
+                <div className="hero-host-name">
+                  With{" "}
+                  <strong>
+                    <EditableText pageKey="eventLanding" path="heroHostName" as="span">
+                      {heroHostName}
+                    </EditableText>
+                  </strong>
+                </div>
+                {(heroHostTitle || editor?.isEditMode) && (
+                  <span className="hero-host-title">
+                    <EditableText pageKey="eventLanding" path="heroHostTitle" as="span">
+                      {heroHostTitle}
+                    </EditableText>
+                  </span>
                 )}
               </div>
 
-              <div className="hero-meta">
-                {w.eventDate && (
-                  <div>
-                    <span className="label">Date</span>
-                    <span className="value"><strong>{w.eventDate}</strong></span>
-                  </div>
-                )}
-                {w.eventTime && (
-                  <div>
-                    <span className="label">Time</span>
-                    <span className="value">
-                      <strong>{w.eventTime}</strong> {w.eventTimezone}
-                    </span>
-                  </div>
-                )}
-              </div>
+              {(heroEventDate || heroEventTime || editor?.isEditMode) && (
+                <div className="hero-meta">
+                  {(heroEventDate || editor?.isEditMode) && (
+                    <div>
+                      <span className="label">Date</span>
+                      <span className="value">
+                        <strong>
+                          <EditableText pageKey="eventLanding" path="heroEventDate" as="span">
+                            {heroEventDate}
+                          </EditableText>
+                        </strong>
+                      </span>
+                    </div>
+                  )}
+                  {(heroEventTime || heroEventTimezone || editor?.isEditMode) && (
+                    <div>
+                      <span className="label">Time</span>
+                      <span className="value">
+                        <strong>
+                          <EditableText pageKey="eventLanding" path="heroEventTime" as="span">
+                            {heroEventTime}
+                          </EditableText>
+                        </strong>{" "}
+                        <EditableText pageKey="eventLanding" path="heroEventTimezone" as="span">
+                          {heroEventTimezone}
+                        </EditableText>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div
@@ -209,17 +288,20 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       </section>
 
       {/* ── 03 Credibility 1 ── */}
-      {c.credibilityQuote1 && (
+      {(c.credibilityQuote1 || editMode) && (
         <section className="credibility">
           <div className="container">
             <div className="quote-glyph" aria-hidden="true">&ldquo;</div>
-            <blockquote>{c.credibilityQuote1}</blockquote>
-            {c.credibilityAttribution1 && (
-              <cite>
-                <strong>{c.credibilityAttribution1.split("·")[0]?.trim()}</strong>
-                {c.credibilityAttribution1.includes("·") ? ` · ${c.credibilityAttribution1.split("·").slice(1).join("·").trim()}` : ""}
-              </cite>
-            )}
+            <blockquote>
+              <PageText pageKey="eventLanding" path="credibilityQuote1" as="span">
+                {c.credibilityQuote1 ?? ""}
+              </PageText>
+            </blockquote>
+            <cite>
+              <PageText pageKey="eventLanding" path="credibilityAttribution1" as="span">
+                {c.credibilityAttribution1 ?? ""}
+              </PageText>
+            </cite>
           </div>
         </section>
       )}
@@ -228,8 +310,14 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       <section className="video-section" style={{ background: "var(--surface-sunken)" }}>
         <div className="container">
           <div className="section-header">
-            {c.videoSectionEyebrow && <span className="eyebrow">{c.videoSectionEyebrow}</span>}
-            <h2 className="display-section">{c.videoSectionHeading ?? "Watch the invitation"}</h2>
+            <PageText pageKey="eventLanding" path="videoSectionEyebrow" as="span" className="eyebrow">
+              {c.videoSectionEyebrow ?? ""}
+            </PageText>
+            <h2 className="display-section">
+              <EditableText pageKey="eventLanding" path="videoSectionHeading" as="span">
+                {c.videoSectionHeading ?? "Watch the invitation"}
+              </EditableText>
+            </h2>
           </div>
           {c.videoUrl || w.eventVideoUrl ? (
             <div className="video-frame" style={{ cursor: "default" }}>
@@ -248,35 +336,35 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
               </button>
             </div>
           )}
-          {c.videoCaption && <p className="video-caption">{c.videoCaption}</p>}
+          {c.videoCaption && (
+            <p className="video-caption">
+              <EditableText pageKey="eventLanding" path="videoCaption" as="span">{c.videoCaption}</EditableText>
+            </p>
+          )}
         </div>
       </section>
 
       {/* ── 05 As Seen On ── */}
-      {(w.pressLogos ?? []).length > 0 && (
-        <section className="as-seen-on">
-          <div className="container">
-            <span className="eyebrow">As featured in</span>
-            <div className="logo-wall" aria-label="Press logos">
-              {(w.pressLogos ?? []).filter(p => p.name || p.logoUrl).map((p, i) => (
-                p.logoUrl
-                  ? <div key={i} className="logo-slot">
-                      <img src={p.logoUrl} alt={p.name} style={{ height: 52, maxWidth: "100%", objectFit: "contain", display: "block" }} />
-                    </div>
-                  : <div key={i} className="logo-slot">{p.name}</div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      <EditablePressLogos
+        pageKey="eventLanding"
+        eyebrow={asSeenOnEyebrow}
+        logos={pressLogos}
+        exportMode={exportMode}
+      />
 
       {/* ── 06 Audience Callouts ── */}
       {(c.audienceItems ?? []).length > 0 && (
         <section className="audience">
           <div className="container">
             <div className="section-header">
-              {c.audienceEyebrow && <span className="eyebrow">{c.audienceEyebrow}</span>}
-              <h2 className="display-section">{c.audienceHeading ?? "This is for you if\u2026"}</h2>
+              <PageText pageKey="eventLanding" path="audienceEyebrow" as="span" className="eyebrow">
+                {c.audienceEyebrow ?? ""}
+              </PageText>
+              <h2 className="display-section">
+                <EditableText pageKey="eventLanding" path="audienceHeading" as="span">
+                  {c.audienceHeading ?? "This is for you if\u2026"}
+                </EditableText>
+              </h2>
             </div>
             <div className="audience-list">
               {(c.audienceItems ?? []).map((item, i) => (
@@ -284,47 +372,73 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
                   <div className="audience-icon" aria-hidden="true">
                     <CheckIcon />
                   </div>
-                  <p dangerouslySetInnerHTML={{ __html: item }} />
+                  <p>
+                    <EditableText pageKey="eventLanding" path={`audienceItems[${i}]`} as="span" html>
+                      {item.replace(/<[^>]+>/g, "")}
+                    </EditableText>
+                  </p>
                 </div>
               ))}
             </div>
-            {c.audienceClosingText && <p className="audience-close">{c.audienceClosingText}</p>}
-            {c.audienceMicrocopy && <p className="cta-microcopy">{c.audienceMicrocopy}</p>}
+            <p className="audience-close">
+              <PageText pageKey="eventLanding" path="audienceClosingText" as="span">
+                {c.audienceClosingText ?? ""}
+              </PageText>
+            </p>
+            <p className="cta-microcopy">
+              <PageText pageKey="eventLanding" path="audienceMicrocopy" as="span">
+                {c.audienceMicrocopy ?? ""}
+              </PageText>
+            </p>
             <div className="cta-row">
-              <a href="/checkout" className="btn btn-primary btn-xl">{ctaText}</a>
+              {ctaLink("btn btn-primary btn-xl")}
             </div>
           </div>
         </section>
       )}
 
       {/* ── 07 Encourage CTA 1 — text band only, no button ── */}
-      {c.encourageText1 && (
+      {(c.encourageText1 || editMode) && (
         <section
           className={encourageClass(c.encourage1Theme, "dark")}
           style={safeUrl(c.encourage1BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage1BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
-            <p className="line">{c.encourageText1}</p>
+            <p className="line">
+              <PageText pageKey="eventLanding" path="encourageText1" as="span">
+                {c.encourageText1 ?? ""}
+              </PageText>
+            </p>
           </div>
         </section>
       )}
 
       {/* ── 08 Value Proposition ── */}
-      {c.vpHeading && (
+      {(c.vpHeading || editMode) && (
         <section>
           <div className="container">
             <div className="value-prop">
               <div className="vp-text">
-                {c.vpEyebrow && <span className="eyebrow">{c.vpEyebrow}</span>}
-                <h2 className="h2 display-section" style={{ marginTop: "var(--s-4)" }}>{c.vpHeading}</h2>
+                <PageText pageKey="eventLanding" path="vpEyebrow" as="span" className="eyebrow">
+                  {c.vpEyebrow ?? ""}
+                </PageText>
+                <h2 className="h2 display-section" style={{ marginTop: "var(--s-4)" }}>
+                  <PageText pageKey="eventLanding" path="vpHeading" as="span">
+                    {c.vpHeading ?? ""}
+                  </PageText>
+                </h2>
                 {(c.vpParagraphs ?? []).map((p, i) => (
-                  <p key={i} dangerouslySetInnerHTML={{ __html: p }} />
+                  <PageText key={i} pageKey="eventLanding" path={`vpParagraphs[${i}]`} as="p" html>
+                    {p}
+                  </PageText>
                 ))}
-                {c.vpPullQuote && (
-                  <div className="vp-pull">
-                    <p className="pull-quote">{c.vpPullQuote}</p>
-                  </div>
-                )}
+                <div className="vp-pull">
+                  <p className="pull-quote">
+                    <PageText pageKey="eventLanding" path="vpPullQuote" as="span">
+                      {c.vpPullQuote ?? ""}
+                    </PageText>
+                  </p>
+                </div>
               </div>
               <div className="vp-image">
                 {lifestyle1Url
@@ -340,29 +454,46 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       )}
 
       {/* ── 09 Credibility 2 (inline) ── */}
-      {c.credibilityQuote2 && (
+      {(c.credibilityQuote2 || editMode) && (
         <section className="credibility inline" style={{ paddingTop: 40, paddingBottom: 40, marginBottom: 40 }}>
           <div className="container" style={{ paddingTop: 40, paddingBottom: 40 }}>
             <div className="quote-glyph" aria-hidden="true">&ldquo;</div>
-            <blockquote><em>&ldquo;{c.credibilityQuote2}&rdquo;</em></blockquote>
-            {c.credibilityAttribution2 && (
-              <cite>
-                <strong>{c.credibilityAttribution2.split("·")[0]?.trim()}</strong>
-                {c.credibilityAttribution2.includes("·") ? ` · ${c.credibilityAttribution2.split("·").slice(1).join("·").trim()}` : ""}
-              </cite>
-            )}
+            <blockquote>
+              <em>
+                &ldquo;
+                <PageText pageKey="eventLanding" path="credibilityQuote2" as="span">
+                  {c.credibilityQuote2 ?? ""}
+                </PageText>
+                &rdquo;
+              </em>
+            </blockquote>
+            <cite>
+              <PageText pageKey="eventLanding" path="credibilityAttribution2" as="span">
+                {c.credibilityAttribution2 ?? ""}
+              </PageText>
+            </cite>
           </div>
         </section>
       )}
 
       {/* ── 10 Outcomes (Edward style) ── */}
-      {(c.outcomesItems ?? []).length > 0 && (
+      {((c.outcomesItems ?? []).length > 0 || editMode) && (
         <section className="outcomes" style={{ background: "var(--surface-sunken)" }}>
           <div className="container">
             <div className="section-header">
-              {c.outcomesEyebrow && <span className="eyebrow">{c.outcomesEyebrow}</span>}
-              <h2 className="display-section">{c.outcomesHeading ?? "What you'll experience"}</h2>
-              {c.outcomesSubheading && <p className="body-lg">{c.outcomesSubheading}</p>}
+              <PageText pageKey="eventLanding" path="outcomesEyebrow" as="span" className="eyebrow">
+                {c.outcomesEyebrow ?? ""}
+              </PageText>
+              <h2 className="display-section">
+                <PageText pageKey="eventLanding" path="outcomesHeading" as="span">
+                  {c.outcomesHeading ?? "What you'll experience"}
+                </PageText>
+              </h2>
+              <p className="body-lg">
+                <PageText pageKey="eventLanding" path="outcomesSubheading" as="span">
+                  {c.outcomesSubheading ?? ""}
+                </PageText>
+              </p>
             </div>
             <div className="outcome-grid">
               {(c.outcomesItems ?? []).map((item, i) => (
@@ -371,8 +502,13 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
                     <CheckIcon />
                   </div>
                   <p>
-                    <strong>{item.title}</strong>
-                    {item.body ? ` ${item.body}` : ""}
+                    <PageText pageKey="eventLanding" path={`outcomesItems[${i}].title`} as="strong">
+                      {item.title}
+                    </PageText>
+                    {" "}
+                    <PageText pageKey="eventLanding" path={`outcomesItems[${i}].body`} as="span">
+                      {item.body ?? ""}
+                    </PageText>
                   </p>
                 </div>
               ))}
@@ -383,36 +519,52 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
                 : <div className="img-placeholder tint-stone"><span className="img-label">Supporting image · 21:9</span></div>
               }
             </div>
-            {c.outcomesClosingText && <p className="outcomes-close">{c.outcomesClosingText}</p>}
-            {c.outcomesMicrocopy && <p className="outcomes-microcopy">{c.outcomesMicrocopy}</p>}
+            <p className="outcomes-close">
+              <PageText pageKey="eventLanding" path="outcomesClosingText" as="span">
+                {c.outcomesClosingText ?? ""}
+              </PageText>
+            </p>
+            <p className="outcomes-microcopy">
+              <PageText pageKey="eventLanding" path="outcomesMicrocopy" as="span">
+                {c.outcomesMicrocopy ?? ""}
+              </PageText>
+            </p>
             <div className="outcomes-cta">
-              <a href="/checkout" className="btn btn-primary btn-xl">{ctaText}</a>
+              {ctaLink("btn btn-primary btn-xl")}
             </div>
           </div>
         </section>
       )}
 
       {/* ── 11 Personal Message ── */}
-      {(c.personalMessageParagraphs ?? []).length > 0 && (
+      {((c.personalMessageParagraphs ?? []).length > 0 || editMode) && (
         <section className="personal-message">
           <div className="container">
-            <h2 className="h2">{c.personalMessageHeading ?? `A note from ${w.hostName}`}</h2>
+            <h2 className="h2">
+              <PageText pageKey="eventLanding" path="personalMessageHeading" as="span">
+                {c.personalMessageHeading ?? `A note from ${w.hostName}`}
+              </PageText>
+            </h2>
             <div className="reading">
               <blockquote>
                 {(c.personalMessageParagraphs ?? []).map((p, i) => (
-                  <p key={i} dangerouslySetInnerHTML={{ __html: p }} />
+                  <PageText key={i} pageKey="eventLanding" path={`personalMessageParagraphs[${i}]`} as="p" html>
+                    {p}
+                  </PageText>
                 ))}
               </blockquote>
-              {c.personalMessageSignature && (
-                <p className="signature">{c.personalMessageSignature}</p>
-              )}
+              <p className="signature">
+                <PageText pageKey="eventLanding" path="personalMessageSignature" as="span">
+                  {c.personalMessageSignature ?? ""}
+                </PageText>
+              </p>
             </div>
           </div>
         </section>
       )}
 
       {/* ── Testimonials ── */}
-      {(w.testimonials ?? []).length > 0 && (
+      {((w.testimonials ?? []).length > 0 || editMode) && (
         <TestimonialCarousel
           testimonials={w.testimonials ?? []}
           eyebrow={c.testimonialsEyebrow}
@@ -421,29 +573,43 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       )}
 
       {/* ── 07b Encourage CTA 2 ── */}
-      {c.encourageText2 && (
+      {(c.encourageText2 || editMode) && (
         <section
           className={encourageClass(c.encourage2Theme, "accent")}
           style={safeUrl(c.encourage2BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage2BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
-            <p className="line">{c.encourageText2}</p>
-            <a href="/checkout" className="btn btn-primary btn-xl">{ctaText}</a>
+            <p className="line">
+              <PageText pageKey="eventLanding" path="encourageText2" as="span">
+                {c.encourageText2 ?? ""}
+              </PageText>
+            </p>
+            {ctaLink("btn btn-primary btn-xl")}
           </div>
         </section>
       )}
 
       {/* ── 13 How It Works ── */}
-      {(c.howItWorksParagraphs ?? []).length > 0 && (
+      {((c.howItWorksParagraphs ?? []).length > 0 || editMode) && (
         <section className="how-it-works">
           <div className="container">
-            <h2 className="h2 display-section">{c.howItWorksHeading ?? "How the session unfolds"}</h2>
+            <h2 className="h2 display-section">
+              <PageText pageKey="eventLanding" path="howItWorksHeading" as="span">
+                {c.howItWorksHeading ?? "How the session unfolds"}
+              </PageText>
+            </h2>
             <div className="reading">
               {(c.howItWorksParagraphs ?? []).map((p, i) => (
-                <p key={i} dangerouslySetInnerHTML={{ __html: p }} />
+                <PageText key={i} pageKey="eventLanding" path={`howItWorksParagraphs[${i}]`} as="p" html>
+                  {p}
+                </PageText>
               ))}
             </div>
-            {c.howItWorksClosing && <p className="closing">{c.howItWorksClosing}</p>}
+            <p className="closing">
+              <PageText pageKey="eventLanding" path="howItWorksClosing" as="span">
+                {c.howItWorksClosing ?? ""}
+              </PageText>
+            </p>
           </div>
         </section>
       )}
@@ -452,7 +618,11 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       <section className="event-overview">
         <div className="container">
           <div className="overview-top">
-            <h2 className="h2 display-section">{c.eventOverviewHeading ?? "Event overview"}</h2>
+            <h2 className="h2 display-section">
+              <PageText pageKey="eventLanding" path="eventOverviewHeading" as="span">
+                {c.eventOverviewHeading ?? "Event overview"}
+              </PageText>
+            </h2>
             <div className="overview-meta">
               <div className="overview-row">
                 <span className="label">Status</span>
@@ -460,16 +630,27 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
                   <span className="live-tag"><span className="dot" aria-hidden="true" />Live online</span>
                 </span>
               </div>
-              {w.eventDate && (
+              {(heroEventDate || editor?.isEditMode) && (
                 <div className="overview-row">
                   <span className="label">Date</span>
-                  <span className="value">{w.eventDate}</span>
+                  <span className="value">
+                    <EditableText pageKey="eventLanding" path="heroEventDate" as="span">
+                      {heroEventDate}
+                    </EditableText>
+                  </span>
                 </div>
               )}
-              {w.eventTime && (
+              {(heroEventTime || heroEventTimezone || editor?.isEditMode) && (
                 <div className="overview-row">
                   <span className="label">Time</span>
-                  <span className="value">{w.eventTime} {w.eventTimezone}</span>
+                  <span className="value">
+                    <EditableText pageKey="eventLanding" path="heroEventTime" as="span">
+                      {heroEventTime}
+                    </EditableText>
+                    {(heroEventTimezone || editor?.isEditMode) && (
+                      <> <EditableText pageKey="eventLanding" path="heroEventTimezone" as="span">{heroEventTimezone}</EditableText></>
+                    )}
+                  </span>
                 </div>
               )}
               {w.eventDuration && (
@@ -478,14 +659,18 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
                   <span className="value">{w.eventDuration}</span>
                 </div>
               )}
-              {c.recordingNote && (
-                <p className="recording-note"><em>{c.recordingNote}</em></p>
-              )}
+              <p className="recording-note">
+                <em>
+                  <PageText pageKey="eventLanding" path="recordingNote" as="span">
+                    {c.recordingNote ?? ""}
+                  </PageText>
+                </em>
+              </p>
             </div>
           </div>
 
           <div className="overview-bottom">
-            {(c.experienceItems ?? []).length > 0 && (
+            {((c.experienceItems ?? []).length > 0 || editMode) && (
               <div>
                 <h3>What you&apos;ll experience</h3>
                 <div className="experience-list">
@@ -496,18 +681,30 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
                           <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
                         </svg>
                       </div>
-                      <p dangerouslySetInnerHTML={{ __html: `<strong>${item.title}</strong> ${item.body}` }} />
+                      <p>
+                        <PageText pageKey="eventLanding" path={`experienceItems[${i}].title`} as="strong">
+                          {item.title}
+                        </PageText>
+                        {" "}
+                        <PageText pageKey="eventLanding" path={`experienceItems[${i}].body`} as="span">
+                          {item.body ?? ""}
+                        </PageText>
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            {(c.challengeItems ?? []).length > 0 && (
+            {((c.challengeItems ?? []).length > 0 || editMode) && (
               <div>
                 <h3>This session is built to address things like</h3>
                 <ul className="challenges-list">
                   {(c.challengeItems ?? []).map((item, i) => (
-                    <li key={i}>{item}</li>
+                    <li key={i}>
+                      <PageText pageKey="eventLanding" path={`challengeItems[${i}]`} as="span">
+                        {item}
+                      </PageText>
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -517,56 +714,83 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       </section>
 
       {/* ── Credibility 3 (post-overview) ── */}
-      {c.credibilityQuote3 && (
+      {(c.credibilityQuote3 || editMode) && (
         <section className="credibility inline" style={{ paddingTop: 40, paddingBottom: 40, marginBottom: 40 }}>
           <div className="container" style={{ paddingTop: 40, paddingBottom: 40 }}>
             <div className="quote-glyph" aria-hidden="true">&ldquo;</div>
-            <blockquote><em>&ldquo;{c.credibilityQuote3}&rdquo;</em></blockquote>
-            {c.credibilityAttribution3 && (
-              <cite>
-                <strong>{c.credibilityAttribution3.split("·")[0]?.trim()}</strong>
-                {c.credibilityAttribution3.includes("·") ? ` · ${c.credibilityAttribution3.split("·").slice(1).join("·").trim()}` : ""}
-              </cite>
-            )}
+            <blockquote>
+              <em>
+                &ldquo;
+                <PageText pageKey="eventLanding" path="credibilityQuote3" as="span">
+                  {c.credibilityQuote3 ?? ""}
+                </PageText>
+                &rdquo;
+              </em>
+            </blockquote>
+            <cite>
+              <PageText pageKey="eventLanding" path="credibilityAttribution3" as="span">
+                {c.credibilityAttribution3 ?? ""}
+              </PageText>
+            </cite>
           </div>
         </section>
       )}
 
       {/* ── 15 Extra VP ── */}
-      {c.extraVpHeading && (
+      {(c.extraVpHeading || editMode) && (
         <section className="extra-vp on-dark">
           <div className="container">
-            <h2 className="h2 display-section">{c.extraVpHeading}</h2>
+            <h2 className="h2 display-section">
+              <PageText pageKey="eventLanding" path="extraVpHeading" as="span">
+                {c.extraVpHeading ?? ""}
+              </PageText>
+            </h2>
             <div className="reading">
               {(c.extraVpParagraphs ?? []).map((p, i) => (
-                <p key={i} dangerouslySetInnerHTML={{ __html: p }} />
+                <PageText key={i} pageKey="eventLanding" path={`extraVpParagraphs[${i}]`} as="p" html>
+                  {p}
+                </PageText>
               ))}
             </div>
-            {c.extraVpClosing && <p className="closing">{c.extraVpClosing}</p>}
+            <p className="closing">
+              <PageText pageKey="eventLanding" path="extraVpClosing" as="span">
+                {c.extraVpClosing ?? ""}
+              </PageText>
+            </p>
           </div>
         </section>
       )}
 
       {/* ── 07c Encourage CTA 3 ── */}
-      {c.encourageText3 && (
+      {(c.encourageText3 || editMode) && (
         <section
           className={encourageClass(c.encourage3Theme, "light")}
           style={safeUrl(c.encourage3BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage3BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
-            <p className="line">{c.encourageText3}</p>
-            <a href="/checkout" className="btn btn-primary btn-xl">{ctaText}</a>
+            <p className="line">
+              <PageText pageKey="eventLanding" path="encourageText3" as="span">
+                {c.encourageText3 ?? ""}
+              </PageText>
+            </p>
+            {ctaLink("btn btn-primary btn-xl")}
           </div>
         </section>
       )}
 
       {/* ── 16 Outcomes 2 (icon grid) ── */}
-      {(c.outcomes2Items ?? []).length > 0 && (
+      {((c.outcomes2Items ?? []).length > 0 || editMode) && (
         <section className="outcomes-grid">
           <div className="container">
             <div className="section-header">
-              {c.outcomes2Eyebrow && <span className="eyebrow">{c.outcomes2Eyebrow}</span>}
-              <h2 className="display-section">{c.outcomes2Heading ?? "What you take home"}</h2>
+              <PageText pageKey="eventLanding" path="outcomes2Eyebrow" as="span" className="eyebrow">
+                {c.outcomes2Eyebrow ?? ""}
+              </PageText>
+              <h2 className="display-section">
+                <PageText pageKey="eventLanding" path="outcomes2Heading" as="span">
+                  {c.outcomes2Heading ?? "What you take home"}
+                </PageText>
+              </h2>
             </div>
             <div className="outcomes-grid-list">
               {(c.outcomes2Items ?? []).map((item, i) => (
@@ -575,8 +799,16 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
                     <circle cx="12" cy="12" r="9"/><path d="M16 8l-4 6-3-2"/>
                   </svg>
                   <div className="outcomes-grid-text">
-                    <h3>{item.title}</h3>
-                    <p>{item.body}</p>
+                    <h3>
+                      <PageText pageKey="eventLanding" path={`outcomes2Items[${i}].title`} as="span">
+                        {item.title}
+                      </PageText>
+                    </h3>
+                    <p>
+                      <PageText pageKey="eventLanding" path={`outcomes2Items[${i}].body`} as="span">
+                        {item.body ?? ""}
+                      </PageText>
+                    </p>
                   </div>
                 </div>
               ))}
@@ -586,7 +818,7 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       )}
 
       {/* ── 17 Bio ── */}
-      {(c.bioParagraphs ?? []).length > 0 && (
+      {((c.bioParagraphs ?? []).length > 0 || editMode) && (
         <section style={{ background: "var(--surface-sunken)" }}>
           <div className="container">
             <div className="bio">
@@ -599,14 +831,24 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
                 }
               </div>
               <div className="bio-text">
-                {c.bioEyebrow && <span className="eyebrow">{c.bioEyebrow}</span>}
+                <PageText pageKey="eventLanding" path="bioEyebrow" as="span" className="eyebrow">
+                  {c.bioEyebrow ?? ""}
+                </PageText>
                 <h2 className="h2 display-section" style={{ marginTop: "var(--s-4)" }}>
-                  {c.bioHeading ?? `About ${w.hostName}`}
+                  <PageText pageKey="eventLanding" path="bioHeading" as="span">
+                    {c.bioHeading ?? `About ${w.hostName}`}
+                  </PageText>
                 </h2>
                 {(c.bioParagraphs ?? []).map((p, i) => (
-                  <p key={i} dangerouslySetInnerHTML={{ __html: p }} />
+                  <PageText key={i} pageKey="eventLanding" path={`bioParagraphs[${i}]`} as="p" html>
+                    {p}
+                  </PageText>
                 ))}
-                {c.bioSignature && <p className="signature">{c.bioSignature}</p>}
+                <p className="signature">
+                  <PageText pageKey="eventLanding" path="bioSignature" as="span">
+                    {c.bioSignature ?? ""}
+                  </PageText>
+                </p>
               </div>
             </div>
           </div>
@@ -614,26 +856,53 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       )}
 
       {/* ── 18 Final VP ── */}
-      {c.finalVpHeading && (
+      {(c.finalVpHeading || editMode) && (
         <section className={structuralSectionClass("final-vp", finalVpTheme)}>
           <div className="container">
-            <h2>{c.finalVpHeading}</h2>
+            <h2>
+              <PageText pageKey="eventLanding" path="finalVpHeading" as="span">
+                {c.finalVpHeading ?? ""}
+              </PageText>
+            </h2>
             <div className="reading">
-              {c.finalVpIntro && <p dangerouslySetInnerHTML={{ __html: c.finalVpIntro }} />}
-              {(c.finalVpFromTo ?? []).length > 0 && (
+              <PageText pageKey="eventLanding" path="finalVpIntro" as="p" html>
+                {c.finalVpIntro ?? ""}
+              </PageText>
+              {((c.finalVpFromTo ?? []).length > 0 || editMode) && (
                 <ul className="from-to">
                   {(c.finalVpFromTo ?? []).map((ft, i) => (
                     <li key={i}>
-                      From <em>&ldquo;{ft.from}&rdquo;</em> to <em>&ldquo;{ft.to}&rdquo;</em>
+                      From{" "}
+                      <em>
+                        &ldquo;
+                        <PageText pageKey="eventLanding" path={`finalVpFromTo[${i}].from`} as="span">
+                          {ft.from}
+                        </PageText>
+                        &rdquo;
+                      </em>{" "}
+                      to{" "}
+                      <em>
+                        &ldquo;
+                        <PageText pageKey="eventLanding" path={`finalVpFromTo[${i}].to`} as="span">
+                          {ft.to}
+                        </PageText>
+                        &rdquo;
+                      </em>
                     </li>
                   ))}
                 </ul>
               )}
-              {c.finalVpClosing && <p dangerouslySetInnerHTML={{ __html: c.finalVpClosing }} />}
+              <PageText pageKey="eventLanding" path="finalVpClosing" as="p" html>
+                {c.finalVpClosing ?? ""}
+              </PageText>
             </div>
             <div className="cta-block">
-              {c.finalVpCtaMicrocopy && <p className="cta-microcopy">{c.finalVpCtaMicrocopy}</p>}
-              <a href="/checkout" className="btn btn-primary btn-xl">{ctaText}</a>
+              <p className="cta-microcopy">
+                <PageText pageKey="eventLanding" path="finalVpCtaMicrocopy" as="span">
+                  {c.finalVpCtaMicrocopy ?? ""}
+                </PageText>
+              </p>
+              {ctaLink("btn btn-primary btn-xl")}
             </div>
           </div>
         </section>
@@ -644,18 +913,28 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
         <section className="faq">
           <div className="container">
             <div className="section-header">
-              {c.faqEyebrow && <span className="eyebrow">{c.faqEyebrow}</span>}
+              <PageText pageKey="eventLanding" path="faqEyebrow" as="span" className="eyebrow">
+                {c.faqEyebrow ?? ""}
+              </PageText>
               <h2 className="display-section">Frequently Asked Questions</h2>
             </div>
             <div className="faq-list">
               {(c.faqItems ?? []).map((faq, i) => (
                 <div key={i} className={`faq-item${i === 0 ? " is-open" : ""}`}>
                   <button className="faq-question" aria-expanded={i === 0 ? "true" : "false"}>
-                    <span>{faq.question}</span>
+                    <span>
+                      <EditableText pageKey="eventLanding" path={`faqItems[${i}].question`} as="span">
+                        {faq.question}
+                      </EditableText>
+                    </span>
                     <ChevronDown />
                   </button>
                   <div className="faq-answer">
-                    <div className="faq-answer-inner">{faq.answer}</div>
+                    <div className="faq-answer-inner">
+                      <EditableText pageKey="eventLanding" path={`faqItems[${i}].answer`} as="span">
+                        {faq.answer}
+                      </EditableText>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -667,8 +946,16 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
       {/* ── Final CTA (dark) ── */}
       <section className={structuralSectionClass("encourage", registerTheme)} id="register">
         <div className="container">
-          <p className="line">{c.finalCtaLine ?? w.eventName}</p>
-          <a href="/checkout" className="btn btn-primary btn-xl">{c.finalCtaText ?? ctaText}</a>
+          <p className="line">
+            <EditableText pageKey="eventLanding" path="finalCtaLine" as="span">
+              {c.finalCtaLine ?? w.eventName ?? ""}
+            </EditableText>
+          </p>
+          <a href="/checkout" className="btn btn-primary btn-xl">
+            <EditableText pageKey="eventLanding" path="finalCtaText" as="span">
+              {c.finalCtaText ?? ctaText}
+            </EditableText>
+          </a>
         </div>
       </section>
 
@@ -678,7 +965,9 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
           <div className="container">
             <h2>FTC Disclaimer</h2>
             <div className="reading">
-              <p>{c.ftcDisclaimer}</p>
+              <p>
+                <EditableText pageKey="eventLanding" path="ftcDisclaimer" as="span">{c.ftcDisclaimer}</EditableText>
+              </p>
             </div>
           </div>
         </section>
@@ -702,7 +991,7 @@ export default function EventLandingPage({ content: c, wizard: w }: Props) {
               <a href={w.privacyPolicyUrl ?? "#"}>Privacy</a>
               <a href={w.termsOfUseUrl ?? "#"}>Terms of Use</a>
             </nav>
-            <a href="/checkout" className="btn btn-primary">{ctaText}</a>
+            {ctaLink("btn btn-primary")}
           </div>
         </div>
       </footer>
@@ -742,8 +1031,14 @@ function TestimonialCarousel({
     <section className="testimonials">
       <div className="container">
         <div className="section-header">
-          {eyebrow && <span className="eyebrow">{eyebrow}</span>}
-          <h2 className="display-section">{heading}</h2>
+          <PageText pageKey="eventLanding" path="testimonialsEyebrow" as="span" className="eyebrow">
+            {eyebrow ?? ""}
+          </PageText>
+          <h2 className="display-section">
+            <PageText pageKey="eventLanding" path="testimonialsHeading" as="span">
+              {heading}
+            </PageText>
+          </h2>
         </div>
 
         {/* key change triggers the fade-in animation on each navigation */}

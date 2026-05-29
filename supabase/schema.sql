@@ -42,9 +42,19 @@ create table if not exists public.generated_funnels (
   submission_id uuid references public.wizard_submissions(id),
   content jsonb not null default '{}',
   theme_slug text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  hosting_status text not null default 'none', -- none | requested | approved | hosted
+  approved_at timestamptz,
+  hosted_url text
 );
 create index if not exists generated_funnels_user_idx on public.generated_funnels (user_id);
+
+-- Migration: run once if the table already exists without new columns
+-- alter table public.generated_funnels add column if not exists updated_at timestamptz not null default now();
+-- alter table public.generated_funnels add column if not exists hosting_status text not null default 'none';
+-- alter table public.generated_funnels add column if not exists approved_at timestamptz;
+-- alter table public.generated_funnels add column if not exists hosted_url text;
 
 -- RLS policies
 alter table public.users enable row level security;

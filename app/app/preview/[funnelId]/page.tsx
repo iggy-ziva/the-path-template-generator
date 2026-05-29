@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/session";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
+import { getOrCreateUserId } from "@/lib/getOrCreateUserId";
 import { splitFunnelContent } from "@/lib/funnel-snapshot";
 import PreviewClient from "./_components/PreviewClient";
 
@@ -25,6 +26,7 @@ export default async function PreviewPage({
 
   const { funnelId } = await params;
   const supabase = getServiceClient();
+  const userId = await getOrCreateUserId(session, supabase);
 
   const isAdmin = ADMIN_EMAILS.includes(session.email);
 
@@ -33,7 +35,7 @@ export default async function PreviewPage({
     .from("generated_funnels")
     .select("id, content, theme_slug, created_at, submission_id, user_id")
     .eq("id", funnelId);
-  if (!isAdmin) funnelQuery.eq("user_id", session.userId);
+  if (!isAdmin && userId) funnelQuery.eq("user_id", userId);
 
   const { data: funnel } = await funnelQuery.single();
 
@@ -50,7 +52,7 @@ export default async function PreviewPage({
       .from("wizard_submissions")
       .select("step_data")
       .eq("id", funnel.submission_id);
-    if (!isAdmin) subQuery.eq("user_id", session.userId);
+    if (!isAdmin && userId) subQuery.eq("user_id", userId);
     const { data: submission } = await subQuery.single();
     if (submission?.step_data) wizardData = submission.step_data as Record<string, unknown>;
   }
@@ -62,6 +64,7 @@ export default async function PreviewPage({
       content={pageContent}
       themeSlug={funnel.theme_slug}
       createdAt={funnel.created_at}
+      updatedAt={null}
       wizardData={wizardData}
     />
   );

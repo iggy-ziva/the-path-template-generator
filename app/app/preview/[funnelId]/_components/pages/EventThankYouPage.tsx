@@ -5,12 +5,16 @@ import type { EventThankYouContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl, brandSectionOverlay, brandImageBackground } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 
+import EditableText from "../editor/EditableText";
+import { PageText } from "../editor/page-editable";
+
 interface Props {
   content: EventThankYouContent;
   wizard: WizardSnapshot;
+  exportMode?: boolean;
 }
 
-export default function EventThankYouPage({ content: c, wizard: w }: Props) {
+export default function EventThankYouPage({ content: c, wizard: w, exportMode = false }: Props) {
   const [copied, setCopied] = useState(false);
 
   const hostName     = w.hostName ?? w.businessName ?? "";
@@ -21,7 +25,7 @@ export default function EventThankYouPage({ content: c, wizard: w }: Props) {
   const eventTz      = w.eventTimezone ?? "";
   const eventPlatform = w.eventPlatform ?? "Zoom";
   const contactEmail = w.contactEmail ?? "";
-  const shareUrl     = c.shareUrl ?? (typeof window !== "undefined" ? window.location.origin : "#");
+  const shareUrl     = c.shareUrl ?? (exportMode ? "#" : (typeof window !== "undefined" ? window.location.origin : "#"));
 
   const headline         = c.headline ?? "You're in.";
   const subheadline      = c.subheadline ?? `${eventName}${hostName ? ` — with ${hostName}` : ""}`;
@@ -68,9 +72,17 @@ export default function EventThankYouPage({ content: c, wizard: w }: Props) {
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          {c.label && <p className="ty-label">{c.label}</p>}
-          <h1 className="ty-headline">{headline}</h1>
-          <p className="ty-event-name">{subheadline}</p>
+          {c.label && (
+            <PageText pageKey="eventThankYou" path="label" as="p" className="ty-label" forceShow>
+              {c.label}
+            </PageText>
+          )}
+          <h1 className="ty-headline">
+            <EditableText pageKey="eventThankYou" path="headline" as="span">{headline}</EditableText>
+          </h1>
+          <p className="ty-event-name">
+            <EditableText pageKey="eventThankYou" path="subheadline" as="span">{subheadline}</EditableText>
+          </p>
           <div className="ty-event-details">
             {eventDate && <span>{eventDate}</span>}
             {eventDate && (eventTime || eventPlatform) && <span className="sep" />}
@@ -82,9 +94,9 @@ export default function EventThankYouPage({ content: c, wizard: w }: Props) {
           </div>
           {emailNote && (
             <div className="ty-email-note">
-              {contactEmail
-                ? <>{emailNote.split(contactEmail)[0]}<strong>{contactEmail}</strong>{emailNote.split(contactEmail)[1]}</>
-                : emailNote}
+              <PageText pageKey="eventThankYou" path="emailNote" as="span" forceShow>
+                {emailNote}
+              </PageText>
             </div>
           )}
         </div>
@@ -94,14 +106,18 @@ export default function EventThankYouPage({ content: c, wizard: w }: Props) {
       {nextSteps.length > 0 && (
         <section className="next-steps-section">
           <div className="ty-content">
-            <p className="section-title">{nextStepsHeading}</p>
+            <PageText pageKey="eventThankYou" path="nextStepsHeading" as="p" className="section-title">
+              {nextStepsHeading}
+            </PageText>
             <div className="steps-list">
               {nextSteps.map((step, i) => (
                 <div key={i} className="step-item">
                   <div className="step-num">{step.step}</div>
                   <div className="step-content">
-                    <h3>{step.title}</h3>
-                    <p dangerouslySetInnerHTML={{ __html: step.body }} />
+                    <h3>
+                      <EditableText pageKey="eventThankYou" path={`nextSteps[${i}].title`} as="span">{step.title}</EditableText>
+                    </h3>
+                    <EditableText pageKey="eventThankYou" path={`nextSteps[${i}].body`} as="p" html>{step.body}</EditableText>
                   </div>
                 </div>
               ))}
@@ -114,8 +130,12 @@ export default function EventThankYouPage({ content: c, wizard: w }: Props) {
       <section className="calendar-section">
         <div className="ty-content">
           <div className="calendar-inner">
-            <h2 className="calendar-headline">{calendarHeading}</h2>
-            <p className="calendar-sub">{calendarSub}</p>
+            <PageText pageKey="eventThankYou" path="calendarHeading" as="h2" className="calendar-headline">
+              {calendarHeading}
+            </PageText>
+            <PageText pageKey="eventThankYou" path="calendarSub" as="p" className="calendar-sub">
+              {calendarSub}
+            </PageText>
             <div className="calendar-fallback">
               <a className="cal-btn" href="#" target="_blank" rel="noopener">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -188,7 +208,9 @@ export default function EventThankYouPage({ content: c, wizard: w }: Props) {
               </div>
             )}
             {zoomNote && (
-              <p className="zoom-note">{zoomNote}</p>
+              <PageText pageKey="eventThankYou" path="zoomNote" as="p" className="zoom-note">
+                {zoomNote}
+              </PageText>
             )}
           </div>
         </section>
@@ -198,8 +220,16 @@ export default function EventThankYouPage({ content: c, wizard: w }: Props) {
       {(shareHeading || shareSub) && (
         <section className="share-section">
           <div className="ty-content">
-            {shareHeading && <h2 className="share-headline">{shareHeading}</h2>}
-            {shareSub && <p className="share-sub">{shareSub}</p>}
+            {shareHeading && (
+              <PageText pageKey="eventThankYou" path="shareHeading" as="h2" className="share-headline">
+                {shareHeading}
+              </PageText>
+            )}
+            {shareSub && (
+              <PageText pageKey="eventThankYou" path="shareSub" as="p" className="share-sub">
+                {shareSub}
+              </PageText>
+            )}
             <div className="share-buttons">
               <a
                 href={`mailto:?subject=${encodeURIComponent(eventName)}&body=${encodeURIComponent(`I just registered for this and thought of you: ${shareUrl}`)}`}
@@ -261,17 +291,23 @@ export default function EventThankYouPage({ content: c, wizard: w }: Props) {
         <section className="personal-note-section">
           <div className="ty-content">
             {personalNoteHeadline && (
-              <h2 className="note-headline">{personalNoteHeadline}</h2>
+              <PageText pageKey="eventThankYou" path="personalNoteHeadline" as="h2" className="note-headline">
+                {personalNoteHeadline}
+              </PageText>
             )}
             {personalNoteParagraphs.length > 0 && (
               <blockquote>
                 {personalNoteParagraphs.map((para, i) => (
-                  <p key={i}>{para}</p>
+                  <EditableText key={i} pageKey="eventThankYou" path={`personalNoteParagraphs[${i}]`} as="p">
+                    {para}
+                  </EditableText>
                 ))}
               </blockquote>
             )}
             {personalNoteSignature && (
-              <div className="signature">{personalNoteSignature}</div>
+              <PageText pageKey="eventThankYou" path="personalNoteSignature" as="div" className="signature">
+                {personalNoteSignature}
+              </PageText>
             )}
           </div>
         </section>

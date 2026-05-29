@@ -1,0 +1,105 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
+import { createClient } from "@supabase/supabase-js";
+import { WIZARD_SNAPSHOT_KEY, splitFunnelContent } from "@/lib/funnel-snapshot";
+import { deepMergeContent } from "@/lib/content-path";
+import { getOrCreateUserId } from "@/lib/getOrCreateUserId";
+
+const PAGE_KEYS = [
+  "eventLanding",
+  "eventCheckout",
+  "upsell",
+  "eventThankYou",
+  "replay",
+  "programmeLanding",
+  "programmeCheckout",
+  "programmeThankYou",
+] as const;
+
+type PageKey = (typeof PAGE_KEYS)[number];
+
+function getServiceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
+
+function isPageKey(k: string): k is PageKey {
+  return (PAGE_KEYS as readonly string[]).includes(k);
+}
+
+/** Update generated funnel page content after AI generation (editor saves). */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id: funnelId } = await params;
+  const body = await req.json().catch(() => ({}));
+
+  const supabase = getServiceClient();
+  const userId = await getOrCreateUserId(session, supabase);
+  if (!userId) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+  const { data: funnel, error: fetchErr } = await supabase
+    .from("generated_funnels")
+    .select("id, content, user_id")
+    .eq("id", funnelId)
+    .eq("user_id", userId)
+    .single();
+
+  if (fetchErr || !funnel) {
+    return NextResponse.json({ error: "Funnel not found" }, { status: 404 });
+  }
+
+  const raw = funnel.content as Record<string, unknown>;
+  const { pageContent, wizardSnapshot } = splitFunnelContent(raw);
+  let nextContent: Record<string, unknown> = { ...pageContent };
+
+  if (wizardSnapshot) {
+    nextContent = { [WIZARD_SNAPSHOT_KEY]: wizardSnapshot, ...nextContent };
+  }
+
+  // Full content replace
+  if (body.content && typeof body.content === "object" && !Array.isArray(body.content)) {
+    const incoming = body.content as Record<string, unknown>;
+    const { [WIZARD_SNAPSHOT_KEY]: _s, ...pages } = incoming;
+    nextContent = wizardSnapshot
+      ? { [WIZARD_SNAPSHOT_KEY]: wizardSnapshot, ...pages }
+      : { ...pages };
+  }
+
+  // Single page patch: { pageKey, patch }
+  if (typeof body.pageKey === "string" && isPageKey(body.pageKey) && body.patch && typeof body.patch === "object") {
+    const existing = (pageContent[body.pageKey] as Record<string, unknown>) ?? {};
+    const merged = deepMergeContent(existing, body.patch as Record<string, unknown>);
+    nextContent = wizardSnapshot
+      ? { [WIZARD_SNAPSHOT_KEY]: wizardSnapshot, ...pageContent, [body.pageKey]: merged }
+      : { ...pageContent, [body.pageKey]: merged };
+  }
+
+  const updatedAt = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("generated_funnels")
+    .update({ content: nextContent })
+    .eq("id", funnelId)
+    .eq("user_id", userId)
+    .select("id, content")
+    .single();
+
+  if (error) {
+    console.error("funnel content patch error:", error);
+    return NextResponse.json({ error: "Failed to save content" }, { status: 500 });
+  }
+
+  const split = splitFunnelContent(data.content as Record<string, unknown>);
+  return NextResponse.json({
+    funnelId: data.id,
+    content: split.pageContent,
+    updatedAt: updatedAt,
+  });
+}

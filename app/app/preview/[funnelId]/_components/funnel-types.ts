@@ -123,6 +123,11 @@ export interface EventLandingContent {
   heroPriceValue?: string;
   heroCtaText?: string;
   heroMetaLine?: string;
+  heroHostName?: string;
+  heroHostTitle?: string;
+  heroEventDate?: string;
+  heroEventTime?: string;
+  heroEventTimezone?: string;
   /** Structural section theme — AI or brand-aware default */
   heroTheme?: SectionTheme;
   // 03 Credibility 1
@@ -133,6 +138,9 @@ export interface EventLandingContent {
   videoSectionHeading?: string;
   videoCaption?: string;
   videoUrl?: string | null;
+  // 05 As seen on
+  asSeenOnEyebrow?: string;
+  pressLogos?: { name: string; websiteUrl: string; logoUrl?: string; textFallback?: boolean; transparentBg?: boolean }[];
   // 06 Audience
   audienceEyebrow?: string;
   audienceHeading?: string;

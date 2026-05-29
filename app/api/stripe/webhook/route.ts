@@ -40,9 +40,10 @@ export async function POST(req: NextRequest) {
           themeLabel: session.metadata?.theme_label ?? session.metadata?.theme_slug ?? "Unknown",
         }).catch((err) => console.error("Design service notification error:", err));
       } else if (orderType === "hosting") {
+        const funnelId = session.metadata?.funnel_id ?? "";
         await sendHostingNotification({
           customerEmail: email,
-          funnelId: session.metadata?.funnel_id ?? "",
+          funnelId,
         }).catch((err) => console.error("Hosting notification error:", err));
       } else {
         // Standard template purchase — grant access in Supabase

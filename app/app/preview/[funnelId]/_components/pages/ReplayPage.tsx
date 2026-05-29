@@ -1,13 +1,19 @@
+"use client";
+
+import { useState } from "react";
 import type { ReplayContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl, brandSectionOverlay, brandImageBackground } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
+import EditableText from "../editor/EditableText";
+import { PageLink, PageText } from "../editor/page-editable";
 
 interface Props {
   content: ReplayContent;
   wizard: WizardSnapshot;
+  exportMode?: boolean;
 }
 
-export default function ReplayPage({ content: c, wizard: w }: Props) {
+export default function ReplayPage({ content: c, wizard: w, exportMode = false }: Props) {
   const hostName     = w.hostName ?? w.businessName ?? "";
   const businessName = w.businessName ?? hostName;
   const eventName    = w.eventName ?? "Event";
@@ -48,16 +54,20 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
       <div className="replay-offer-bar">
         <div className="inner">
           <div className="offer-bar-left">
-            <span className="offer-bar-label">{offerBarLabel}</span>
-            {offerBarTitle && <span className="offer-bar-title">{offerBarTitle}</span>}
-            {offerBarUrgency && <span className="offer-bar-urgency">{offerBarUrgency}</span>}
+            <PageText pageKey="replay" path="offerBarLabel" as="span" className="offer-bar-label">{offerBarLabel}</PageText>
+            {offerBarTitle && (
+              <PageText pageKey="replay" path="offerBarTitle" as="span" className="offer-bar-title">{offerBarTitle}</PageText>
+            )}
+            {offerBarUrgency && (
+              <PageText pageKey="replay" path="offerBarUrgency" as="span" className="offer-bar-urgency">{offerBarUrgency}</PageText>
+            )}
           </div>
           <div className="offer-bar-right">
             {offerBarPrice && (
               <div className="offer-bar-price">
-                <span className="offer-bar-price-main">{offerBarPrice}</span>
+                <PageText pageKey="replay" path="offerBarPrice" as="span" className="offer-bar-price-main">{offerBarPrice}</PageText>
                 {programCtaPlanText && (
-                  <span className="offer-bar-price-plan">{programCtaPlanText}</span>
+                  <PageText pageKey="replay" path="programCtaPlanText" as="span" className="offer-bar-price-plan">{programCtaPlanText}</PageText>
                 )}
               </div>
             )}
@@ -84,15 +94,19 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
               imgStyle={{ maxHeight: "120px", maxWidth: "200px", width: "100%", objectFit: "contain", display: "block", marginBottom: "28px", marginInline: "auto" }}
             />
           )}
-          <p className="replay-eyebrow">{eyebrow}</p>
-          <h1 className="replay-event-title">{headline}</h1>
-          <p className="replay-subtitle">{subtitle}</p>
+          <PageText pageKey="replay" path="eyebrow" as="p" className="replay-eyebrow">{eyebrow}</PageText>
+          <h1 className="replay-event-title">
+            <EditableText pageKey="replay" path="headline" as="span">{headline}</EditableText>
+          </h1>
+          <p className="replay-subtitle">
+            <EditableText pageKey="replay" path="subtitle" as="span">{subtitle}</EditableText>
+          </p>
           <div className="replay-meta">
             {hostName && <span>Hosted by {hostName}</span>}
             {hostName && <span className="replay-meta-dot" />}
-            <span>{metaRecordings}</span>
+            <PageText pageKey="replay" path="metaRecordings" as="span">{metaRecordings}</PageText>
             <span className="replay-meta-dot" />
-            <span>{metaAccess}</span>
+            <PageText pageKey="replay" path="metaAccess" as="span">{metaAccess}</PageText>
           </div>
         </div>
       </header>
@@ -101,7 +115,7 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
       {resources.length > 0 && (
         <section className="resources-section">
           <div className="container">
-            <p className="resources-label">{resourcesLabel}</p>
+            <PageText pageKey="replay" path="resourcesLabel" as="p" className="resources-label">{resourcesLabel}</PageText>
             <div className="resources-list">
               {resources.map((resource, i) => (
                 <a key={i} href="#" className="resource-btn">
@@ -140,9 +154,11 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
                 <div className="video-part-header">
                   <div className={`video-part-num${i === 0 ? " active" : ""}`}>{i + 1}</div>
                   <div className="video-part-meta">
-                    <p className="video-part-label">{video.partLabel}</p>
-                    <h2 className="video-part-title">{video.title}</h2>
-                    <p className="video-part-desc">{video.description}</p>
+                    <PageText pageKey="replay" path={`videos[${i}].partLabel`} as="p" className="video-part-label">{video.partLabel}</PageText>
+                    <h2 className="video-part-title">
+                      <EditableText pageKey="replay" path={`videos[${i}].title`} as="span">{video.title}</EditableText>
+                    </h2>
+                    <PageText pageKey="replay" path={`videos[${i}].description`} as="p" className="video-part-desc">{video.description}</PageText>
                     {video.duration && (
                       <p className="video-part-duration">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -188,18 +204,22 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
         <section className="live-comments-section">
           <div className="container">
             <div className="live-comments-header">
-              <p className="live-comments-eyebrow">{c.commentsEyebrow ?? "From the live chat"}</p>
+              <PageText pageKey="replay" path="commentsEyebrow" as="p" className="live-comments-eyebrow">
+                {c.commentsEyebrow ?? "From the live chat"}
+              </PageText>
               <h2 className="live-comments-title">
-                {c.commentsTitle ?? "What people said during the event"}
+                <PageText pageKey="replay" path="commentsTitle" as="span">
+                  {c.commentsTitle ?? "What people said during the event"}
+                </PageText>
               </h2>
             </div>
             <div className="comments-track">
               {comments.map((comment, i) => (
                 <div key={i} className="comment-card">
-                  <p className="comment-bubble">{comment.bubble}</p>
+                  <EditableText pageKey="replay" path={`comments[${i}].bubble`} as="p" className="comment-bubble">{comment.bubble}</EditableText>
                   <span className="comment-name">
                     <span className="comment-dot" />
-                    {comment.name}
+                    <EditableText pageKey="replay" path={`comments[${i}].name`} as="span">{comment.name}</EditableText>
                   </span>
                 </div>
               ))}
@@ -215,10 +235,12 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
             <div className="program-cta-inner">
 
               <div className="program-cta-content">
-                <p className="program-cta-label">{programCtaLabel}</p>
-                <h2 className="program-cta-headline">{programCtaHeadline}</h2>
+                <PageText pageKey="replay" path="programCtaLabel" as="p" className="program-cta-label">{programCtaLabel}</PageText>
+                <h2 className="program-cta-headline">
+                  <EditableText pageKey="replay" path="programCtaHeadline" as="span">{programCtaHeadline}</EditableText>
+                </h2>
                 {programCtaDescription && (
-                  <p className="program-cta-desc">{programCtaDescription}</p>
+                  <PageText pageKey="replay" path="programCtaDescription" as="p" className="program-cta-desc">{programCtaDescription}</PageText>
                 )}
                 {programCtaBenefits.length > 0 && (
                   <ul className="program-cta-benefits">
@@ -236,7 +258,7 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
                             />
                           </svg>
                         </span>
-                        {benefit}
+                        <EditableText pageKey="replay" path={`programCtaBenefits[${i}]`} as="span">{benefit}</EditableText>
                       </li>
                     ))}
                   </ul>
@@ -248,10 +270,10 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
                 <div className="program-price-divider" />
                 <span className="program-price-label">One payment</span>
                 {programCtaPrice && (
-                  <span className="program-price-main">{programCtaPrice}</span>
+                  <PageText pageKey="replay" path="programCtaPrice" as="span" className="program-price-main">{programCtaPrice}</PageText>
                 )}
                 {programCtaPlanText && (
-                  <p className="program-price-plan">{programCtaPlanText}</p>
+                  <PageText pageKey="replay" path="programCtaPlanText" as="p" className="program-price-plan">{programCtaPlanText}</PageText>
                 )}
                 {programCtaUrgency && (
                   <span className="program-urgency">
@@ -259,10 +281,12 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
                       <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.2" />
                       <path d="M5 2.5v3l1.5 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                     </svg>
-                    {programCtaUrgency}
+                    <PageText pageKey="replay" path="programCtaUrgency" as="span">{programCtaUrgency}</PageText>
                   </span>
                 )}
-                <a href="/program" className="program-cta-btn">{programCtaEnrolText}</a>
+                <PageLink pageKey="replay" path="programCtaEnrolText" href="/program" className="program-cta-btn">
+                  {programCtaEnrolText}
+                </PageLink>
                 {contactEmail && (
                   <p className="program-cta-sub">
                     Secure checkout &middot; Instant access &middot; Questions?{" "}
@@ -279,8 +303,12 @@ export default function ReplayPage({ content: c, wizard: w }: Props) {
       {/* 07 — Disclaimer */}
       <div className="replay-disclaimer">
         <div className="container">
-          <h2 className="disclaimer-heading">{ftcHeading}</h2>
-          <p className="disclaimer-text">{ftcText}</p>
+          <h2 className="disclaimer-heading">
+            <EditableText pageKey="replay" path="ftcHeading" as="span">{ftcHeading}</EditableText>
+          </h2>
+          <p className="disclaimer-text">
+            <EditableText pageKey="replay" path="ftcText" as="span">{ftcText}</EditableText>
+          </p>
         </div>
       </div>
 

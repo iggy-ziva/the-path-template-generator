@@ -2416,16 +2416,16 @@
       pointer-events: none;
     }
     .prog-hero .container {
-      max-width: 900px;
+      max-width: var(--content-max);
       margin-inline: auto;
       padding-inline: var(--s-7);
       padding-block: var(--s-9);
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: var(--s-7);
-      align-items: center;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--s-8);
+      align-items: start;
     }
-    @media (max-width: 860px) {
+    @media (max-width: 1024px) {
       .prog-hero .container {
         grid-template-columns: 1fr;
         gap: var(--s-5);
@@ -2446,7 +2446,9 @@
         width: 100%;
       }
     }
-    .prog-hero-main {}
+    .prog-hero-main {
+      min-width: 0;
+    }
     .prog-hero-eyebrow {
       font-family: var(--font-body);
       font-size: 11px;
@@ -2458,12 +2460,13 @@
     }
     .prog-hero-title {
       font-family: var(--font-display);
-      font-size: clamp(42px, 6vw, 72px);
+      font-size: clamp(36px, 4.5vw, 68px);
       font-weight: 700;
-      line-height: 1.0;
+      line-height: 1.05;
       color: var(--text-inverse);
       margin-bottom: var(--s-5);
-      text-wrap: balance;
+      text-wrap: pretty;
+      overflow-wrap: break-word;
     }
     .prog-hero-sub {
       font-family: var(--font-display);
@@ -2472,7 +2475,7 @@
       font-weight: 300;
       line-height: 1.5;
       color: color-mix(in srgb, var(--text-inverse) 60%, transparent);
-      max-width: 520px;
+      max-width: min(720px, 100%);
       margin-bottom: var(--s-7);
     }
     .prog-hero-meta {
@@ -2540,10 +2543,10 @@
       gap: var(--s-3);
       flex-shrink: 0;
     }
-    @media (max-width: 860px) {
+    @media (max-width: 1024px) {
       .prog-hero-price-card {
         min-width: unset;
-        max-width: 320px;
+        max-width: 360px;
         text-align: left;
         align-items: flex-start;
         padding: var(--s-5) var(--s-6);

@@ -30,13 +30,13 @@ export default function DownloadFunnelModal({ funnelId, onClose }: Props) {
   async function handleZipDownload() {
     setDownloading(true);
     try {
-      const res = await fetch(`/api/download/${funnelId}`);
+      const res = await fetch(`/api/wizard/export/${funnelId}`);
       if (!res.ok) throw new Error("Download failed");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "funnel-files.zip";
+      a.download = `funnel-${funnelId.slice(0, 8)}.zip`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {

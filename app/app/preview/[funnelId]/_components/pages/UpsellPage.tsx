@@ -1,11 +1,16 @@
+"use client";
+
 import type { UpsellContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 import { distillUpsellDescription } from "@/lib/upsell-copy";
+import EditableText from "../editor/EditableText";
+import { PageLink, PageText } from "../editor/page-editable";
 
 interface Props {
   content: UpsellContent;
   wizard: WizardSnapshot;
+  exportMode?: boolean;
 }
 
 const CheckSvg = () => (
@@ -35,7 +40,7 @@ function resolveUpsellQuotes(
   return [];
 }
 
-export default function UpsellPage({ content: c, wizard: w }: Props) {
+export default function UpsellPage({ content: c, wizard: w, exportMode = false }: Props) {
   const brandName = w.businessName ?? w.hostName ?? "Your Brand";
 
   // Product name stays from wizard; tagline + description prefer AI-distilled generated copy
@@ -49,11 +54,18 @@ export default function UpsellPage({ content: c, wizard: w }: Props) {
   const yesSubText   = w.upsellCtaSubText  ?? c.yesCtaSubText ?? "Charged to the same card. No extra form to fill.";
   const declineText  = w.upsellDeclineText ?? c.declineText ?? "No thanks — I'll pass and go to my confirmation.";
   const includedTitle = c.includedTitle ?? "What's in the bundle";
+  const confirmationBannerText = c.confirmationBannerText ?? `Your spot for ${w.eventName} is confirmed — one more thing before you go.`;
+  const eyebrowText = c.eyebrow ?? "One-time offer · Step 2 of 2";
+  const savingAmount = c.savingAmount ?? "";
+  const urgencyNote = w.upsellPriceNote ?? c.urgencyNote ?? "";
 
-  const items = (w.upsellIncludedItems ?? []).length > 0
-    ? w.upsellIncludedItems!
-    : (c.includedItems ?? []);
+  const usingContentItems = !(w.upsellIncludedItems ?? []).length;
+  const items = usingContentItems
+    ? (c.includedItems ?? [])
+    : w.upsellIncludedItems!;
 
+  const usingContentQuotes = !(w.upsellQuotes?.filter((q) => q.quote?.trim()) ?? []).length
+    && !w.upsellQuote?.trim();
   const testimonialQuotes = resolveUpsellQuotes(w, c);
 
   return (
@@ -87,7 +99,9 @@ export default function UpsellPage({ content: c, wizard: w }: Props) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: 16, height: 16, flexShrink: 0 }}>
           <polyline points="20 6 9 17 4 12" />
         </svg>
-        {c.confirmationBannerText ?? `Your spot for ${w.eventName} is confirmed — one more thing before you go.`}
+        <PageText pageKey="upsell" path="confirmationBannerText" as="span">
+          {confirmationBannerText}
+        </PageText>
       </div>
 
       {/* ── 03–08 Offer body ── */}
@@ -104,25 +118,37 @@ export default function UpsellPage({ content: c, wizard: w }: Props) {
           </div>
         )}
 
-        <div className="offer-eyebrow">
-          {c.eyebrow ?? "One-time offer · Step 2 of 2"}
-        </div>
+        <PageText pageKey="upsell" path="eyebrow" as="div" className="offer-eyebrow">
+          {eyebrowText}
+        </PageText>
 
         {offerName ? (
           <>
             <h1 className="offer-title">{offerName}</h1>
-            {tagline && <p className="offer-tagline">{tagline}</p>}
+            {tagline && (
+              <p className="offer-tagline">
+                <EditableText pageKey="upsell" path="headline" as="span">{tagline}</EditableText>
+              </p>
+            )}
           </>
         ) : tagline ? (
-          <h1 className="offer-title">{tagline}</h1>
+          <h1 className="offer-title">
+            <EditableText pageKey="upsell" path="headline" as="span">{tagline}</EditableText>
+          </h1>
         ) : null}
 
-        {description && <p className="offer-desc">{description}</p>}
+        {description && (
+          <p className="offer-desc">
+            <EditableText pageKey="upsell" path="description" as="span">{description}</EditableText>
+          </p>
+        )}
 
         <hr className="offer-divider" />
 
         {/* What's included */}
-        <div className="included-title">{includedTitle}</div>
+        <PageText pageKey="upsell" path="includedTitle" as="div" className="included-title">
+          {includedTitle}
+        </PageText>
         <div className="included-list">
           {items.map((item, i) => (
             <div key={i} className="included-item">
@@ -133,8 +159,16 @@ export default function UpsellPage({ content: c, wizard: w }: Props) {
                 </svg>
               </div>
               <div>
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
+                <h3>
+                  {usingContentItems ? (
+                    <EditableText pageKey="upsell" path={`includedItems[${i}].title`} as="span">{item.title}</EditableText>
+                  ) : item.title}
+                </h3>
+                <p>
+                  {usingContentItems ? (
+                    <EditableText pageKey="upsell" path={`includedItems[${i}].description`} as="span">{item.description}</EditableText>
+                  ) : item.description}
+                </p>
               </div>
             </div>
           ))}
@@ -146,7 +180,11 @@ export default function UpsellPage({ content: c, wizard: w }: Props) {
             {testimonialQuotes.map((t, i) => (
               <div key={i} className="offer-quote">
                 <span className="quote-glyph">&ldquo;</span>
-                <blockquote>{t.quote}</blockquote>
+                <blockquote>
+                  {usingContentQuotes ? (
+                    <EditableText pageKey="upsell" path={`testimonialQuotes[${i}].quote`} as="span">{t.quote}</EditableText>
+                  ) : t.quote}
+                </blockquote>
                 {t.attribution && (
                   <cite>
                     <strong>{t.attribution.split("·")[0]?.trim()}</strong>
@@ -162,24 +200,34 @@ export default function UpsellPage({ content: c, wizard: w }: Props) {
         <div className="price-block">
           <p className="price-was">Regular value: <s>{regularValue}</s></p>
           <div className="price-now">{offerPrice}</div>
-          {c.savingAmount && (
+          {savingAmount && (
             <div className="price-saving">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 14, height: 14 }}>
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              {c.savingAmount}
+              <PageText pageKey="upsell" path="savingAmount" as="span">{savingAmount}</PageText>
             </div>
           )}
-          {(w.upsellPriceNote ?? c.urgencyNote) && (
-            <p className="price-note" dangerouslySetInnerHTML={{ __html: w.upsellPriceNote ?? c.urgencyNote ?? "" }} />
+          {urgencyNote && (
+            <PageText pageKey="upsell" path="urgencyNote" as="p" className="price-note" html forceShow>
+              {urgencyNote}
+            </PageText>
           )}
         </div>
 
         {/* CTA */}
-        <a href="/thank-you" className="yes-btn">{yesCtaText}</a>
-        {yesSubText && <p className="yes-btn-sub">{yesSubText}</p>}
+        <PageLink pageKey="upsell" path="yesCtaText" href="/thank-you" className="yes-btn">
+          {yesCtaText}
+        </PageLink>
+        {yesSubText && (
+          <PageText pageKey="upsell" path="yesCtaSubText" as="p" className="yes-btn-sub">
+            {c.yesCtaSubText ?? yesSubText}
+          </PageText>
+        )}
 
-        <a href="/thank-you" className="no-link">{declineText}</a>
+        <PageLink pageKey="upsell" path="declineText" href="/thank-you" className="no-link">
+          {declineText}
+        </PageLink>
       </main>
 
       {/* Footer */}

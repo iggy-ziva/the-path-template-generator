@@ -4,14 +4,18 @@ import type { ProgrammeCheckoutContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 
+import EditableText from "../editor/EditableText";
+import { PageText } from "../editor/page-editable";
+
 interface Props {
   content: ProgrammeCheckoutContent;
   wizard: WizardSnapshot;
+  exportMode?: boolean;
 }
 
 type PlanId = string;
 
-export default function ProgrammeCheckoutPage({ content: c, wizard: w }: Props) {
+export default function ProgrammeCheckoutPage({ content: c, wizard: w, exportMode = false }: Props) {
   const programName = c.programName ?? w.programName ?? "The Programme";
   const hostName = w.hostName ?? "Your Host";
   const year = new Date().getFullYear();
@@ -45,6 +49,9 @@ export default function ProgrammeCheckoutPage({ content: c, wizard: w }: Props) 
 
   const benefits = c.benefits ?? [];
   const chips = c.programChips ?? (w.programDuration ? [w.programDuration] : []);
+  const guaranteeTitle = c.guaranteeTitle ?? "30-day money-back guarantee";
+  const guaranteeBody = c.guaranteeText ?? w.programGuarantee ?? "";
+  const ctaText = c.ctaText ?? `Enrol now — ${activePlan?.amount ?? ""}`;
 
   return (
     <div className="programme-checkout-page" style={{ background: "var(--surface-inverse)", color: "var(--text-inverse)", minHeight: "100%" }}>
@@ -211,8 +218,8 @@ export default function ProgrammeCheckoutPage({ content: c, wizard: w }: Props) 
 
           {/* Submit */}
           <div className="submit-section">
-            <button className="submit-btn">
-              {c.ctaText ?? `Enrol now — ${activePlan?.amount ?? ""}`}
+            <button className="submit-btn" type="button">
+              <EditableText pageKey="programmeCheckout" path="ctaText" as="span">{ctaText}</EditableText>
             </button>
             <div className="payment-divider">or pay with</div>
             <button className="paypal-btn" type="button">
@@ -233,7 +240,9 @@ export default function ProgrammeCheckoutPage({ content: c, wizard: w }: Props) 
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-                <span>{c.guaranteeTitle ?? "30-day money-back guarantee"}</span>
+                <span>
+                  <PageText pageKey="programmeCheckout" path="guaranteeTitle" as="span">{guaranteeTitle}</PageText>
+                </span>
               </div>
               <div className="submit-security-sep" />
               <div className="submit-security-item">
@@ -257,7 +266,11 @@ export default function ProgrammeCheckoutPage({ content: c, wizard: w }: Props) 
               style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: "var(--r-lg)", marginBottom: "16px", display: "block" }}
             />
           )}
-          {c.programEyebrow && <p className="order-eyebrow">{c.programEyebrow}</p>}
+          {c.programEyebrow && (
+            <PageText pageKey="programmeCheckout" path="programEyebrow" as="p" className="order-eyebrow">
+              {c.programEyebrow}
+            </PageText>
+          )}
           <h2 className="order-program-name">{programName}</h2>
 
           {chips.length > 0 && (
@@ -309,7 +322,9 @@ export default function ProgrammeCheckoutPage({ content: c, wizard: w }: Props) 
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
-                  <span dangerouslySetInnerHTML={{ __html: benefit }} />
+                  <EditableText pageKey="programmeCheckout" path={`benefits[${i}]`} as="span" html>
+                    {benefit}
+                  </EditableText>
                 </div>
               ))}
             </div>
@@ -324,8 +339,14 @@ export default function ProgrammeCheckoutPage({ content: c, wizard: w }: Props) 
                 </svg>
               </div>
               <div className="guarantee-text">
-                <h4>{c.guaranteeTitle ?? "Money-back guarantee"}</h4>
-                <p>{c.guaranteeText ?? w.programGuarantee}</p>
+                <h4>
+                  <PageText pageKey="programmeCheckout" path="guaranteeTitle" as="span">
+                    {c.guaranteeTitle ?? "Money-back guarantee"}
+                  </PageText>
+                </h4>
+                <PageText pageKey="programmeCheckout" path="guaranteeText" as="p">
+                  {guaranteeBody}
+                </PageText>
               </div>
             </div>
           )}
@@ -343,7 +364,9 @@ export default function ProgrammeCheckoutPage({ content: c, wizard: w }: Props) 
       {c.ftcDisclaimer && (
         <div className="co-ftc">
           <h2>Earnings &amp; results disclaimer</h2>
-          <p>{c.ftcDisclaimer}</p>
+          <p>{c.ftcDisclaimer && (
+            <EditableText pageKey="programmeCheckout" path="ftcDisclaimer" as="span">{c.ftcDisclaimer}</EditableText>
+          )}</p>
         </div>
       )}
 

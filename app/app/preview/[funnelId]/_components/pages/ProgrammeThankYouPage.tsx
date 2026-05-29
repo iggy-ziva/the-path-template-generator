@@ -1,16 +1,22 @@
+"use client";
+
 import type { ProgrammeThankYouContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl, brandSectionOverlay, brandImageBackground } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
+import EditableText from "../editor/EditableText";
+import { PageText } from "../editor/page-editable";
 
 interface Props {
   content: ProgrammeThankYouContent;
   wizard: WizardSnapshot;
+  exportMode?: boolean;
 }
 
-export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) {
+export default function ProgrammeThankYouPage({ content: c, wizard: w, exportMode = false }: Props) {
   const hostName = w.hostName ?? "Your Host";
   const programName = w.programName ?? "The Programme";
   const year = new Date().getFullYear();
+  const welcomeMessage = (c as ProgrammeThankYouContent & { welcomeMessage?: string }).welcomeMessage;
 
   return (
     <>
@@ -36,13 +42,25 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) 
             </div>
           </div>
 
-          {c.label && <p className="ty-label">{c.label}</p>}
-
-          <h1 className="ty-headline">{c.headline ?? "You're in."}</h1>
-
-          {c.subheadline && (
-            <p className="ty-subheadline">{c.subheadline}</p>
+          {c.label && (
+            <PageText pageKey="programmeThankYou" path="label" as="p" className="ty-label" forceShow>
+              {c.label}
+            </PageText>
           )}
+
+          <h1 className="ty-headline">
+            <EditableText pageKey="programmeThankYou" path="headline" as="span">{c.headline ?? "You're in."}</EditableText>
+          </h1>
+
+          {welcomeMessage ? (
+            <p className="ty-subheadline">
+              <PageText pageKey="programmeThankYou" path="welcomeMessage" as="span">{welcomeMessage}</PageText>
+            </p>
+          ) : c.subheadline ? (
+            <p className="ty-subheadline">
+              <EditableText pageKey="programmeThankYou" path="subheadline" as="span">{c.subheadline}</EditableText>
+            </p>
+          ) : null}
 
           {(c.chips ?? []).length > 0 && (
             <div className="ty-chips">
@@ -80,7 +98,9 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) 
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                 <polyline points="22,6 12,13 2,6" />
               </svg>
-              <span dangerouslySetInnerHTML={{ __html: c.emailNote }} />
+              <PageText pageKey="programmeThankYou" path="emailNote" as="span" html forceShow>
+                {c.emailNote}
+              </PageText>
             </div>
           )}
 
@@ -93,15 +113,21 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) 
           <div className="ty-content">
 
             <p className="ty-section-label">What happens next</p>
-            {c.nextHeadline && <h2 className="next-headline">{c.nextHeadline}</h2>}
+            {c.nextHeadline && (
+              <PageText pageKey="programmeThankYou" path="nextHeadline" as="h2" className="next-headline">
+                {c.nextHeadline}
+              </PageText>
+            )}
 
             <div className="steps-list">
               {(c.steps ?? []).map((step, i) => (
                 <div key={i} className="step-item">
                   <div className="step-num">{step.num}</div>
                   <div className="step-content">
-                    <h3>{step.title}</h3>
-                    <p>{step.body}</p>
+                    <h3>
+                      <EditableText pageKey="programmeThankYou" path={`steps[${i}].title`} as="span">{step.title}</EditableText>
+                    </h3>
+                    <EditableText pageKey="programmeThankYou" path={`steps[${i}].body`} as="p">{step.body}</EditableText>
                     {step.tag && (
                       <span className="step-tag">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "11px", height: "11px" }}>
@@ -126,7 +152,11 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) 
 
             <div className="schedule-intro">
               <p className="ty-section-label">Your schedule</p>
-              {c.scheduleIntro && <h2 className="schedule-headline">{c.scheduleIntro}</h2>}
+              {c.scheduleIntro && (
+                <PageText pageKey="programmeThankYou" path="scheduleIntro" as="h2" className="schedule-headline">
+                  {c.scheduleIntro}
+                </PageText>
+              )}
             </div>
 
             <div className="schedule-grid">
@@ -170,7 +200,9 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) 
 
             <div className="note-body">
               {(c.noteParagraphs ?? []).map((para, i) => (
-                <p key={i}>{para}</p>
+                <EditableText key={i} pageKey="programmeThankYou" path={`noteParagraphs[${i}]`} as="p">
+                  {para}
+                </EditableText>
               ))}
             </div>
 
@@ -191,7 +223,11 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) 
           <div className="ty-content">
 
             {c.commitmentLabel && <p className="ty-section-label">{c.commitmentLabel}</p>}
-            {c.commitmentHeadline && <h2 className="commitment-headline">{c.commitmentHeadline}</h2>}
+            {c.commitmentHeadline && (
+              <PageText pageKey="programmeThankYou" path="commitmentHeadline" as="h2" className="commitment-headline">
+                {c.commitmentHeadline}
+              </PageText>
+            )}
 
             <div className="commitment-list">
               {(c.commitmentItems ?? []).map((item, i) => (
@@ -201,7 +237,9 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) 
                       <path d="M1.5 5l2.5 2.5 4.5-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
-                  <p className="commitment-item-text">{item}</p>
+                  <EditableText pageKey="programmeThankYou" path={`commitmentItems[${i}]`} as="p" className="commitment-item-text">
+                    {item}
+                  </EditableText>
                 </div>
               ))}
             </div>
@@ -218,7 +256,11 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w }: Props) 
             <div className="access-card">
               <div className="access-card-inner">
                 <p className="access-card-eyebrow">Your program details</p>
-                <h3 className="access-card-headline">{c.accessCardTitle ?? programName}</h3>
+                <h3 className="access-card-headline">
+                  <PageText pageKey="programmeThankYou" path="accessCardTitle" as="span">
+                    {c.accessCardTitle ?? programName}
+                  </PageText>
+                </h3>
                 <div className="access-details">
                   {(c.accessRows ?? [])
                     .filter(row => !/question/i.test(row.label))

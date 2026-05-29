@@ -118,6 +118,11 @@ export default function WizardClient({ userEmail }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keep generated_funnel_id in sync when switching submissions
+  useEffect(() => {
+    if (submissionId) refreshFunnels();
+  }, [submissionId]);
+
   async function handleSaveFunnelName(name: string) {
     setFunnelName(name);
     setNameModalOpen(false);
@@ -267,6 +272,14 @@ export default function WizardClient({ userEmail }: Props) {
     [data]
   );
 
+  const activeFunnelSummary = useMemo(
+    () => funnels.find((f) => f.id === submissionId) ?? null,
+    [funnels, submissionId],
+  );
+  const generatedFunnelId = activeFunnelSummary?.generated_funnel_id ?? null;
+  const showViewPreview =
+    completionPct >= GENERATE_THRESHOLD && Boolean(generatedFunnelId);
+
   // Track when the user crosses the 80% threshold so we can play a one-shot
   // celebration animation. We only fire it on the rising edge.
   const [justCrossedThreshold, setJustCrossedThreshold] = useState(false);
@@ -309,7 +322,7 @@ export default function WizardClient({ userEmail }: Props) {
       <div style={{ marginBottom: 48 }}>
 
         {/* Funnel name + switcher */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
           {/* All funnels */}
           <button
             onClick={() => setSidebarOpen(true)}
@@ -360,6 +373,32 @@ export default function WizardClient({ userEmail }: Props) {
             {funnelName}
             <span style={{ color: Z.faint, fontWeight: 400, fontSize: 11 }}>✎</span>
           </button>
+
+          {showViewPreview && (
+            <a
+              href={`/app/preview/${generatedFunnelId}`}
+              title="Open your generated funnel preview"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                marginLeft: "auto",
+                background: `linear-gradient(135deg, ${Z.pink}, ${Z.coral})`,
+                border: "none",
+                borderRadius: 10,
+                padding: "7px 14px",
+                fontFamily: 'var(--font-barlow), sans-serif',
+                fontSize: 12,
+                fontWeight: 700,
+                color: Z.white,
+                textDecoration: "none",
+                boxShadow: "0 2px 8px rgba(255,0,126,0.25)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              View →
+            </a>
+          )}
         </div>
 
         <div

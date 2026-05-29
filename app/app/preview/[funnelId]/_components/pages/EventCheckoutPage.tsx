@@ -4,10 +4,13 @@ import { useState } from "react";
 import type { EventCheckoutContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
+import EditableText from "../editor/EditableText";
+import { PageText, useEditMode } from "../editor/page-editable";
 
 interface Props {
   content: EventCheckoutContent;
   wizard: WizardSnapshot;
+  exportMode?: boolean;
 }
 
 function getCountdown(eventDate?: string): { days: string; hrs: string; mins: string } {
@@ -25,7 +28,8 @@ function getCountdown(eventDate?: string): { days: string; hrs: string; mins: st
   }
 }
 
-export default function EventCheckoutPage({ content: c, wizard: w }: Props) {
+export default function EventCheckoutPage({ content: c, wizard: w, exportMode = false }: Props) {
+  const editMode = useEditMode();
   const priceMin = c.priceMin ?? w.eventPriceMin ?? 11;
   const priceMax = c.priceMax ?? w.eventPriceMax ?? 111;
   const priceDefault =
@@ -61,7 +65,22 @@ export default function EventCheckoutPage({ content: c, wizard: w }: Props) {
   const eventPlatform = w.eventPlatform ?? "Zoom";
   const benefits     = c.benefits ?? [];
   const ctaText      = c.ctaText ?? `Register Now — $${price}.00`;
+  const ctaDisplay   = editMode
+    ? ctaText
+    : (ctaText.includes("${price}") || ctaText.includes("$price")
+        ? `Register Now — $${price}.00`
+        : ctaText);
   const guaranteeText = c.guaranteeText ?? "No prerequisites · Recording included · No refunds on donation-based events";
+  const priceRangeCopy = c.priceRangeCopy ?? (
+    `Pay any amount from $${priceMin} to the regular full price of $${priceMax}. `
+    + "Pay what is genuinely accessible and meaningful for you."
+  );
+  const ftcDisclaimer = c.ftcDisclaimer ?? (
+    `The information provided by ${hostName || "the host"} is for educational and personal-development purposes only. `
+    + "It is not intended or implied to be a substitute for professional medical, psychological, or financial advice, "
+    + "diagnosis, or treatment. All testimonials are genuine. Individual results may vary. "
+    + "This is a donation-based offering; no refunds will be issued."
+  );
 
   return (
     <div className="theme-root">
@@ -136,14 +155,9 @@ export default function EventCheckoutPage({ content: c, wizard: w }: Props) {
               <h2 className="form-card-title">Choose your price</h2>
             </div>
             <div className="form-card-body">
-              <p className="price-range-label">
-                {c.priceRangeCopy ?? (
-                  <>
-                    Pay any amount from <strong>${priceMin}</strong> to the regular full price
-                    of <strong>${priceMax}</strong>. Pay what is genuinely accessible and meaningful for you.
-                  </>
-                )}
-              </p>
+              <PageText pageKey="eventCheckout" path="priceRangeCopy" as="p" className="price-range-label">
+                {priceRangeCopy}
+              </PageText>
               <div className="price-input-wrap">
                 <span className="price-currency">$</span>
                 <input
@@ -363,12 +377,12 @@ export default function EventCheckoutPage({ content: c, wizard: w }: Props) {
                 not store your card details and we will never share or sell your data.
               </p>
               <div>
-                <button className="submit-btn">
-                  {ctaText.includes("${price}") || ctaText.includes("$price")
-                    ? `Register Now — $${price}.00`
-                    : ctaText}
+                <button className="submit-btn" type="button">
+                  <EditableText pageKey="eventCheckout" path="ctaText" as="span">{ctaDisplay}</EditableText>
                 </button>
-                <p className="submit-guarantee">{guaranteeText}</p>
+                <PageText pageKey="eventCheckout" path="guaranteeText" as="p" className="submit-guarantee">
+                  {guaranteeText}
+                </PageText>
               </div>
             </div>
           </div>
@@ -465,8 +479,9 @@ export default function EventCheckoutPage({ content: c, wizard: w }: Props) {
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
-                      {/* Benefits may contain <strong> tags from AI generation */}
-                      <span dangerouslySetInnerHTML={{ __html: benefit }} />
+                      <EditableText pageKey="eventCheckout" path={`benefits[${i}]`} as="span" html>
+                        {benefit}
+                      </EditableText>
                     </div>
                   ))}
                 </div>
@@ -481,10 +496,9 @@ export default function EventCheckoutPage({ content: c, wizard: w }: Props) {
       {/* FTC Disclaimer */}
       <div className="checkout-ftc">
         <h2>FTC Disclaimer</h2>
-        <p>
-          {c.ftcDisclaimer ??
-            `The information provided by ${hostName || "the host"} is for educational and personal-development purposes only. It is not intended or implied to be a substitute for professional medical, psychological, or financial advice, diagnosis, or treatment. All testimonials are genuine. Individual results may vary. This is a donation-based offering; no refunds will be issued.`}
-        </p>
+        <PageText pageKey="eventCheckout" path="ftcDisclaimer" as="p">
+          {ftcDisclaimer}
+        </PageText>
       </div>
 
       {/* Footer */}

@@ -3,6 +3,9 @@ import { useState } from "react";
 import type { ProgrammeLandingContent, WizardSnapshot, SectionTheme } from "../funnel-types";
 import { safeUrl, brandSectionOverlay, brandImageBackground } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
+import EditableText from "../editor/EditableText";
+import { PageText } from "../editor/page-editable";
+import { useEditorOptional } from "../editor/EditorContext";
 
 function themeClasses(theme?: SectionTheme, defaultTheme: SectionTheme = "dark"): string {
   const t = theme ?? defaultTheme;
@@ -14,6 +17,7 @@ function themeClasses(theme?: SectionTheme, defaultTheme: SectionTheme = "dark")
 interface Props {
   content: ProgrammeLandingContent;
   wizard: WizardSnapshot;
+  exportMode?: boolean;
 }
 
 const StarIcon = () => (
@@ -28,10 +32,14 @@ const PlusIcon = () => (
   </svg>
 );
 
-export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
+export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode = false }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
   const [openWeek, setOpenWeek] = useState<number | null>(0);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const editor = useEditorOptional();
+
+  const sessionWeeksFromContent = (c.sessionWeeks ?? []).length > 0;
+  const bonusesFromContent = (c.bonusesItems ?? []).length > 0;
 
   const programName = c.heroHeadline ?? w.programName ?? "The Programme";
   const hostName = c.bioName ?? w.hostName ?? "Your Host";
@@ -78,13 +86,23 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
       >
         <div className="container">
           <div className="prog-hero-main">
-            {c.heroEyebrow && <p className="prog-hero-eyebrow">{c.heroEyebrow}</p>}
-            <h1 className="prog-hero-title">{programName}</h1>
-            {c.heroSubheadline && <p className="prog-hero-sub">{c.heroSubheadline}</p>}
+            {c.heroEyebrow && (
+              <PageText pageKey="programmeLanding" path="heroEyebrow" as="p" className="prog-hero-eyebrow">{c.heroEyebrow}</PageText>
+            )}
+            <h1 className="prog-hero-title">
+              <EditableText pageKey="programmeLanding" path="heroHeadline" as="span">{programName}</EditableText>
+            </h1>
+            {c.heroSubheadline && (
+              <p className="prog-hero-sub">
+                <EditableText pageKey="programmeLanding" path="heroSubheadline" as="span">{c.heroSubheadline}</EditableText>
+              </p>
+            )}
             {(c.heroMeta ?? []).length > 0 && (
               <div className="prog-hero-meta">
                 {(c.heroMeta ?? []).map((item, i) => (
-                  <span key={i} className="prog-hero-meta-item" dangerouslySetInnerHTML={{ __html: item }} />
+                  <EditableText key={i} pageKey="programmeLanding" path={`heroMeta[${i}]`} as="span" className="prog-hero-meta-item" html>
+                    {item}
+                  </EditableText>
                 ))}
               </div>
             )}
@@ -100,8 +118,14 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
               </span>
             )}
             <div className="hero-price-divider" />
-            <button className="hero-enrol-btn" onClick={() => setModalOpen(true)}>Choose my plan</button>
-            {c.heroUrgency && <p className="hero-urgency">{c.heroUrgency}</p>}
+            <button className="hero-enrol-btn" onClick={() => setModalOpen(true)}>
+              <PageText pageKey="programmeLanding" path="heroCtaText" as="span">
+                {c.heroCtaText ?? "Choose my plan"}
+              </PageText>
+            </button>
+            {c.heroUrgency && (
+              <PageText pageKey="programmeLanding" path="heroUrgency" as="p" className="hero-urgency">{c.heroUrgency}</PageText>
+            )}
           </div>
         </div>
       </section>
@@ -111,23 +135,29 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
         <section className="vision">
           <div className="container">
             <div className="section-header">
-              {c.visionEyebrow && <span className="eyebrow">{c.visionEyebrow}</span>}
-              {c.visionHeading && <h2 className="display-section">{c.visionHeading}</h2>}
+              {c.visionEyebrow && (
+                <PageText pageKey="programmeLanding" path="visionEyebrow" as="span" className="eyebrow">{c.visionEyebrow}</PageText>
+              )}
+              {c.visionHeading && (
+                <PageText pageKey="programmeLanding" path="visionHeading" as="h2" className="display-section">{c.visionHeading}</PageText>
+              )}
             </div>
             <div className="vision-grid">
               {(c.visionItems ?? []).map((item, i) => (
                 <div key={i} className="vision-item">
                   <span className="vision-bullet" />
-                  <p dangerouslySetInnerHTML={{ __html: item }} />
+                  <EditableText pageKey="programmeLanding" path={`visionItems[${i}]`} as="p" html>{item}</EditableText>
                 </div>
               ))}
             </div>
             {c.visionCtaText && (
               <div className="vision-cta">
-                <a href={checkoutHref} className="btn btn-primary" onClick={(e) => { e.preventDefault(); setModalOpen(true); }}>
-                  {c.visionCtaText}
+                <a href={checkoutHref} className="btn btn-primary" onClick={(e) => { if (editor?.isEditMode) e.preventDefault(); else { e.preventDefault(); setModalOpen(true); } }}>
+                  <PageText pageKey="programmeLanding" path="visionCtaText" as="span">{c.visionCtaText}</PageText>
                 </a>
-                {c.visionCtaNote && <span className="vision-cta-note">{c.visionCtaNote}</span>}
+                {c.visionCtaNote && (
+                  <PageText pageKey="programmeLanding" path="visionCtaNote" as="span" className="vision-cta-note">{c.visionCtaNote}</PageText>
+                )}
               </div>
             )}
           </div>
@@ -140,15 +170,19 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
           <div className="container">
             <div className="already-tried-inner">
               <div>
-                {c.alreadyTriedEyebrow && <p className="already-tried-eyebrow">{c.alreadyTriedEyebrow}</p>}
-                {c.alreadyTriedHeading && <h2 className="already-tried-headline">{c.alreadyTriedHeading}</h2>}
+                {c.alreadyTriedEyebrow && (
+                  <PageText pageKey="programmeLanding" path="alreadyTriedEyebrow" as="p" className="already-tried-eyebrow">{c.alreadyTriedEyebrow}</PageText>
+                )}
+                {c.alreadyTriedHeading && (
+                  <PageText pageKey="programmeLanding" path="alreadyTriedHeading" as="h2" className="already-tried-headline">{c.alreadyTriedHeading}</PageText>
+                )}
                 {(c.alreadyTriedBody ?? []).map((para, i) => (
-                  <p key={i} className="already-tried-body">{para}</p>
+                  <EditableText key={i} pageKey="programmeLanding" path={`alreadyTriedBody[${i}]`} as="p" className="already-tried-body">{para}</EditableText>
                 ))}
               </div>
               <div className="tried-cloud">
                 {(c.alreadyTriedTags ?? []).map((tag, i) => (
-                  <span key={i} className="tried-tag">{tag}</span>
+                  <EditableText key={i} pageKey="programmeLanding" path={`alreadyTriedTags[${i}]`} as="span" className="tried-tag">{tag}</EditableText>
                 ))}
               </div>
             </div>
@@ -161,9 +195,11 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
         <section className="promise">
           <div className="container">
             <div className="promise-left">
-              {c.promiseHeading && <h2 className="promise-headline">{c.promiseHeading}</h2>}
+              {c.promiseHeading && (
+                <PageText pageKey="programmeLanding" path="promiseHeading" as="h2" className="promise-headline">{c.promiseHeading}</PageText>
+              )}
               {(c.promiseBody ?? []).map((para, i) => (
-                <p key={i} className="promise-body">{para}</p>
+                <EditableText key={i} pageKey="programmeLanding" path={`promiseBody[${i}]`} as="p" className="promise-body">{para}</EditableText>
               ))}
             </div>
             <ul className="promise-list">
@@ -174,7 +210,7 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
                       <path d="M1.5 5l2.5 2.5 4.5-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
-                  <p dangerouslySetInnerHTML={{ __html: item }} />
+                  <EditableText pageKey="programmeLanding" path={`promiseBullets[${i}]`} as="p" html>{item}</EditableText>
                 </li>
               ))}
             </ul>
@@ -198,8 +234,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
         <section className="includes">
           <div className="container">
             <div className="section-header">
-              {c.includesEyebrow && <span className="eyebrow">{c.includesEyebrow}</span>}
-              {c.includesHeading && <h2 className="display-section">{c.includesHeading}</h2>}
+              {c.includesEyebrow && (
+                <PageText pageKey="programmeLanding" path="includesEyebrow" as="span" className="eyebrow">{c.includesEyebrow}</PageText>
+              )}
+              {c.includesHeading && (
+                <PageText pageKey="programmeLanding" path="includesHeading" as="h2" className="display-section">{c.includesHeading}</PageText>
+              )}
             </div>
             <div className="includes-grid">
               {(c.includesItems ?? []).map((item, i) => (
@@ -210,9 +250,13 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
                       <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                     </svg>
                   </div>
-                  <h3>{item.title}</h3>
-                  <p>{item.description}</p>
-                  {item.tag && <span className="includes-item-tag">{item.tag}</span>}
+                  <h3>
+                    <EditableText pageKey="programmeLanding" path={`includesItems[${i}].title`} as="span">{item.title}</EditableText>
+                  </h3>
+                  <EditableText pageKey="programmeLanding" path={`includesItems[${i}].description`} as="p">{item.description}</EditableText>
+                  {item.tag && (
+                    <EditableText pageKey="programmeLanding" path={`includesItems[${i}].tag`} as="span" className="includes-item-tag">{item.tag}</EditableText>
+                  )}
                 </div>
               ))}
             </div>
@@ -225,8 +269,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
         <section className="session-breakdown">
           <div className="container">
             <div className="section-header">
-              {c.sessionEyebrow && <span className="eyebrow">{c.sessionEyebrow}</span>}
-              {c.sessionHeading && <h2 className="display-section">{c.sessionHeading}</h2>}
+              {c.sessionEyebrow && (
+                <PageText pageKey="programmeLanding" path="sessionEyebrow" as="span" className="eyebrow">{c.sessionEyebrow}</PageText>
+              )}
+              {c.sessionHeading && (
+                <PageText pageKey="programmeLanding" path="sessionHeading" as="h2" className="display-section">{c.sessionHeading}</PageText>
+              )}
             </div>
             <div className="week-list">
               {(sessionWeeks ?? []).map((week, i) => (
@@ -237,15 +285,29 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
                     onClick={() => setOpenWeek(openWeek === i ? null : i)}
                   >
                     <span className="week-num">{week.num}</span>
-                    <span className="week-title">{week.title}</span>
-                    {week.dates && <span className="week-date">{week.dates}</span>}
+                    <span className="week-title">
+                      {sessionWeeksFromContent ? (
+                        <EditableText pageKey="programmeLanding" path={`sessionWeeks[${i}].title`} as="span">{week.title}</EditableText>
+                      ) : week.title}
+                    </span>
+                    {week.dates && (
+                      <span className="week-date">
+                        {sessionWeeksFromContent ? (
+                          <EditableText pageKey="programmeLanding" path={`sessionWeeks[${i}].dates`} as="span">{week.dates}</EditableText>
+                        ) : week.dates}
+                      </span>
+                    )}
                     <span className="week-icon"><PlusIcon /></span>
                   </button>
                   <div className="week-body">
                     <div className="week-body-inner">
                       <ul className="week-points">
                         {(week.points ?? []).map((pt, j) => (
-                          <li key={j}>{pt}</li>
+                          <li key={j}>
+                            {sessionWeeksFromContent ? (
+                              <EditableText pageKey="programmeLanding" path={`sessionWeeks[${i}].points[${j}]`} as="span">{pt}</EditableText>
+                            ) : pt}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -262,8 +324,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
         <section className="video-testimonials">
           <div className="container">
             <div className="section-header">
-              {c.videoTestimonialsEyebrow && <span className="eyebrow">{c.videoTestimonialsEyebrow}</span>}
-              {c.videoTestimonialsHeading && <h2 className="display-section">{c.videoTestimonialsHeading}</h2>}
+              {c.videoTestimonialsEyebrow && (
+                <PageText pageKey="programmeLanding" path="videoTestimonialsEyebrow" as="span" className="eyebrow">{c.videoTestimonialsEyebrow}</PageText>
+              )}
+              {c.videoTestimonialsHeading && (
+                <PageText pageKey="programmeLanding" path="videoTestimonialsHeading" as="h2" className="display-section">{c.videoTestimonialsHeading}</PageText>
+              )}
             </div>
             <div className="vt-track">
               {videoUrls.length > 0
@@ -311,8 +377,16 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
         <section className="credibility">
           <div className="container">
             <div className="quote-glyph" aria-hidden="true">"</div>
-            <blockquote>{c.credibilityQuote}</blockquote>
-            {c.credibilityAttribution && <cite><strong>{c.credibilityAttribution}</strong></cite>}
+            {c.credibilityQuote && (
+              <blockquote>
+                <PageText pageKey="programmeLanding" path="credibilityQuote" as="span">{c.credibilityQuote}</PageText>
+              </blockquote>
+            )}
+            {c.credibilityAttribution && (
+              <cite>
+                <PageText pageKey="programmeLanding" path="credibilityAttribution" as="strong">{c.credibilityAttribution}</PageText>
+              </cite>
+            )}
           </div>
         </section>
       )}
@@ -322,25 +396,43 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
         <section className="bonuses">
           <div className="container">
             <div className="section-header">
-              {c.bonusesEyebrow && <span className="eyebrow">{c.bonusesEyebrow}</span>}
-              {c.bonusesHeading && <h2 className="display-section">{c.bonusesHeading}</h2>}
+              {c.bonusesEyebrow && (
+                <PageText pageKey="programmeLanding" path="bonusesEyebrow" as="span" className="eyebrow">{c.bonusesEyebrow}</PageText>
+              )}
+              {c.bonusesHeading && (
+                <PageText pageKey="programmeLanding" path="bonusesHeading" as="h2" className="display-section">{c.bonusesHeading}</PageText>
+              )}
             </div>
             <div className="bonus-list">
               {(bonuses ?? []).map((bonus, i) => (
                 <div key={i} className="bonus-card">
                   <span className="bonus-num">{bonus.num}</span>
                   <div className="bonus-content">
-                    <h3 className="bonus-title">{bonus.title}</h3>
-                    <p className="bonus-desc">{bonus.description}</p>
+                    <h3 className="bonus-title">
+                      {bonusesFromContent ? (
+                        <EditableText pageKey="programmeLanding" path={`bonusesItems[${i}].title`} as="span">{bonus.title}</EditableText>
+                      ) : bonus.title}
+                    </h3>
+                    <p className="bonus-desc">
+                      {bonusesFromContent ? (
+                        <EditableText pageKey="programmeLanding" path={`bonusesItems[${i}].description`} as="span">{bonus.description}</EditableText>
+                      ) : bonus.description}
+                    </p>
                   </div>
-                  {bonus.value && <span className="bonus-value">{bonus.value}</span>}
+                  {bonus.value && (
+                    <span className="bonus-value">
+                      {bonusesFromContent ? (
+                        <EditableText pageKey="programmeLanding" path={`bonusesItems[${i}].value`} as="span">{bonus.value}</EditableText>
+                      ) : bonus.value}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
             {c.bonusesTotal && (
               <div className="bonus-total">
                 <p className="bonus-total-label">Total bonus value</p>
-                <p className="bonus-total-value">{c.bonusesTotal}</p>
+                <PageText pageKey="programmeLanding" path="bonusesTotal" as="p" className="bonus-total-value">{c.bonusesTotal}</PageText>
                 <p className="bonus-total-note">Included with every enrolment. No code required.</p>
               </div>
             )}
@@ -352,7 +444,9 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
       {(c.midPriceLabel || c.midPriceCtaText) && (
         <section className="price-repeat">
           <div className="container">
-            {c.midPriceLabel && <span className="price-repeat-label">{c.midPriceLabel}</span>}
+            {c.midPriceLabel && (
+              <PageText pageKey="programmeLanding" path="midPriceLabel" as="span" className="price-repeat-label">{c.midPriceLabel}</PageText>
+            )}
             <h2 className="price-repeat-name">{programName}</h2>
             <span className="price-repeat-amount">
               <sup>$</sup>{priceFull.toLocaleString()}
@@ -364,10 +458,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
             )}
             {c.midPriceCtaText && (
               <button className="price-repeat-btn" onClick={() => setModalOpen(true)}>
-                {c.midPriceCtaText}
+                <PageText pageKey="programmeLanding" path="midPriceCtaText" as="span">{c.midPriceCtaText}</PageText>
               </button>
             )}
-            {c.midPriceUrgency && <p className="price-repeat-urgency">{c.midPriceUrgency}</p>}
+            {c.midPriceUrgency && (
+              <PageText pageKey="programmeLanding" path="midPriceUrgency" as="p" className="price-repeat-urgency">{c.midPriceUrgency}</PageText>
+            )}
           </div>
         </section>
       )}
@@ -377,9 +473,15 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
         <section className="outcomes" style={{ background: "var(--surface-sunken)" }}>
           <div className="container">
             <div className="section-header">
-              {c.outcomesEyebrow && <span className="eyebrow">{c.outcomesEyebrow}</span>}
-              {c.outcomesHeading && <h2 className="display-section">{c.outcomesHeading}</h2>}
-              {c.outcomesBody && <p className="body-lg">{c.outcomesBody}</p>}
+              {c.outcomesEyebrow && (
+                <PageText pageKey="programmeLanding" path="outcomesEyebrow" as="span" className="eyebrow">{c.outcomesEyebrow}</PageText>
+              )}
+              {c.outcomesHeading && (
+                <PageText pageKey="programmeLanding" path="outcomesHeading" as="h2" className="display-section">{c.outcomesHeading}</PageText>
+              )}
+              {c.outcomesBody && (
+                <PageText pageKey="programmeLanding" path="outcomesBody" as="p" className="body-lg">{c.outcomesBody}</PageText>
+              )}
             </div>
             <div className="outcome-grid">
               {(c.outcomesItems ?? []).map((item, i) => (
@@ -390,15 +492,18 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
                     </svg>
                   </div>
                   <p>
-                    <strong>{item.before}</strong>{item.after ? ` ${item.after}` : ""}
+                    <EditableText pageKey="programmeLanding" path={`outcomesItems[${i}].before`} as="strong">{item.before}</EditableText>
+                    {item.after ? (
+                      <> <EditableText pageKey="programmeLanding" path={`outcomesItems[${i}].after`} as="span">{item.after}</EditableText></>
+                    ) : null}
                   </p>
                 </div>
               ))}
             </div>
             {c.outcomesCtaText && (
               <div className="prog-outcomes-cta">
-                <a href={checkoutHref} className="btn btn-primary btn-xl" onClick={(e) => { e.preventDefault(); setModalOpen(true); }}>
-                  {c.outcomesCtaText}
+                <a href={checkoutHref} className="btn btn-primary btn-xl" onClick={(e) => { if (editor?.isEditMode) e.preventDefault(); else { e.preventDefault(); setModalOpen(true); } }}>
+                  <PageText pageKey="programmeLanding" path="outcomesCtaText" as="span">{c.outcomesCtaText}</PageText>
                 </a>
               </div>
             )}
@@ -411,8 +516,12 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
         <section className="testimonials">
           <div className="container">
             <div className="section-header">
-              {c.testimonialsEyebrow && <span className="eyebrow">{c.testimonialsEyebrow}</span>}
-              {c.testimonialsHeading && <h2 className="display-section">{c.testimonialsHeading}</h2>}
+              {c.testimonialsEyebrow && (
+                <PageText pageKey="programmeLanding" path="testimonialsEyebrow" as="span" className="eyebrow">{c.testimonialsEyebrow}</PageText>
+              )}
+              {c.testimonialsHeading && (
+                <PageText pageKey="programmeLanding" path="testimonialsHeading" as="h2" className="display-section">{c.testimonialsHeading}</PageText>
+              )}
             </div>
             <div className="testimonials-carousel">
               <div className="testimonials-track" id="testimonials-track">
@@ -452,9 +561,15 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
       <section className="pricing" id="pricing">
         <div className="container">
           <div className="section-header">
-            {c.pricingEyebrow && <span className="eyebrow">{c.pricingEyebrow}</span>}
-            {c.pricingHeading && <h2 className="display-section">{c.pricingHeading}</h2>}
-            {c.pricingSubheading && <p className="body-lg">{c.pricingSubheading}</p>}
+            {c.pricingEyebrow && (
+              <PageText pageKey="programmeLanding" path="pricingEyebrow" as="span" className="eyebrow">{c.pricingEyebrow}</PageText>
+            )}
+            {c.pricingHeading && (
+              <PageText pageKey="programmeLanding" path="pricingHeading" as="h2" className="display-section">{c.pricingHeading}</PageText>
+            )}
+            {c.pricingSubheading && (
+              <PageText pageKey="programmeLanding" path="pricingSubheading" as="p" className="body-lg">{c.pricingSubheading}</PageText>
+            )}
           </div>
           <div className="pricing-card">
             <span className="pricing-program-name">{programName}</span>
@@ -468,7 +583,7 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
               </button>
             )}
             <button className="pricing-enrol-btn" onClick={() => setModalOpen(true)}>
-              {c.pricingCtaText ?? "Enrol now"}
+              <PageText pageKey="programmeLanding" path="pricingCtaText" as="span">{c.pricingCtaText ?? "Enrol now"}</PageText>
             </button>
             <p className="pricing-fine-print">
               Secure checkout · Instant access
@@ -483,7 +598,7 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
                 <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
                 <path d="M6 3v3.5l1.5 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
-              {c.pricingUrgency}
+              <PageText pageKey="programmeLanding" path="pricingUrgency" as="span">{c.pricingUrgency}</PageText>
             </p>
           )}
         </div>
@@ -503,17 +618,25 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
               )}
             </div>
             <div className="host-content">
-              {c.bioEyebrow && <p className="host-eyebrow">{c.bioEyebrow}</p>}
-              <h2 className="host-name">{hostName}</h2>
+              {c.bioEyebrow && (
+                <PageText pageKey="programmeLanding" path="bioEyebrow" as="p" className="host-eyebrow">{c.bioEyebrow}</PageText>
+              )}
+              <h2 className="host-name">
+                <EditableText pageKey="programmeLanding" path="bioName" as="span">{hostName}</EditableText>
+              </h2>
               {(c.bioParagraphs ?? (w.hostBio ? [w.hostBio] : [])).map((para, i) => (
-                <p key={i} className="host-bio">{para}</p>
+                c.bioParagraphs ? (
+                  <EditableText key={i} pageKey="programmeLanding" path={`bioParagraphs[${i}]`} as="p" className="host-bio">{para}</EditableText>
+                ) : (
+                  <p key={i} className="host-bio">{para}</p>
+                )
               ))}
               {(c.bioCredentials ?? []).length > 0 && (
                 <ul className="host-credentials">
                   {(c.bioCredentials ?? []).map((cred, i) => (
                     <li key={i}>
                       <span className="host-cred-dot" />
-                      {cred}
+                      <EditableText pageKey="programmeLanding" path={`bioCredentials[${i}]`} as="span">{cred}</EditableText>
                     </li>
                   ))}
                 </ul>
@@ -528,7 +651,9 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
         <section className="faq">
           <div className="container">
             <div className="section-header">
-              {c.faqEyebrow && <span className="eyebrow">{c.faqEyebrow}</span>}
+              {c.faqEyebrow && (
+                <PageText pageKey="programmeLanding" path="faqEyebrow" as="span" className="eyebrow">{c.faqEyebrow}</PageText>
+              )}
               <h2 className="display-section">Things people ask before enrolling</h2>
             </div>
             <div className="faq-list">
@@ -539,7 +664,7 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
                     aria-expanded={openFaq === i}
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   >
-                    {item.question}
+                    <EditableText pageKey="programmeLanding" path={`faqItems[${i}].question`} as="span">{item.question}</EditableText>
                     <span className="faq-icon">
                       <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M6 3v6M3 6h6" strokeWidth="1.5" strokeLinecap="round" />
@@ -547,7 +672,9 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
                     </span>
                   </button>
                   <div className="faq-answer">
-                    <div className="faq-answer-inner">{item.answer}</div>
+                    <div className="faq-answer-inner">
+                      <EditableText pageKey="programmeLanding" path={`faqItems[${i}].answer`} as="span">{item.answer}</EditableText>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -563,14 +690,20 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
           style={finalCtaBgUrl ? { backgroundImage: brandImageBackground(brandSectionOverlay(0.88), finalCtaBgUrl), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         >
           <div className="container">
-            {c.finalCtaHeadline && <h2 className="final-cta-headline">{c.finalCtaHeadline}</h2>}
-            {c.finalCtaBody && <p className="final-cta-body">{c.finalCtaBody}</p>}
+            {c.finalCtaHeadline && (
+              <PageText pageKey="programmeLanding" path="finalCtaHeadline" as="h2" className="final-cta-headline">{c.finalCtaHeadline}</PageText>
+            )}
+            {c.finalCtaBody && (
+              <PageText pageKey="programmeLanding" path="finalCtaBody" as="p" className="final-cta-body">{c.finalCtaBody}</PageText>
+            )}
             {c.finalCtaText && (
               <button className="final-cta-btn" onClick={() => setModalOpen(true)}>
-                {c.finalCtaText}
+                <PageText pageKey="programmeLanding" path="finalCtaText" as="span">{c.finalCtaText}</PageText>
               </button>
             )}
-            {c.finalCtaDeadline && <p className="final-cta-deadline">{c.finalCtaDeadline}</p>}
+            {c.finalCtaDeadline && (
+              <PageText pageKey="programmeLanding" path="finalCtaDeadline" as="p" className="final-cta-deadline">{c.finalCtaDeadline}</PageText>
+            )}
           </div>
         </section>
       )}
@@ -579,7 +712,7 @@ export default function ProgrammeLandingPage({ content: c, wizard: w }: Props) {
       {c.ftcDisclaimer && (
         <div className="prog-disclaimer">
           <div className="container">
-            <p>{c.ftcDisclaimer}</p>
+            <PageText pageKey="programmeLanding" path="ftcDisclaimer" as="p">{c.ftcDisclaimer}</PageText>
           </div>
         </div>
       )}
