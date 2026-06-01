@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { FunnelContent, WizardSnapshot } from "./funnel-types";
 import { computeBrandTokens, buildBrandCSS, brandVarsStyle } from "@/lib/brand-tokens";
 import { EditorProvider, useEditor } from "./editor/EditorContext";
+import { collectWizardImages } from "./editor/wizard-image-library";
 import EventLandingPage from "./pages/EventLandingPage";
 import EventCheckoutPage from "./pages/EventCheckoutPage";
 import UpsellPage from "./pages/UpsellPage";
@@ -37,8 +38,13 @@ interface Props {
 }
 
 export default function PreviewClient(props: Props) {
+  const imageLibrary = collectWizardImages(props.wizardData as WizardSnapshot);
   return (
-    <EditorProvider funnelId={props.funnelId} initialContent={props.content as FunnelContent}>
+    <EditorProvider
+      funnelId={props.funnelId}
+      initialContent={props.content as FunnelContent}
+      imageLibrary={imageLibrary}
+    >
       <PreviewClientInner {...props} />
     </EditorProvider>
   );

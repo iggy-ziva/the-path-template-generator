@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type CSSProperties } from "react";
 import type { EventLandingContent, WizardSnapshot } from "../funnel-types";
-import { safeUrl, brandHeroOverlay, brandSectionOverlay, brandImageBackground } from "../funnel-types";
+import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 import EditableText from "../editor/EditableText";
 import { useEditorOptional } from "../editor/EditorContext";
@@ -121,7 +121,7 @@ const ChevronDown = () => (
 
 export default function EventLandingPage({ content: c, wizard: w, exportMode = false }: Props) {
   // Claude's assigned URLs take priority; fall back to wizard arrays; safeUrl guards against instruction strings
-  const hero1Url      = safeUrl(c.heroBackgroundImageUrl  ?? w.heroImageUrls?.[0]);
+  const heroVisualUrl = safeUrl(c.heroVisualImageUrl       ?? w.heroImageUrls?.[0]);
   const lifestyle1Url = safeUrl(c.valuePropImageUrl        ?? w.lifestyleImageUrls?.[0]);
   const outcomes1Url  = safeUrl(c.outcomesImageUrl         ?? w.lifestyleImageUrls?.[1]);
   const brandName = w.businessName ?? w.hostName ?? "Your Brand";
@@ -224,11 +224,10 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
         base="hero"
         id="hero"
         exportMode={exportMode}
-        style={hero1Url ? {
-          backgroundImage: brandImageBackground(brandHeroOverlay(), hero1Url),
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        } : undefined}
+        backgroundPath="heroBackgroundImageUrl"
+        backgroundOverlay="hero"
+        backgroundFallbackUrl={safeUrl(w.heroImageUrls?.[0])}
+        controlsTopOffset={150}
       >
         <div className="container">
           <div className="hero-grid">
@@ -329,13 +328,13 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
 
             <EditableBackgroundImage
               pageKey="eventLanding"
-              path="heroBackgroundImageUrl"
+              path="heroVisualImageUrl"
               className="hero-visual"
               ariaHidden={false}
-              hasImage={Boolean(hero1Url)}
-              style={hero1Url ? { backgroundImage: `url(${hero1Url})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+              hasImage={Boolean(heroVisualUrl)}
+              style={heroVisualUrl ? { backgroundImage: `url(${heroVisualUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
             >
-              {!hero1Url && (
+              {!heroVisualUrl && (
                 <div className="hv-label">
                   Hero visual
                   <strong>Your hero image will appear here.</strong>
@@ -491,7 +490,8 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
           theme={themeFor("encourage1", "dark")}
           base="encourage"
           exportMode={exportMode}
-          style={safeUrl(c.encourage1BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage1BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+          backgroundPath="encourage1BackgroundUrl"
+          backgroundOverlay="section"
         >
           <div className="container">
             <p className="line">
@@ -682,7 +682,8 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
           theme={themeFor("encourage2", "accent")}
           base="encourage"
           exportMode={exportMode}
-          style={safeUrl(c.encourage2BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage2BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+          backgroundPath="encourage2BackgroundUrl"
+          backgroundOverlay="section"
         >
           <div className="container">
             <p className="line">
@@ -875,7 +876,8 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
           theme={themeFor("encourage3", "light")}
           base="encourage"
           exportMode={exportMode}
-          style={safeUrl(c.encourage3BackgroundUrl) ? { backgroundImage: brandImageBackground(brandSectionOverlay(), safeUrl(c.encourage3BackgroundUrl)!), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+          backgroundPath="encourage3BackgroundUrl"
+          backgroundOverlay="section"
         >
           <div className="container">
             <p className="line">

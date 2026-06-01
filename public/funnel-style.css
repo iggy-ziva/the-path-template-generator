@@ -539,6 +539,10 @@ section {
   opacity: 0.4;
   z-index: -1;
 }
+/* When a custom background image is set on the hero, drop the opaque gradient
+   overlays so the chosen image (with its own legibility scrim) is visible. */
+.hero.has-bg-image::before,
+.hero.has-bg-image::after { display: none; }
 /* Warm-brand hero — mid slate/teal band instead of near-black */
 .hero.accent-bg {
   background: var(--surface-accent);

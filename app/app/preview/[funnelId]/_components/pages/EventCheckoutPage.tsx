@@ -5,6 +5,7 @@ import type { EventCheckoutContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 import EditableText from "../editor/EditableText";
+import { EditableImage } from "../editor/EditableList";
 import { PageText, useEditMode } from "../editor/page-editable";
 
 interface Props {
@@ -394,12 +395,18 @@ export default function EventCheckoutPage({ content: c, wizard: w, exportMode = 
           <div className={`sales-card${mobileOpen ? " is-open" : ""}`}>
 
             {/* Sidebar feature image */}
-            {safeUrl(c.checkoutSidebarImageUrl ?? w.lifestyleImageUrls?.[0]) && (
-              <img
-                src={safeUrl(c.checkoutSidebarImageUrl ?? w.lifestyleImageUrls![0])!}
+            {(safeUrl(c.checkoutSidebarImageUrl ?? w.lifestyleImageUrls?.[0]) || editMode) && (
+              <EditableImage
+                pageKey="eventCheckout"
+                path="checkoutSidebarImageUrl"
+                url={safeUrl(c.checkoutSidebarImageUrl ?? w.lifestyleImageUrls?.[0])}
                 alt=""
-                style={{ width: "100%", aspectRatio: "16/7", objectFit: "cover", borderRadius: "var(--r-lg) var(--r-lg) 0 0", display: "block", marginBottom: 0 }}
-              />
+                imgStyle={{ width: "100%", aspectRatio: "16/7", objectFit: "cover", borderRadius: "var(--r-lg) var(--r-lg) 0 0", display: "block", marginBottom: 0 }}
+              >
+                <div style={{ width: "100%", aspectRatio: "16/7", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-sunken)", color: "var(--text-tertiary)", fontSize: 13, borderRadius: "var(--r-lg) var(--r-lg) 0 0" }}>
+                  Add a sidebar image
+                </div>
+              </EditableImage>
             )}
 
             {/* Event identity */}

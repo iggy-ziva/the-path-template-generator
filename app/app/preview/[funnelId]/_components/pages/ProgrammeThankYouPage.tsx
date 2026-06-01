@@ -1,9 +1,10 @@
 "use client";
 
 import type { ProgrammeThankYouContent, WizardSnapshot } from "../funnel-types";
-import { safeUrl, brandSectionOverlay, brandImageBackground } from "../funnel-types";
+import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 import EditableText from "../editor/EditableText";
+import EditableBg from "../editor/EditableBg";
 import { PageText } from "../editor/page-editable";
 
 interface Props {
@@ -21,13 +22,12 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w, exportMod
   return (
     <>
       {/* ── 01 CONFIRMATION HERO ── */}
-      <section
+      <EditableBg
+        pageKey="programmeThankYou"
+        path="backgroundImageUrl"
+        fallbackUrl={safeUrl(w.heroImageUrls?.[0])}
+        overlayOpacity={0.88}
         className="ty-hero on-dark"
-        style={safeUrl(c.backgroundImageUrl ?? w.heroImageUrls?.[0]) ? {
-          backgroundImage: brandImageBackground(brandSectionOverlay(0.88), safeUrl(c.backgroundImageUrl ?? w.heroImageUrls![0])!),
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        } : undefined}
       >
         <div className="inner">
 
@@ -105,7 +105,7 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w, exportMod
           )}
 
         </div>
-      </section>
+      </EditableBg>
 
       {/* ── 02 WHAT HAPPENS NEXT ── */}
       {((c.steps ?? []).length > 0 || c.nextHeadline) && (

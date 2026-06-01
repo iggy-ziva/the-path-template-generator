@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import type { EventThankYouContent, WizardSnapshot } from "../funnel-types";
-import { safeUrl, brandSectionOverlay, brandImageBackground } from "../funnel-types";
+import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 
 import EditableText from "../editor/EditableText";
+import EditableBg from "../editor/EditableBg";
 import { PageText } from "../editor/page-editable";
 
 interface Props {
@@ -58,13 +59,12 @@ export default function EventThankYouPage({ content: c, wizard: w, exportMode = 
     <div className="theme-root">
 
       {/* 01 — Confirmation Hero */}
-      <section
+      <EditableBg
+        pageKey="eventThankYou"
+        path="backgroundImageUrl"
+        fallbackUrl={safeUrl(w.heroImageUrls?.[0])}
+        overlayOpacity={0.88}
         className="ty-hero on-dark"
-        style={safeUrl(c.backgroundImageUrl ?? w.heroImageUrls?.[0]) ? {
-          backgroundImage: brandImageBackground(brandSectionOverlay(0.88), safeUrl(c.backgroundImageUrl ?? w.heroImageUrls![0])!),
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        } : undefined}
       >
         <div className="inner">
           <div className="ty-check" aria-hidden="true">
@@ -100,7 +100,7 @@ export default function EventThankYouPage({ content: c, wizard: w, exportMode = 
             </div>
           )}
         </div>
-      </section>
+      </EditableBg>
 
       {/* 02 — What happens next */}
       {nextSteps.length > 0 && (

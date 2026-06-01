@@ -5,7 +5,8 @@ import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 
 import EditableText from "../editor/EditableText";
-import { PageText } from "../editor/page-editable";
+import { EditableImage } from "../editor/EditableList";
+import { PageText, useEditMode } from "../editor/page-editable";
 
 interface Props {
   content: ProgrammeCheckoutContent;
@@ -16,6 +17,7 @@ interface Props {
 type PlanId = string;
 
 export default function ProgrammeCheckoutPage({ content: c, wizard: w, exportMode = false }: Props) {
+  const editMode = useEditMode();
   const programName = c.programName ?? w.programName ?? "The Programme";
   const hostName = w.hostName ?? "Your Host";
   const year = new Date().getFullYear();
@@ -259,12 +261,20 @@ export default function ProgrammeCheckoutPage({ content: c, wizard: w, exportMod
         {/* ── RIGHT: ORDER SUMMARY ── */}
         <aside className="order-col">
 
-          {safeUrl(c.programmeImageUrl ?? w.lifestyleImageUrls?.[0]) && (
-            <img
-              src={safeUrl(c.programmeImageUrl ?? w.lifestyleImageUrls![0])!}
-              alt=""
-              style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: "var(--r-lg)", marginBottom: "16px", display: "block" }}
-            />
+          {(safeUrl(c.programmeImageUrl ?? w.lifestyleImageUrls?.[0]) || editMode) && (
+            <div style={{ marginBottom: "16px" }}>
+              <EditableImage
+                pageKey="programmeCheckout"
+                path="programmeImageUrl"
+                url={safeUrl(c.programmeImageUrl ?? w.lifestyleImageUrls?.[0])}
+                alt=""
+                imgStyle={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: "var(--r-lg)", display: "block" }}
+              >
+                <div style={{ width: "100%", aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-raised)", color: "var(--text-tertiary)", fontSize: 13, borderRadius: "var(--r-lg)" }}>
+                  Add an image
+                </div>
+              </EditableImage>
+            </div>
           )}
           {c.programEyebrow && (
             <PageText pageKey="programmeCheckout" path="programEyebrow" as="p" className="order-eyebrow">

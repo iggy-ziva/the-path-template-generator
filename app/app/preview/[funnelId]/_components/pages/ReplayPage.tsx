@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import type { ReplayContent, WizardSnapshot } from "../funnel-types";
-import { safeUrl, brandSectionOverlay, brandImageBackground } from "../funnel-types";
+import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 import EditableText from "../editor/EditableText";
+import EditableBg from "../editor/EditableBg";
 import { PageLink, PageText } from "../editor/page-editable";
 
 interface Props {
@@ -77,13 +78,14 @@ export default function ReplayPage({ content: c, wizard: w, exportMode = false }
       </div>
 
       {/* 02 — Page Header */}
-      <header
-        className={`replay-header${safeUrl(c.heroBackgroundImageUrl ?? w.heroImageUrls?.[1] ?? w.heroImageUrls?.[0]) ? " on-dark" : ""}`}
-        style={safeUrl(c.heroBackgroundImageUrl ?? w.heroImageUrls?.[1] ?? w.heroImageUrls?.[0]) ? {
-          backgroundImage: brandImageBackground(brandSectionOverlay(0.92), safeUrl(c.heroBackgroundImageUrl ?? w.heroImageUrls?.[1] ?? w.heroImageUrls![0])!),
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        } : undefined}
+      <EditableBg
+        as="header"
+        pageKey="replay"
+        path="heroBackgroundImageUrl"
+        fallbackUrl={safeUrl(w.heroImageUrls?.[1] ?? w.heroImageUrls?.[0])}
+        overlayOpacity={0.92}
+        className="replay-header"
+        imageClassName="on-dark"
       >
         <div className="container">
           {(c.logoUrl ?? w.logoUrl) && (
@@ -109,7 +111,7 @@ export default function ReplayPage({ content: c, wizard: w, exportMode = false }
             <PageText pageKey="replay" path="metaAccess" as="span">{metaAccess}</PageText>
           </div>
         </div>
-      </header>
+      </EditableBg>
 
       {/* 03 — Resource Downloads */}
       {resources.length > 0 && (

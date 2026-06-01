@@ -3,6 +3,8 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { useEditorOptional } from "./EditorContext";
 import type { FunnelPageKey } from "@/lib/funnel-export/config";
+import { getAtPath } from "@/lib/content-path";
+import ImagePickerModal from "./ImagePickerModal";
 
 interface Props {
   pageKey: FunnelPageKey;
@@ -58,24 +60,14 @@ export default function EditableBackgroundImage({
 }: Props) {
   const editor = useEditorOptional();
   const isEditMode = editor?.isEditMode ?? false;
-  const [uploading, setUploading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
-  async function handleUpload(file: File) {
-    if (!editor) return;
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/wizard/upload", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json();
-      if (data.url) editor.updateField(pageKey, path, data.url);
-    } catch {
-      alert("Image upload failed — please try again.");
-    } finally {
-      setUploading(false);
-    }
-  }
+  const currentUrl = editor
+    ? (getAtPath(editor.draftContent[pageKey] as Record<string, unknown> | undefined, path) as
+        | string
+        | null
+        | undefined)
+    : undefined;
 
   const editStyle: CSSProperties = isEditMode
     ? { ...style, position: "relative", outline: "2px dashed rgba(255,255,255,0.6)", outlineOffset: -4 }
@@ -85,18 +77,25 @@ export default function EditableBackgroundImage({
     <div className={className} aria-hidden={ariaHidden} style={editStyle}>
       {children}
       {isEditMode && editor && (
-        <label style={{ ...SWAP_PILL, cursor: uploading ? "wait" : "pointer" }} contentEditable={false}>
-          {uploading ? "Uploading…" : hasImage ? "Swap image" : "Add image"}
-          <input
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleUpload(f);
-            }}
-          />
-        </label>
+        <button
+          type="button"
+          style={SWAP_PILL}
+          contentEditable={false}
+          onClick={() => setPickerOpen(true)}
+        >
+          {hasImage ? "Swap image" : "Add image"}
+        </button>
+      )}
+      {pickerOpen && editor && (
+        <ImagePickerModal
+          library={editor.imageLibrary}
+          currentUrl={currentUrl}
+          onSelect={(url) => {
+            editor.updateField(pageKey, path, url);
+            setPickerOpen(false);
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
       )}
     </div>
   );

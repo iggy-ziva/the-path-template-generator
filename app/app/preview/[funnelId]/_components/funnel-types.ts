@@ -12,6 +12,11 @@ export function brandSectionOverlay(opacity = 0.82): string {
   const pct = Math.round(opacity * 100);
   return `linear-gradient(color-mix(in srgb, var(--surface-inverse) ${pct}%, transparent), color-mix(in srgb, var(--surface-inverse) ${pct}%, transparent))`;
 }
+/** Light scrim for background images on light-themed sections, keeps dark text legible. */
+export function brandLightSectionOverlay(opacity = 0.82): string {
+  const pct = Math.round(opacity * 100);
+  return `linear-gradient(color-mix(in srgb, var(--surface-canvas) ${pct}%, transparent), color-mix(in srgb, var(--surface-canvas) ${pct}%, transparent))`;
+}
 export function brandImageBackground(overlay: string, url: string): string {
   return `${overlay}, url(${url})`;
 }
@@ -112,7 +117,8 @@ export interface EventLandingContent {
   // Takes priority over the legacy per-section *Theme fields below.
   sectionThemes?: Partial<Record<string, SectionTheme>>;
   // Image assignments — Claude picks from available uploaded images
-  heroBackgroundImageUrl?:  string | null;   // primary hero background
+  heroBackgroundImageUrl?:  string | null;   // primary hero background (full-section)
+  heroVisualImageUrl?:       string | null;   // side visual card in the hero grid
   valuePropImageUrl?:        string | null;   // lifestyle/supporting image alongside VP text
   outcomesImageUrl?:         string | null;   // wide supporting image in outcomes section
   encourage1BackgroundUrl?:  string | null;   // optional atmospheric bg for encourage CTA 1

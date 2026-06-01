@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
 import type { ProgrammeLandingContent, WizardSnapshot, SectionTheme } from "../funnel-types";
-import { safeUrl, brandSectionOverlay, brandImageBackground } from "../funnel-types";
+import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 import EditableText from "../editor/EditableText";
+import { EditableImage } from "../editor/EditableList";
 import { PageText } from "../editor/page-editable";
 import { useEditorOptional } from "../editor/EditorContext";
 import EditableSection from "../editor/EditableSection";
@@ -68,9 +69,7 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
   const paymentPlans = w.programPaymentPlans ?? [];
 
   // Claude's assigned URLs take priority; fall back to wizard arrays; safeUrl guards against instruction strings
-  const heroImageUrl         = safeUrl(c.heroBackgroundImageUrl   ?? w.heroImageUrls?.[0]);
   const programmeFeatureUrl  = safeUrl(c.programmeFeatureImageUrl ?? w.lifestyleImageUrls?.[0]);
-  const finalCtaBgUrl        = safeUrl(c.finalCtaBackgroundUrl);
 
   return (
     <>
@@ -82,14 +81,9 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
         base="plain"
         className="prog-hero"
         exportMode={exportMode}
-        style={heroImageUrl ? {
-          backgroundImage: brandImageBackground(
-            "linear-gradient(to right, color-mix(in srgb, var(--surface-inverse) 92%, transparent) 45%, color-mix(in srgb, var(--surface-inverse) 50%, transparent) 100%)",
-            heroImageUrl,
-          ),
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        } : undefined}
+        backgroundPath="heroBackgroundImageUrl"
+        backgroundOverlay="hero"
+        backgroundFallbackUrl={safeUrl(w.heroImageUrls?.[0])}
       >
         <div className="container">
           <div className="prog-hero-main">
@@ -226,13 +220,19 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
       )}
 
       {/* ── Programme feature image ── */}
-      {programmeFeatureUrl && (
+      {(programmeFeatureUrl || editor?.isEditMode) && (
         <div style={{ padding: "0", lineHeight: 0, overflow: "hidden", maxHeight: "480px" }}>
-          <img
-            src={programmeFeatureUrl}
+          <EditableImage
+            pageKey="programmeLanding"
+            path="programmeFeatureImageUrl"
+            url={programmeFeatureUrl}
             alt=""
-            style={{ width: "100%", height: "480px", objectFit: "cover", objectPosition: "center 30%", display: "block" }}
-          />
+            imgStyle={{ width: "100%", height: "480px", objectFit: "cover", objectPosition: "center 30%", display: "block" }}
+          >
+            <div style={{ width: "100%", height: "480px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-sunken)", color: "var(--text-tertiary)", fontSize: 13 }}>
+              Add a feature image
+            </div>
+          </EditableImage>
         </div>
       )}
 
@@ -699,7 +699,8 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
           base="plain"
           className="final-cta"
           exportMode={exportMode}
-          style={finalCtaBgUrl ? { backgroundImage: brandImageBackground(brandSectionOverlay(0.88), finalCtaBgUrl), backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+          backgroundPath="finalCtaBackgroundUrl"
+          backgroundOverlay="section"
         >
           <div className="container">
             {c.finalCtaHeadline && (

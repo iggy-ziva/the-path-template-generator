@@ -5,7 +5,8 @@ import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 import { distillUpsellDescription } from "@/lib/upsell-copy";
 import EditableText from "../editor/EditableText";
-import { PageLink, PageText } from "../editor/page-editable";
+import { EditableImage } from "../editor/EditableList";
+import { PageLink, PageText, useEditMode } from "../editor/page-editable";
 
 interface Props {
   content: UpsellContent;
@@ -41,7 +42,9 @@ function resolveUpsellQuotes(
 }
 
 export default function UpsellPage({ content: c, wizard: w, exportMode = false }: Props) {
+  const editMode = useEditMode();
   const brandName = w.businessName ?? w.hostName ?? "Your Brand";
+  const productImageUrl = safeUrl(c.productImageUrl ?? w.additionalImageUrls?.[0] ?? w.lifestyleImageUrls?.[1] ?? w.lifestyleImageUrls?.[0]);
 
   // Product name stays from wizard; tagline + description prefer AI-distilled generated copy
   const offerName    = w.upsellOfferName ?? "";
@@ -108,13 +111,19 @@ export default function UpsellPage({ content: c, wizard: w, exportMode = false }
       <main className="upsell-page">
 
         {/* Product feature image */}
-        {safeUrl(c.productImageUrl ?? w.additionalImageUrls?.[0] ?? w.lifestyleImageUrls?.[1] ?? w.lifestyleImageUrls?.[0]) && (
+        {(productImageUrl || editMode) && (
           <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto 32px", borderRadius: "var(--r-xl)", overflow: "hidden", lineHeight: 0 }}>
-            <img
-              src={safeUrl(c.productImageUrl ?? w.additionalImageUrls?.[0] ?? w.lifestyleImageUrls?.[1] ?? w.lifestyleImageUrls?.[0])!}
+            <EditableImage
+              pageKey="upsell"
+              path="productImageUrl"
+              url={productImageUrl}
               alt=""
-              style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
-            />
+              imgStyle={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
+            >
+              <div style={{ width: "100%", aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-sunken)", color: "var(--text-tertiary)", fontSize: 13 }}>
+                Add a product image
+              </div>
+            </EditableImage>
           </div>
         )}
 

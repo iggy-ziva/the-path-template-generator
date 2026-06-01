@@ -9,6 +9,7 @@ import ReplayPage from "@/app/app/preview/[funnelId]/_components/pages/ReplayPag
 import ProgrammeLandingPage from "@/app/app/preview/[funnelId]/_components/pages/ProgrammeLandingPage";
 import ProgrammeCheckoutPage from "@/app/app/preview/[funnelId]/_components/pages/ProgrammeCheckoutPage";
 import ProgrammeThankYouPage from "@/app/app/preview/[funnelId]/_components/pages/ProgrammeThankYouPage";
+import { PageContentContext } from "@/app/app/preview/[funnelId]/_components/editor/PageContentContext";
 import { FUNNEL_PAGES, rewriteExportLinks, type FunnelPageKey } from "./config";
 
 function PageShell({
@@ -90,9 +91,11 @@ export function renderPageElement(
   }
 
   return (
-    <PageShell pageKey={pageKey} wizard={wizard}>
-      {inner}
-    </PageShell>
+    <PageContentContext.Provider value={content}>
+      <PageShell pageKey={pageKey} wizard={wizard}>
+        {inner}
+      </PageShell>
+    </PageContentContext.Provider>
   );
 }
 

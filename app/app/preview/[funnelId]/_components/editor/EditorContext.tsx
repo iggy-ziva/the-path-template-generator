@@ -11,6 +11,7 @@ import React, {
 import type { FunnelContent } from "../funnel-types";
 import type { FunnelPageKey } from "@/lib/funnel-export/config";
 import { getAtPath, setAtPath } from "@/lib/content-path";
+import type { ImageLibraryItem } from "./wizard-image-library";
 
 export type ContentPath = string;
 
@@ -21,6 +22,8 @@ interface EditorContextValue {
   isDirty: boolean;
   isSaving: boolean;
   lastSavedAt: string | null;
+  /** Images the user uploaded during the wizard, offered for reuse in the image picker. */
+  imageLibrary: ImageLibraryItem[];
   updateField: (pageKey: FunnelPageKey, path: ContentPath, value: unknown) => void;
   addListItem: (pageKey: FunnelPageKey, path: ContentPath, item: unknown) => void;
   removeListItem: (pageKey: FunnelPageKey, path: ContentPath, index: number) => void;
@@ -44,10 +47,11 @@ export function useEditorOptional(): EditorContextValue | null {
 interface Props {
   funnelId: string;
   initialContent: FunnelContent;
+  imageLibrary?: ImageLibraryItem[];
   children: ReactNode;
 }
 
-export function EditorProvider({ funnelId, initialContent, children }: Props) {
+export function EditorProvider({ funnelId, initialContent, imageLibrary = [], children }: Props) {
   const [isEditMode, setEditMode] = useState(false);
   const [savedContent, setSavedContent] = useState<FunnelContent>(initialContent);
   const [draftContent, setDraftContent] = useState<FunnelContent>(initialContent);
@@ -126,6 +130,7 @@ export function EditorProvider({ funnelId, initialContent, children }: Props) {
     isDirty,
     isSaving,
     lastSavedAt,
+    imageLibrary,
     updateField,
     addListItem,
     removeListItem,
