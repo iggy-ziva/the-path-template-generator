@@ -12,6 +12,7 @@ import type { FunnelContent } from "../funnel-types";
 import type { FunnelPageKey } from "@/lib/funnel-export/config";
 import { getAtPath, setAtPath } from "@/lib/content-path";
 import type { ImageLibraryItem } from "./wizard-image-library";
+import type { BrandColorOption } from "./brand-palette";
 
 export type ContentPath = string;
 
@@ -24,6 +25,8 @@ interface EditorContextValue {
   lastSavedAt: string | null;
   /** Images the user uploaded during the wizard, offered for reuse in the image picker. */
   imageLibrary: ImageLibraryItem[];
+  /** Brand colours the user entered in the wizard, offered in the text colour picker. */
+  colorPalette: BrandColorOption[];
   updateField: (pageKey: FunnelPageKey, path: ContentPath, value: unknown) => void;
   addListItem: (pageKey: FunnelPageKey, path: ContentPath, item: unknown) => void;
   removeListItem: (pageKey: FunnelPageKey, path: ContentPath, index: number) => void;
@@ -48,10 +51,17 @@ interface Props {
   funnelId: string;
   initialContent: FunnelContent;
   imageLibrary?: ImageLibraryItem[];
+  colorPalette?: BrandColorOption[];
   children: ReactNode;
 }
 
-export function EditorProvider({ funnelId, initialContent, imageLibrary = [], children }: Props) {
+export function EditorProvider({
+  funnelId,
+  initialContent,
+  imageLibrary = [],
+  colorPalette = [],
+  children,
+}: Props) {
   const [isEditMode, setEditMode] = useState(false);
   const [savedContent, setSavedContent] = useState<FunnelContent>(initialContent);
   const [draftContent, setDraftContent] = useState<FunnelContent>(initialContent);
@@ -131,6 +141,7 @@ export function EditorProvider({ funnelId, initialContent, imageLibrary = [], ch
     isSaving,
     lastSavedAt,
     imageLibrary,
+    colorPalette,
     updateField,
     addListItem,
     removeListItem,

@@ -167,6 +167,7 @@ export default function EditableText({
         <TextStylePopover
           anchor={anchor}
           current={override}
+          colors={editor.colorPalette}
           onPickFont={(font) => setOverride({ font })}
           onPickColor={(color) => setOverride({ color })}
           onReset={() => editor!.updateField(pageKey, `textStyles.${path}`, undefined)}
@@ -227,6 +228,7 @@ function StyleButtonPortal({
 function TextStylePopover({
   anchor,
   current,
+  colors,
   onPickFont,
   onPickColor,
   onReset,
@@ -234,11 +236,14 @@ function TextStylePopover({
 }: {
   anchor: { top: number; left: number };
   current: TextStyleOverride | undefined;
+  colors: { label: string; value: string }[];
   onPickFont: (font: string) => void;
   onPickColor: (color: string) => void;
   onReset: () => void;
   onClose: () => void;
 }) {
+  // Prefer the user's actual wizard brand colours; fall back to themed tokens.
+  const swatches = colors.length > 0 ? colors : COLOR_OPTIONS;
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -305,10 +310,10 @@ function TextStylePopover({
       </div>
 
       <div style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>
-        Colour
+        {colors.length > 0 ? "Brand colours" : "Colour"}
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 14 }}>
-        {COLOR_OPTIONS.map((col) => {
+        {swatches.map((col) => {
           const active = current?.color === col.value;
           return (
             <button
