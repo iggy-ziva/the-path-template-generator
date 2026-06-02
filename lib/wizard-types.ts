@@ -126,6 +126,11 @@ export interface WizardData {
 
   // Meta
   completedSteps?: number[];
+  /** Steps the user explicitly opted out of — excluded from completeness denominator. */
+  skippedSections?: {
+    upsell?: boolean;
+    programme?: boolean;
+  };
 }
 
 export const WIZARD_STEPS = [

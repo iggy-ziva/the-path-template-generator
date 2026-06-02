@@ -2,11 +2,57 @@
 import type { WizardData } from "@/lib/wizard-types";
 import { Field, TextInput, Textarea, Grid, Section, DatePicker, SessionScheduleBuilder, PaymentPlanBuilder } from "../WizardField";
 
+const Z = {
+  charcoal: "#2E2E2E", muted: "#8A7A6A", faint: "#C8B8A4",
+  creamDeep: "#F5EEE0", font: 'var(--font-barlow), -apple-system, sans-serif',
+};
+
 interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; }
 
 export default function Step5({ data, onChange }: Props) {
+  const skipped = data.skippedSections?.programme ?? false;
+
+  function toggleSkip() {
+    onChange({ skippedSections: { ...data.skippedSections, programme: !skipped } });
+  }
+
   return (
     <div>
+      {/* ── Skip banner ── */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: 16, background: skipped ? "#FFF8E6" : Z.creamDeep,
+        border: `1.5px solid ${skipped ? "#F5C842" : Z.faint}`,
+        borderRadius: 12, padding: "14px 20px", marginBottom: 28,
+      }}>
+        <div>
+          <div style={{ fontFamily: Z.font, fontSize: 13, fontWeight: 700, color: Z.charcoal }}>
+            {skipped ? "Programme page skipped — the AI will generate a placeholder page." : "Don't have a programme ready yet?"}
+          </div>
+          <div style={{ fontFamily: Z.font, fontSize: 12, color: Z.muted, marginTop: 3 }}>
+            {skipped
+              ? "You can come back and fill this in before regenerating."
+              : "Skip this section and the AI will use sensible defaults. You can fill it in later and regenerate."}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={toggleSkip}
+          style={{
+            flexShrink: 0, fontFamily: Z.font, fontSize: 12, fontWeight: 700,
+            padding: "8px 16px", borderRadius: 8, cursor: "pointer",
+            background: skipped ? Z.charcoal : "none",
+            color: skipped ? "#fff" : Z.muted,
+            border: `1.5px solid ${skipped ? Z.charcoal : Z.faint}`,
+            whiteSpace: "nowrap" as const,
+          }}
+        >
+          {skipped ? "Fill in programme details" : "Skip for now"}
+        </button>
+      </div>
+
+      {!skipped && (
+      <div>
       <Section title="Programme identity">
         <Field label="Programme name" required>
           <TextInput value={data.programName ?? ""} onChange={(v) => onChange({ programName: v })} placeholder="e.g. The Somatic Freedom Collective" />
@@ -65,6 +111,8 @@ export default function Step5({ data, onChange }: Props) {
           />
         </Field>
       </Section>
+      </div>
+      )}
 
     </div>
   );

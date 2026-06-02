@@ -7,8 +7,8 @@ import type { ImageLibraryItem } from "./wizard-image-library";
 interface Props {
   library: ImageLibraryItem[];
   currentUrl?: string | null;
-  /** Called with the chosen URL (either a reused library image or a freshly uploaded one). */
-  onSelect: (url: string) => void;
+  /** Called with the chosen URL, or null to remove the image entirely. */
+  onSelect: (url: string | null) => void;
   onClose: () => void;
 }
 
@@ -180,32 +180,52 @@ export default function ImagePickerModal({ library, currentUrl, onSelect, onClos
         )}
 
         <div style={FOOTER}>
-          <label
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 13,
-              fontWeight: 700,
-              color: "#fff",
-              background: "#111",
-              borderRadius: 8,
-              padding: "10px 16px",
-              cursor: uploading ? "wait" : "pointer",
-            }}
-          >
-            {uploading ? "Uploading…" : "Upload new image"}
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              disabled={uploading}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleUpload(f);
+          <div style={{ display: "flex", gap: 8 }}>
+            <label
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#fff",
+                background: "#111",
+                borderRadius: 8,
+                padding: "10px 16px",
+                cursor: uploading ? "wait" : "pointer",
               }}
-            />
-          </label>
+            >
+              {uploading ? "Uploading…" : "Upload new image"}
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                disabled={uploading}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleUpload(f);
+                }}
+              />
+            </label>
+            {currentUrl && (
+              <button
+                type="button"
+                onClick={() => onSelect(null)}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#c0392b",
+                  background: "none",
+                  border: "1px solid #f5c6c2",
+                  borderRadius: 8,
+                  padding: "10px 16px",
+                  cursor: "pointer",
+                }}
+              >
+                Remove image
+              </button>
+            )}
+          </div>
           <button
             type="button"
             onClick={onClose}

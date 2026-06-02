@@ -427,7 +427,7 @@ Recording policy: ${d.eventRecordingPolicy ?? "Assume recording included for 30 
 Promo video URL: ${d.eventVideoUrl ?? "NOT PROVIDED"}
 
 === UPSELL OFFER (one-time post-event offer — wizard fields are SOURCE MATERIAL; rewrite for page) ===
-Product name (renders as page title — do not repeat in headline/description): ${d.upsellOfferName ?? "NOT PROVIDED — generate a plausible name aligned with the event topic"}
+${d.skippedSections?.upsell ? "STATUS: PLACEHOLDER — the client has not yet defined this offer. Generate minimal placeholder copy that is clearly incomplete (e.g. use '[OFFER NAME TBC]' as the product name, generic included items, no real price). The page must still be structurally valid JSON." : `Product name (renders as page title — do not repeat in headline/description): ${d.upsellOfferName ?? "NOT PROVIDED — generate a plausible name aligned with the event topic"}
 Tagline source (rewrite to max 15 words): ${d.upsellHeadline ?? "NOT PROVIDED"}
 Description source (distill to max 2 sentences): ${d.upsellDescription ?? "NOT PROVIDED"}
 Included items:
@@ -439,10 +439,10 @@ Offer price: ${d.upsellOfferPrice ? `$${d.upsellOfferPrice}` : "Not set — calc
 Price note: ${d.upsellPriceNote ?? "—"}
 CTA text: ${d.upsellCtaText ?? "—"}
 CTA sub-text: ${d.upsellCtaSubText ?? "—"}
-Decline text: ${d.upsellDeclineText ?? "—"}
+Decline text: ${d.upsellDeclineText ?? "—"}`}
 
 === PROGRAMME (high-ticket post-event offer) ===
-Name: ${d.programName ?? "NOT PROVIDED"}
+${d.skippedSections?.programme ? "STATUS: PLACEHOLDER — the client has not yet defined this programme. Generate minimal placeholder copy (e.g. use '[PROGRAMME NAME TBC]' as the programme name, generic curriculum, price as $1997). The page must still be structurally valid JSON." : `Name: ${d.programName ?? "NOT PROVIDED"}
 Tagline: ${d.programTagline ?? "NOT PROVIDED"}
 Start date: ${d.programStartDate ?? "NOT PROVIDED — say 'enrolment open' or omit start date copy"}
 Duration: ${d.programDuration ?? "NOT PROVIDED"}
@@ -450,7 +450,7 @@ Schedule (when/cadence sessions run): ${d.programSchedule ?? "NOT PROVIDED"}
 Full price: ${d.programPriceFull ? `$${d.programPriceFull}` : "NOT PROVIDED — use $1997 as a sensible high-ticket default"}
 Payment plans: ${paymentPlansText}
 Member portal URL: ${d.programPortalUrl ?? "NOT PROVIDED — tell students to check their welcome email for portal access"}
-Guarantee: ${d.programGuarantee ?? "NOT PROVIDED — write a confidence-based guarantee appropriate to the offer (typically 7-14 day satisfaction)"}
+Guarantee: ${d.programGuarantee ?? "NOT PROVIDED — write a confidence-based guarantee appropriate to the offer (typically 7-14 day satisfaction)"}`}
 
 === CURRICULUM & CONTENT ===
 Target audience description: ${d.audienceDescription ?? "NOT PROVIDED — derive from event/programme name, tone, and methodology"}

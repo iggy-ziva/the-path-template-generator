@@ -122,10 +122,22 @@ export const CHECKS: CompletenessCheck[] = [
 
 const TOTAL_WEIGHT = CHECKS.reduce((sum, c) => sum + c.weight, 0);
 
-/** Overall wizard completeness 0–100 (rounded). */
+/** Steps skipped by the user — their checks are treated as fully satisfied. */
+function skippedStepIds(d: WizardData): Set<number> {
+  const skipped = new Set<number>();
+  if (d.skippedSections?.upsell)     skipped.add(4);
+  if (d.skippedSections?.programme)  skipped.add(5);
+  return skipped;
+}
+
+/** Overall wizard completeness 0–100 (rounded). Skipped sections are excluded from the denominator. */
 export function overallCompleteness(d: WizardData): number {
-  const earned = CHECKS.reduce((sum, c) => sum + (c.test(d) ? c.weight : 0), 0);
-  return Math.round((earned / TOTAL_WEIGHT) * 100);
+  const skipped = skippedStepIds(d);
+  const applicable = CHECKS.filter(c => !skipped.has(c.step));
+  const total  = applicable.reduce((sum, c) => sum + c.weight, 0);
+  const earned = applicable.reduce((sum, c) => sum + (c.test(d) ? c.weight : 0), 0);
+  if (total === 0) return 100;
+  return Math.round((earned / total) * 100);
 }
 
 /** Completeness for a single step 0–100 (rounded). Returns 100 for unknown steps (e.g. Step 11). */
@@ -137,14 +149,16 @@ export function stepCompleteness(d: WizardData, step: number): number {
   return Math.round((stepEarned / stepTotal) * 100);
 }
 
-/** Returns the list of REQUIRED fields that are currently missing (non-empty). */
+/** Returns the list of REQUIRED fields that are currently missing (non-empty). Respects skipped sections. */
 export function missingRequired(d: WizardData): CompletenessCheck[] {
-  return CHECKS.filter(c => c.required && !c.test(d));
+  const skipped = skippedStepIds(d);
+  return CHECKS.filter(c => c.required && !skipped.has(c.step) && !c.test(d));
 }
 
-/** Returns the list of ALL checks that are currently failing, for the review panel. */
+/** Returns the list of ALL checks that are currently failing, for the review panel. Respects skipped sections. */
 export function missingAll(d: WizardData): CompletenessCheck[] {
-  return CHECKS.filter(c => !c.test(d));
+  const skipped = skippedStepIds(d);
+  return CHECKS.filter(c => !skipped.has(c.step) && !c.test(d));
 }
 
 /** True when generation is permitted: overall ≥ threshold AND every required field filled. */

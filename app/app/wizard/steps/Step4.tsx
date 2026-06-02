@@ -19,6 +19,7 @@ const ROW_STYLE: React.CSSProperties = {
 };
 
 export default function Step4({ data, onChange }: Props) {
+  const skipped = data.skippedSections?.upsell ?? false;
   const items = data.upsellIncludedItems ?? [];
 
   function getQuotes(): { quote: string; attribution: string }[] {
@@ -57,8 +58,47 @@ export default function Step4({ data, onChange }: Props) {
     onChange({ upsellIncludedItems: items.filter((_, idx) => idx !== i) });
   }
 
+  function toggleSkip() {
+    onChange({ skippedSections: { ...data.skippedSections, upsell: !skipped } });
+  }
+
   return (
     <div>
+      {/* ── Skip banner ── */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: 16, background: skipped ? "#FFF8E6" : Z.creamDeep,
+        border: `1.5px solid ${skipped ? "#F5C842" : Z.faint}`,
+        borderRadius: 12, padding: "14px 20px", marginBottom: 28,
+      }}>
+        <div>
+          <div style={{ fontFamily: Z.font, fontSize: 13, fontWeight: 700, color: Z.charcoal }}>
+            {skipped ? "Upsell page skipped — the AI will generate a placeholder page." : "Don't have an upsell ready yet?"}
+          </div>
+          <div style={{ fontFamily: Z.font, fontSize: 12, color: Z.muted, marginTop: 3 }}>
+            {skipped
+              ? "You can come back and fill this in before regenerating."
+              : "Skip this section and the AI will use sensible defaults. You can fill it in later and regenerate."}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={toggleSkip}
+          style={{
+            flexShrink: 0, fontFamily: Z.font, fontSize: 12, fontWeight: 700,
+            padding: "8px 16px", borderRadius: 8, cursor: "pointer",
+            background: skipped ? Z.charcoal : "none",
+            color: skipped ? "#fff" : Z.muted,
+            border: `1.5px solid ${skipped ? Z.charcoal : Z.faint}`,
+            whiteSpace: "nowrap" as const,
+          }}
+        >
+          {skipped ? "Fill in upsell details" : "Skip for now"}
+        </button>
+      </div>
+
+      {!skipped && (
+      <div>
       {/* ── Offer identity ── */}
       <Section title="Offer identity">
         <Field
@@ -265,6 +305,8 @@ export default function Step4({ data, onChange }: Props) {
           />
         </Field>
       </Section>
+      </div>
+      )}
     </div>
   );
 }

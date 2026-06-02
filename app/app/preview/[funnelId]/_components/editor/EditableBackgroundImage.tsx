@@ -89,9 +89,9 @@ export default function EditableBackgroundImage({
       {pickerOpen && editor && (
         <ImagePickerModal
           library={editor.imageLibrary}
-          currentUrl={currentUrl}
+          currentUrl={currentUrl ?? null}
           onSelect={(url) => {
-            editor.updateField(pageKey, path, url);
+            editor.updateField(pageKey, path, url ?? null);
             setPickerOpen(false);
           }}
           onClose={() => setPickerOpen(false)}
