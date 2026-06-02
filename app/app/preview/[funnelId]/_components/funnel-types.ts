@@ -89,10 +89,15 @@ export interface WizardSnapshot {
   testimonials?: { quote: string; name: string; location: string; context?: string }[];
   videoTestimonialUrls?: string[];
   pressLogos?: { name: string; websiteUrl: string; logoUrl?: string; textFallback?: boolean }[];
-  // Images
+  // Step 7 — Existing materials (may include image URLs)
+  existingMaterialUrls?: string[];
+  existingFileUrls?: string[];
+  // Images (Step 9)
   heroImageUrls?: string[];
   lifestyleImageUrls?: string[];
   additionalImageUrls?: string[];
+  // Host signature
+  hostSignatureUrl?: string;
   // Style
   styleGuide?: {
     brandColors?: {

@@ -25,10 +25,18 @@ export function collectWizardImages(wizard: WizardSnapshot | null | undefined): 
     if (isImageUrl(url)) items.push({ url, label });
   };
 
+  // Step 9 — curated image uploads
   (wizard.heroImageUrls ?? []).forEach((u, i) => push(u, `Hero image ${i + 1}`));
   (wizard.lifestyleImageUrls ?? []).forEach((u, i) => push(u, `Lifestyle ${i + 1}`));
   (wizard.additionalImageUrls ?? []).forEach((u, i) => push(u, `Additional ${i + 1}`));
+
+  // Step 7 — uploaded existing materials (filter out PDFs / docs)
+  (wizard.existingFileUrls ?? []).forEach((u, i) => push(u, `Uploaded file ${i + 1}`));
+  (wizard.existingMaterialUrls ?? []).forEach((u, i) => push(u, `Material ${i + 1}`));
+
+  // Step 1 / 2 — host and brand assets
   push(wizard.hostHeadshotUrl, "Host headshot");
+  push(wizard.hostSignatureUrl, "Host signature");
   push(wizard.logoUrl, "Logo");
   (wizard.pressLogos ?? []).forEach((p) => push(p?.logoUrl, p?.name ? `${p.name} logo` : "Press logo"));
 
