@@ -14,7 +14,7 @@ import type { WizardData } from "@/lib/wizard-types";
 // Generate threshold   = 80 (configurable via GENERATE_THRESHOLD below).
 // ─────────────────────────────────────────────────────────────────────────
 
-export const GENERATE_THRESHOLD = 80;
+export const GENERATE_THRESHOLD = 70;
 
 export interface CompletenessCheck {
   /** Stable id used as React key */
@@ -122,9 +122,17 @@ export const CHECKS: CompletenessCheck[] = [
 
 const TOTAL_WEIGHT = CHECKS.reduce((sum, c) => sum + c.weight, 0);
 
-/** Steps skipped by the user — their checks are treated as fully satisfied. */
+/**
+ * Steps that are always excluded from the completeness denominator and
+ * required-field checks. Steps 4 (Upsell) and 5 (Programme) are optional
+ * offering pages — many clients won't have them ready at event launch.
+ * The user's explicit skip toggle additionally signals the AI to generate
+ * placeholder copy, but it no longer affects the gate calculation.
+ */
+const ALWAYS_OPTIONAL_STEPS = new Set([4, 5]);
+
 function skippedStepIds(d: WizardData): Set<number> {
-  const skipped = new Set<number>();
+  const skipped = new Set<number>(ALWAYS_OPTIONAL_STEPS);
   if (d.skippedSections?.upsell)     skipped.add(4);
   if (d.skippedSections?.programme)  skipped.add(5);
   return skipped;
