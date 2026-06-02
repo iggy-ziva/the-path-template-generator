@@ -21,38 +21,60 @@ const MONTHS = [
   "July","August","September","October","November","December",
 ];
 
+const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
+
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 5 }, (_, i) => currentYear + i);
 
 interface Props {
   initialName?: string;
-  onSave: (name: string) => void;
+  /** `eventDate` is provided only when a specific day is picked — it seeds Step 3's
+   *  Live Event date in the same display format the wizard's DatePicker round-trips. */
+  onSave: (name: string, eventDate?: string) => void;
   onCancel?: () => void;
 }
 
-function parseName(name: string): { title: string; month: string; year: string } {
-  // Try to parse "Title · Month YYYY"
-  const match = name.match(/^(.+?)\s*·\s*([\w]+)\s+(\d{4})$/);
-  if (match) return { title: match[1].trim(), month: match[2], year: match[3] };
-  return { title: name === "Untitled Funnel" ? "" : name, month: "", year: String(currentYear) };
+function parseName(name: string): { title: string; month: string; day: string; year: string } {
+  // Try to parse "Title · Month D, YYYY" (with optional day)
+  const withDay = name.match(/^(.+?)\s*·\s*([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})$/);
+  if (withDay) return { title: withDay[1].trim(), month: withDay[2], day: withDay[3], year: withDay[4] };
+  // Fall back to "Title · Month YYYY"
+  const noDay = name.match(/^(.+?)\s*·\s*([A-Za-z]+)\s+(\d{4})$/);
+  if (noDay) return { title: noDay[1].trim(), month: noDay[2], day: "", year: noDay[3] };
+  return { title: name === "Untitled Funnel" ? "" : name, month: "", day: "", year: String(currentYear) };
 }
 
 export default function FunnelNameModal({ initialName = "", onSave, onCancel }: Props) {
   const parsed = parseName(initialName);
   const [title, setTitle] = useState(parsed.title);
   const [month, setMonth] = useState(parsed.month || MONTHS[new Date().getMonth()]);
+  const [day, setDay]     = useState(parsed.day);
   const [year, setYear]   = useState(parsed.year || String(currentYear));
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
   if (!mounted) return null;
 
+  const dateLabel = day ? `${month} ${day}, ${year}` : `${month} ${year}`;
   const composedName = title.trim()
-    ? `${title.trim()} · ${month} ${year}`
-    : `${month} ${year} Funnel`;
+    ? `${title.trim()} · ${dateLabel}`
+    : `${dateLabel} Funnel`;
 
   function handleSave() {
-    onSave(composedName);
+    // Only emit an event date when a specific day was chosen — a month+year
+    // alone isn't a complete date for Step 3's date picker.
+    let eventDate: string | undefined;
+    if (day) {
+      const monthIndex = MONTHS.indexOf(month);
+      const dNum = Number(day);
+      const yNum = Number(year);
+      if (monthIndex >= 0 && dNum && yNum) {
+        eventDate = new Date(yNum, monthIndex, dNum).toLocaleDateString("en-GB", {
+          weekday: "long", day: "numeric", month: "long", year: "numeric",
+        });
+      }
+    }
+    onSave(composedName, eventDate);
   }
 
   const inputStyle: React.CSSProperties = {
@@ -112,12 +134,19 @@ export default function FunnelNameModal({ initialName = "", onSave, onCancel }: 
           />
         </div>
 
-        {/* Month + Year */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 28 }}>
+        {/* Month + Day + Year */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.3fr 0.9fr 1fr", gap: 12, marginBottom: 28 }}>
           <div>
             <label style={labelStyle}>Month</label>
             <select value={month} onChange={(e) => setMonth(e.target.value)} style={{ ...inputStyle, appearance: "none", cursor: "pointer" }}>
               {MONTHS.map((m) => <option key={m}>{m}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Day <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: Z.faint }}>(optional)</span></label>
+            <select value={day} onChange={(e) => setDay(e.target.value)} style={{ ...inputStyle, appearance: "none", cursor: "pointer" }}>
+              <option value="">—</option>
+              {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
           <div>

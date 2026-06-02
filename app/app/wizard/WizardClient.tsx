@@ -123,9 +123,15 @@ export default function WizardClient({ userEmail }: Props) {
     if (submissionId) refreshFunnels();
   }, [submissionId]);
 
-  async function handleSaveFunnelName(name: string) {
+  async function handleSaveFunnelName(name: string, eventDate?: string) {
     setFunnelName(name);
     setNameModalOpen(false);
+
+    // Seed Step 3's Live Event date from the popup, but never overwrite a date
+    // the user has already set — they can always change it later in Step 3.
+    if (eventDate && !data.eventDate) {
+      updateData({ eventDate });
+    }
 
     let sid = submissionId;
 
@@ -250,14 +256,14 @@ export default function WizardClient({ userEmail }: Props) {
     setCurrentStep(nextStep);
     syncFunnelStep(nextStep);
     saveToServer(data, nextStep);
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }
 
   function goPrev() {
     const prevStep = Math.max(currentStep - 1, 1);
     setCurrentStep(prevStep);
     syncFunnelStep(prevStep);
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }
 
   const StepComponent = STEP_COMPONENTS[currentStep - 1];
@@ -568,9 +574,14 @@ export default function WizardClient({ userEmail }: Props) {
                 key={s.id}
                 onClick={() => {
                   if (isDisabled) return;
+                  // Cancel any pending autosave so the stale-closure timer
+                  // can't race with the step change and overwrite the step.
+                  if (saveTimer.current) clearTimeout(saveTimer.current);
                   setCurrentStep(s.id);
                   syncFunnelStep(s.id);
-                  window.scrollTo(0, 0);
+                  // Use instant scroll — smooth-scroll animations on <html>
+                  // can swallow the click event on slower machines.
+                  window.scrollTo({ top: 0, behavior: "instant" });
                 }}
                 aria-disabled={isDisabled}
                 title={isDisabled ? `Reach ${GENERATE_THRESHOLD}% completeness to unlock Review & Generate` : undefined}

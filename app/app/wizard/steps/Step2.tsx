@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { WizardData } from "@/lib/wizard-types";
 import { Field, TextInput, FileUpload, Grid, Section, MultipleFileUpload } from "../WizardField";
 
@@ -70,6 +70,108 @@ function ColorSwatch({ value, onChange }: { value: string; onChange: (v: string)
   );
 }
 
+function AnalysisProgress({ mode }: { mode: "url" | "file" }) {
+  const messages = mode === "url"
+    ? [
+        "Fetching your website…",
+        "Scanning the page styles…",
+        "Detecting your colour palette…",
+        "Identifying your fonts…",
+        "Putting it all together…",
+      ]
+    : [
+        "Uploading your file…",
+        "Reading your style guide…",
+        "Detecting your colour palette…",
+        "Identifying your fonts…",
+        "Putting it all together…",
+      ];
+
+  const [msgIndex, setMsgIndex] = useState(0);
+  useEffect(() => {
+    setMsgIndex(0);
+    const id = setInterval(() => {
+      // Advance through messages but hold on the final one until analysis ends.
+      setMsgIndex((i) => Math.min(i + 1, messages.length - 1));
+    }, 1800);
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        display: "flex", alignItems: "center", gap: 14,
+        padding: "16px 18px", marginTop: 16,
+        background: Z.creamMid,
+        border: `1.5px solid ${Z.creamDeep}`,
+        borderRadius: 12,
+        animation: "brandFadeIn 280ms ease-out",
+      }}
+    >
+      {/* Dual-ring spinner */}
+      <span
+        aria-hidden
+        style={{
+          position: "relative", flexShrink: 0,
+          width: 28, height: 28,
+        }}
+      >
+        <span style={{
+          position: "absolute", inset: 0, borderRadius: "50%",
+          border: `3px solid ${Z.creamDeep}`,
+        }} />
+        <span style={{
+          position: "absolute", inset: 0, borderRadius: "50%",
+          border: "3px solid transparent",
+          borderTopColor: Z.pink,
+          borderRightColor: Z.coral,
+          animation: "brandSpin 0.7s linear infinite",
+        }} />
+      </span>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p
+          key={msgIndex}
+          style={{
+            fontFamily: Z.font, fontSize: 14, fontWeight: 700, color: Z.charcoal,
+            margin: 0, animation: "brandFadeIn 320ms ease-out",
+          }}
+        >
+          {messages[msgIndex]}
+        </p>
+        {/* Indeterminate progress shimmer */}
+        <div style={{
+          position: "relative", height: 4, marginTop: 8,
+          background: Z.creamDeep, borderRadius: 4, overflow: "hidden",
+        }}>
+          <span style={{
+            position: "absolute", top: 0, bottom: 0, width: "40%",
+            background: `linear-gradient(90deg, ${Z.pink}, ${Z.coral})`,
+            borderRadius: 4,
+            animation: "brandSlide 1.3s ease-in-out infinite",
+          }} />
+        </div>
+      </div>
+
+      <style jsx global>{`
+        @keyframes brandSpin { to { transform: rotate(360deg); } }
+        @keyframes brandFadeIn {
+          from { opacity: 0; transform: translateY(-3px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes brandSlide {
+          0%   { left: -40%; }
+          50%  { left: 60%; }
+          100% { left: 100%; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; }
 
 export default function Step2({ data, onChange }: Props) {
@@ -106,11 +208,29 @@ export default function Step2({ data, onChange }: Props) {
     setUploadAnalysing(true);
     setAnalyseError("");
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      // 1. Get a signed upload URL (tiny request — never hits any body-size limit).
+      const ext = file.name.split(".").pop() ?? "bin";
+      const signRes = await fetch("/api/wizard/signed-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ext }),
+      });
+      const sign = await signRes.json();
+      if (!signRes.ok) throw new Error(sign.error ?? "Could not start upload");
+
+      // 2. Upload the file DIRECTLY to Supabase storage, bypassing serverless body limits.
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { error: upErr } = await supabase.storage
+        .from(sign.bucket)
+        .uploadToSignedUrl(sign.path, sign.token, file);
+      if (upErr) throw new Error(upErr.message);
+
+      // 3. Analyse by URL — the server fetches + compresses the file itself.
       const res = await fetch("/api/wizard/analyze-brand-image", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl: sign.publicUrl }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Analysis failed");
@@ -243,9 +363,12 @@ export default function Step2({ data, onChange }: Props) {
               opacity: analysing ? 0.7 : 1,
               boxShadow: "0 2px 12px rgba(255,0,126,0.2)",
               whiteSpace: "nowrap",
+              display: "inline-flex", alignItems: "center", gap: 8,
             }}
           >
-            {analysing ? "Analysing…" : "✦ Analyse brand"}
+            {analysing
+              ? <><span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid rgba(255,255,255,0.5)", borderTopColor: Z.white, borderRadius: "50%", animation: "brandSpin 0.7s linear infinite" }} />Analysing…</>
+              : "✦ Analyse brand"}
           </button>
         </div>
 
@@ -260,7 +383,7 @@ export default function Step2({ data, onChange }: Props) {
         <div>
           <p style={{ fontFamily: Z.font, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: Z.muted, marginBottom: 6 }}>Upload style guide or screenshot</p>
           <p style={{ fontFamily: Z.font, fontSize: 12, color: Z.muted, marginBottom: 10, lineHeight: 1.5 }}>
-            PNG, JPG, WebP or PDF · max 8 MB · Our AI will read the colours and fonts directly from the file
+            PNG, JPG, WebP (up to 50 MB) or PDF (up to 30 MB) · large, high-res files are fine — our AI reads the colours and fonts directly from the file
           </p>
           <input
             ref={fileInputRef}
@@ -286,11 +409,16 @@ export default function Step2({ data, onChange }: Props) {
             onMouseLeave={(e) => { if (!uploadAnalysing) { (e.currentTarget as HTMLButtonElement).style.borderColor = Z.faint; (e.currentTarget as HTMLButtonElement).style.color = Z.charcoal; } }}
           >
             {uploadAnalysing
-              ? <><span style={{ display: "inline-block", width: 14, height: 14, border: `2px solid ${Z.pink}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />Analysing file…</>
+              ? <><span style={{ display: "inline-block", width: 14, height: 14, border: `2px solid ${Z.pink}`, borderTopColor: "transparent", borderRadius: "50%", animation: "brandSpin 0.7s linear infinite" }} />Analysing file…</>
               : <><span style={{ fontSize: 16 }}>📎</span> Upload style guide / screenshot</>
             }
           </button>
         </div>
+
+        {/* ── Live analysis progress ──────────────────────────────────────── */}
+        {(analysing || uploadAnalysing) && (
+          <AnalysisProgress mode={analysing ? "url" : "file"} />
+        )}
 
         {analyseError && <p style={{ fontFamily: Z.font, fontSize: 12, color: Z.coral, marginTop: 10, marginBottom: 0 }}>{analyseError}</p>}
 
