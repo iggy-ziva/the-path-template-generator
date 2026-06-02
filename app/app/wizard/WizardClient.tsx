@@ -202,7 +202,7 @@ export default function WizardClient({ userEmail }: Props) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ submissionId, stepData: updatedData, currentStep: step }),
         });
-        const json = await res.json();
+        const json = await res.json().catch(() => ({}));
         if (json.submissionId && !submissionId) setSubmissionId(json.submissionId);
         const now = new Date();
         setLastSaved(now);

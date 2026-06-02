@@ -345,8 +345,13 @@ export default function Step11({ data, onChange, submissionId }: Props) {
         body: JSON.stringify({ wizardData: data, submissionId }),
       });
       if (!res.ok) {
-        const json = await res.json();
-        throw new Error(json.error ?? "Generation failed");
+        let message = "Generation failed — please try again";
+        try {
+          const body = await res.text();
+          const json = JSON.parse(body);
+          message = json.error ?? message;
+        } catch { /* non-JSON error body — keep fallback message */ }
+        throw new Error(message);
       }
       const { funnelId } = await res.json();
       // Flash to 100% before navigating
