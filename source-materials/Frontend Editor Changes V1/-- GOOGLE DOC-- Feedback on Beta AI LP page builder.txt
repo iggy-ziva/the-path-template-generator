@@ -1,0 +1,243 @@
+﻿Feedback on Beta AI LP page builder
+
+
+
+
+
+
+Key high-level finding
+
+
+
+
+Overall, the Wizard AI page builder is an impressive outcome. It is in a beta stage and not yet ready for a client to use themselves. It could probably get to the point of a client being able to use the wizard themselves at a later stage. 
+
+But for now I’d say the aim should be to get the wizard to a point where it can make an MVP LP based on ZIVA inputs. It’s not far from there in terms of a desktop output.
+
+So this feedback is about the outputs, not about the form and how it asks for inputs.
+
+
+That will require the style guide’s images to be invidual assets. Probably it will require a paired down style guide that is made specifically to work with the wizard.
+
+
+Here is an example of what Mike could make: screenshot
+
+
+Hard to explain but these are key points:
+
+
+* The overall challenge is bridging the old way of making custom LPs to the new AI-built templatized version of LPs.
+
+
+* So it’s about an equilibrium between the style guide and LP UX copy doc, and the input needs of the wizard AI page builder.
+
+
+The AI wizard is a significant departure from the old way of making LPs.
+
+The style guide is made for a custom LP, the wizard form is made for an LP with a standardized format.
+
+
+Previously, ZIVA would write the specific LP copy sections. By contrast, the Wizard takes all the text inputs or reference material and or client’s existing website and then writes all the sections of an LP that the wizard is programmed to. AI is going to editorialize, client will have option to edit the copy output at the end.
+
+If the client inputs their previous website URL, the Wizard will use the copy and aspects of the design style from the previous website. While powerful, clients are typically moving away from the outdated style of their previous websites. The copy for the live event is usually not in a previous website.
+
+
+* So i’d consider hiding the option to input a previous website’s URL.
+
+
+The style guide is over-developed for the purpose of the wizard. 
+
+
+Eg style guide has 6 x site colors and 7 x font colors, some of which are co-extensive with the site colors. The LP builder has 3 x colors.
+
+The style guide is one document (png or PDF) while the wizard form asks for separate images.
+
+The LP UX Copy doc is over-developed for the purpose of the wizard. The wizard writes copy, whereas in the current custom way of building LPs ZIVA writes the LP copy. 
+
+
+Beta version of Wizard page builder: ZIVA made vs client made
+
+I’d say the current version is a fair bit away from a client being able to create the LP by filling in the form.
+
+The strategy I’d suggest is ZIVA filling in the form and creating the LP with the Wizard and then iterating the form and user-friendliness of the form until it’s ready to be a client-facing form.
+
+
+
+
+Hero image
+
+
+* Would be great if the hero image at the back could be changed in edit mode.
+
+
+For example here, you can’t change the color scheme of the hero section, so it ends up brown. If a specific hero image with specific dimensions could be added.
+
+  
+
+
+Padding
+
+
+* I’d consider reducing the padding a little bit. For example above the outcomes section there is probably a little too much padding
+
+
+  
+
+
+
+
+
+
+
+Icons
+
+
+Ability to add icons for bullet lists would be great
+
+
+As featured in
+
+* Not all clients have as featured in logos. So enable the page editor to remove the as featured in section.
+
+
+Images
+
+
+
+The Wizard currently outputs 5 x images: hero x 2, host image x 2, and a lifestyle image.
+
+
+* I’d consider making there only be 1 x hero image, or at least the option to remove the overlaid image. See 2 x images below in hero.
+
+
+  
+
+
+
+
+
+
+
+Date and time
+
+I’d remove words date and time from the output because they’re redundant
+
+
+  
+
+
+
+
+
+Images as backgrounds
+
+
+The ability to ‘add images’ as backgrounds in the editing phase is a nice addition!
+
+See for example this nice texture that it created by adding an image to the credibility statement
+
+
+  
+
+
+
+And also the nice texture it created for the About your host section
+
+
+  
+
+
+
+
+
+
+
+
+
+Bio: About host
+The wizard created an ‘about your host’ section that has the same copy as ‘a note from Lola Jones’
+
+  
+
+
+  
+
+
+
+
+
+
+Ability to delete sections
+
+
+
+
+
+
+
+
+Testimonials (input-related, for later)
+
+
+The Wizard asks to manually enter each testimonial – can we just submit a .doc or .md file of all testimonials and credibility statements?
+
+* Add paste in option, add upload document option
+
+
+
+Testimonial output
+
+
+The output of testimonials made the heading the same as the testimonial primary text.
+
+Currently, the testimonial headings and text can’t be manually edited afterwards.
+
+  
+
+
+
+
+Colours
+
+The wizard accepts three colors for its background color schema. Dark, accent, and light.  So it’s quite important to intentionally select your 3 x  colors.
+
+The style guide for example has 6 x color palette colors, 7 x font colors
+
+I didn’t double-check the colors against the style guide, but from checking now the wizard wasn’t able to pull the exact colors from the style guide png. 
+
+So the user would have to manually check the HEX numbers against those in the style guide. And the user would have to select 3 x colors. 
+
+
+Logo
+The logo the client inputs will be used. Not all clients have logos. So for example I screengrabbed the icons from the style guide to input as logo options and the wizard selected one.
+
+Include the option to edit or remove the logo in the editing stage.
+
+  
+
+  
+
+
+
+Editable headings
+
+Not all headings are editable
+
+
+For example ‘What you’ll experience’ and  ‘This session is built to address things like’ are non-editable headings.
+
+
+
+
+  
+
+
+
+
+
+
+
+‘This session is built to address things like’
+
+
+I would prefer to have it appear as its own section  with an editable heading:

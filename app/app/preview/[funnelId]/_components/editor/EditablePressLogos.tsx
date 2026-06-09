@@ -2,6 +2,8 @@
 
 import React, { useRef, useState } from "react";
 import { useEditorOptional } from "./EditorContext";
+import { usePageContent } from "./PageContentContext";
+import { getAtPath } from "@/lib/content-path";
 import type { FunnelPageKey } from "@/lib/funnel-export/config";
 import { PageText } from "./page-editable";
 
@@ -349,6 +351,10 @@ export default function EditablePressLogos({ pageKey, eyebrow, logos, exportMode
   const isEditMode = !exportMode && (editor?.isEditMode ?? false);
   const [modalIndex, setModalIndex] = useState<number | null>(null);
 
+  const pageContent = usePageContent(pageKey);
+  const hidden = Boolean(getAtPath(pageContent, "hiddenSections.asSeenOn"));
+  const toggleHidden = () => editor?.updateField(pageKey, "hiddenSections.asSeenOn", !hidden);
+
   function setLogos(next: PressLogoEntry[]) {
     editor?.updateField(pageKey, "pressLogos", next);
   }
@@ -369,9 +375,56 @@ export default function EditablePressLogos({ pageKey, eyebrow, logos, exportMode
 
   const showSection = logos.length > 0 || isEditMode;
   if (!showSection) return null;
+  // Hidden outside edit mode (live preview + export) → render nothing.
+  if (hidden && !isEditMode) return null;
 
   return (
-    <section className="as-seen-on">
+    <section
+      className="as-seen-on"
+      style={{
+        position: isEditMode ? "relative" : undefined,
+        outline: hidden && isEditMode ? "2px dashed rgba(193, 122, 67, 0.85)" : undefined,
+        outlineOffset: hidden && isEditMode ? -4 : undefined,
+      }}
+    >
+      {isEditMode && editor && (
+        <div
+          contentEditable={false}
+          style={{ position: "absolute", top: 8, right: 8, zIndex: 131 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleHidden(); }}
+            title={hidden ? "Restore this section" : "Remove this section (reversible)"}
+            style={{
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "1px solid rgba(255,255,255,0.16)",
+              cursor: "pointer",
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.02em",
+              color: hidden ? "#141412" : "#f1b0b0",
+              background: hidden ? "#D4A878" : "rgba(20, 20, 18, 0.82)",
+            }}
+          >
+            {hidden ? "Restore section" : "Remove"}
+          </button>
+        </div>
+      )}
+      {hidden && isEditMode && (
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 60,
+            background: "color-mix(in srgb, var(--surface-canvas) 55%, transparent)",
+            pointerEvents: "none",
+          }}
+        />
+      )}
       <div className="container">
         <PageText pageKey={pageKey} path="asSeenOnEyebrow" as="span" className="eyebrow">
           {eyebrow}

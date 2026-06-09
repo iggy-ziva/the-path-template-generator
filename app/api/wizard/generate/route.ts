@@ -547,6 +547,9 @@ VOICE CONSISTENCY:
 - If the host bio uses "I" (first person), every personal note across pages uses "I".
 - Vocabulary should be consistent: if the methodology is called "the Aligned Living framework" on the landing page, it remains that name across all pages.
 
+CONTENT DEDUPLICATION — CRITICAL:
+- The personal message ("A note from…", personalMessageParagraphs) and the host bio ("About the host", bioParagraphs) serve DIFFERENT purposes and MUST NOT share sentences or restate the same facts. Personal message = intimate first-person invitation to this specific event; bio = credentials, background, and track record. When the only source is hostBio, write each section from a distinct angle rather than reusing the same wording. Reusing hostBio text verbatim in both is a failure.
+
 TYPOGRAPHY RULES (affect every text field):
 - Never combine two prices in one field. Use dedicated sub-fields for secondary prices (programCtaPlanText, hero-price-plan, etc.).
 - Price fields rendered at 42px+ contain ONE price only. No "or", no "from", no alternatives.
@@ -822,6 +825,12 @@ The JSON must have exactly this structure:
       "paragraph 3"
     ],
     "personalMessageSignature": "e.g. '— ${d.hostName ?? "the host"}' — use the actual host name from brand context",
+    // DEDUP RULE — personalMessageParagraphs vs bioParagraphs: these two blocks MUST NOT
+    // share sentences or restate the same facts. The personal message ("A note from…") is an
+    // intimate, first-person invitation to THIS event — why it matters now, what the host hopes
+    // the attendee walks away with. The bio ("About the host") is credentials/background — who
+    // the host is, training, lineage, track record. If hostBio is the only source material, write
+    // each from a distinct angle; do NOT paste hostBio verbatim into both. Zero sentence overlap.
     "testimonialsEyebrow": "e.g. 'In their words'",
     "testimonialsHeading": "testimonials section heading (display-section class)",
     "encourageText2": "second CTA section text — different line from encourageText1",
@@ -871,6 +880,8 @@ The JSON must have exactly this structure:
     "bioEyebrow": "e.g. 'About the host'",
     "bioHeading": "e.g. 'About ${d.hostName ?? "the host"}'",
     "bioParagraphs": [
+      // Must NOT reuse any sentence from personalMessageParagraphs (see DEDUP RULE above) —
+      // this is credentials/background, not the event invitation.
       "paragraph 1 — first paragraph gets drop-cap styling; write first-person",
       "paragraph 2",
       "paragraph 3"

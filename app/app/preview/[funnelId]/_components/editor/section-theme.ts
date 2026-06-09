@@ -63,6 +63,7 @@ export const EVENT_LANDING_SECTIONS: SectionThemeDef[] = [
   { id: "encourage2",    label: "Encourage 2",       base: "encourage", defaultTheme: "accent" },
   { id: "howItWorks",    label: "How it works",      base: "plain",     defaultTheme: "light"  },
   { id: "eventOverview", label: "Event overview",    base: "plain",     defaultTheme: "light"  },
+  { id: "challenges",    label: "Challenges",        base: "plain",     defaultTheme: "light"  },
   { id: "credibility3",  label: "Credibility 3",     base: "plain",     defaultTheme: "light"  },
   { id: "extraVp",       label: "Extra value prop",  base: "plain",     defaultTheme: "accent" },
   { id: "encourage3",    label: "Encourage 3",       base: "encourage", defaultTheme: "light"  },

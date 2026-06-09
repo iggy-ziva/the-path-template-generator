@@ -555,6 +555,24 @@ section {
     radial-gradient(80% 60% at 20% 90%, color-mix(in srgb, var(--surface-inverse) 35%, transparent), transparent 70%),
     linear-gradient(180deg, var(--surface-accent) 0%, color-mix(in srgb, var(--surface-inverse) 45%, var(--surface-accent)) 100%);
 }
+/* Light hero — true light surface (mirrors .prog-hero.light-bg). The editor now
+   emits "hero light-bg on-light" for a light hero; drop the dark gradient/grain
+   overlays so the canvas surface and on-light text cascade are visible. */
+.hero.light-bg {
+  background: var(--surface-canvas);
+  color: var(--text-primary);
+}
+.hero.light-bg::before,
+.hero.light-bg::after { display: none; }
+.hero.light-bg .subtitle { color: var(--text-secondary); }
+.hero.light-bg .hero-meta { color: var(--text-secondary); }
+.hero.light-bg .hero-eyebrow {
+  color: var(--accent-secondary-on-light);
+  border-color: color-mix(in srgb, var(--accent-secondary-on-light) 32%, transparent);
+  background: color-mix(in srgb, var(--accent-secondary-on-light) 8%, transparent);
+}
+.hero.light-bg .hero-eyebrow .dot { background: var(--accent-secondary-on-light); }
+.hero.light-bg .hero-meta .label { color: var(--accent-secondary-on-light); }
 .hero.sunken-bg {
   background: var(--surface-sunken);
   color: var(--text-primary);
@@ -633,9 +651,7 @@ section {
 }
 .hero-meta .value strong { color: var(--text-inverse); font-weight: 500; }
 /* Light hero override */
-.hero.light .hero-meta { color: color-mix(in srgb, var(--text-primary) 70%, transparent); }
-.hero.light .hero-meta .label { color: var(--accent-secondary-on-light); }
-.hero.light .hero-meta .value strong { color: var(--text-primary); }
+.hero.light-bg .hero-meta .value strong { color: var(--text-primary); }
 
 .price-line {
   display: inline-flex;
@@ -664,13 +680,13 @@ section {
   color: var(--text-inverse);
   letter-spacing: -0.01em;
 }
-/* Light hero override (if .hero.light is ever applied) */
-.hero.light .price-line {
+/* Light hero override */
+.hero.light-bg .price-line {
   background: color-mix(in srgb, var(--text-primary) 4%, transparent);
   border-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
 }
-.hero.light .price-line .price-label { color: var(--accent-secondary-on-light); }
-.hero.light .price-line .price-value { color: var(--text-primary); }
+.hero.light-bg .price-line .price-label { color: var(--accent-secondary-on-light); }
+.hero.light-bg .price-line .price-value { color: var(--text-primary); }
 .hero-cta-row {
   display: flex; flex-wrap: wrap; gap: var(--s-4);
   align-items: center;
@@ -678,6 +694,11 @@ section {
 }
 .hero-cta-row .btn-primary { background: var(--accent-light); color: var(--text-on-accent); }
 .hero-cta-row .btn-primary:hover { background: var(--accent-light-hover); }
+/* meta line beside CTA button — readable on dark hero by default */
+.hero-cta-meta { color: color-mix(in srgb, var(--text-inverse) 55%, transparent); }
+/* swap to a visible dark value on light/sunken hero surfaces */
+.hero.light-bg .hero-cta-meta,
+.hero.sunken-bg .hero-cta-meta { color: var(--text-secondary); }
 .hero-host-badge {
   display: flex;
   flex-direction: column;
@@ -686,6 +707,9 @@ section {
   font-size: 14px;
   line-height: 1.5;
 }
+/* swap host badge text to a visible dark value on light/sunken hero surfaces */
+.hero.light-bg .hero-host-badge,
+.hero.sunken-bg .hero-host-badge { color: var(--text-secondary); }
 .hero-host-name {
   display: flex;
   align-items: center;
@@ -696,6 +720,11 @@ section {
   flex-shrink: 0;
   width: 28px; height: 1px;
   background: color-mix(in srgb, var(--accent-light) 50%, transparent);
+}
+/* swap decorative rule to a light-surface-safe accent colour */
+.hero.light-bg .hero-host-name::before,
+.hero.sunken-bg .hero-host-name::before {
+  background: color-mix(in srgb, var(--accent-secondary-on-light) 50%, transparent);
 }
 .hero-host-title {
   padding-left: calc(28px + var(--s-3));

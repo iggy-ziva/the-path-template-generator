@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, type CSSProperties } from "react";
-import type { EventLandingContent, WizardSnapshot } from "../funnel-types";
+import type { EventLandingContent, WizardSnapshot, TestimonialItem } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
-import BrandLogo from "../BrandLogo";
+import EditableLogo from "../editor/EditableLogo";
+import EditableIcon from "../editor/icon-library";
 import EditableText from "../editor/EditableText";
 import { useEditorOptional } from "../editor/EditorContext";
 import { PageText, useEditMode } from "../editor/page-editable";
@@ -181,18 +182,21 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
         theme={themeFor("stickyBar", "dark")}
         base="plain"
         bgViaClass
+        deletable={false}
         as="div"
         id="stickyBar"
         className="sticky-bar is-visible"
         exportMode={exportMode}
       >
         <div className="container">
-          <BrandLogo
-            logoUrl={w.logoUrl}
+          <EditableLogo
+            pageKey="eventLanding"
+            fallbackUrl={w.logoUrl}
             logoTransparent={w.logoTransparent}
             name={brandName}
             className="logo"
             imgStyle={{ height: 96, objectFit: "contain" }}
+            exportMode={exportMode}
           />
           <div className="event-title">{w.eventName}</div>
           <div className="countdown" aria-label="Time until event">
@@ -223,10 +227,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
         theme={heroTheme}
         base="hero"
         id="hero"
+        deletable={false}
         exportMode={exportMode}
         backgroundPath="heroBackgroundImageUrl"
         backgroundOverlay="hero"
         backgroundFallbackUrl={safeUrl(w.heroImageUrls?.[0])}
+        bgDimensionHint="Recommended: at least 2000×1200px (landscape), under 1MB for fast loading."
         controlsTopOffset={150}
       >
         <div className="container">
@@ -269,13 +275,19 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
               <div className="hero-cta-row">
                 {ctaLink("btn btn-primary btn-xl")}
                 {c.heroMetaLine && (
-                  <span className="meta" style={{ color: "color-mix(in srgb, var(--text-inverse) 55%, transparent)" }}>
+                  <span
+                    className="meta hero-cta-meta"
+                    style={heroTheme === "light" ? { color: "var(--text-secondary)" } : undefined}
+                  >
                     <EditableText pageKey="eventLanding" path="heroMetaLine" as="span">{c.heroMetaLine}</EditableText>
                   </span>
                 )}
               </div>
 
-              <div className="hero-host-badge">
+              <div
+                className="hero-host-badge"
+                style={heroTheme === "light" ? { color: "var(--text-secondary)" } : undefined}
+              >
                 <div className="hero-host-name">
                   With{" "}
                   <strong>
@@ -297,7 +309,6 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                 <div className="hero-meta">
                   {(heroEventDate || editor?.isEditMode) && (
                     <div>
-                      <span className="label">Date</span>
                       <span className="value">
                         <strong>
                           <EditableText pageKey="eventLanding" path="heroEventDate" as="span">
@@ -309,7 +320,6 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                   )}
                   {(heroEventTime || heroEventTimezone || editor?.isEditMode) && (
                     <div>
-                      <span className="label">Time</span>
                       <span className="value">
                         <strong>
                           <EditableText pageKey="eventLanding" path="heroEventTime" as="span">
@@ -432,7 +442,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                   style={editMode ? { gridTemplateColumns: "auto 1fr auto", alignItems: "center", columnGap: 16 } : undefined}
                 >
                   <div className="audience-icon" aria-hidden="true">
-                    <CheckIcon />
+                    <EditableIcon
+                      pageKey="eventLanding"
+                      path={`audienceItemIcons.${i}`}
+                      fallback={<CheckIcon />}
+                      exportMode={exportMode}
+                    />
                   </div>
                   <p>
                     <EditableText pageKey="eventLanding" path={`audienceItems[${i}]`} as="span" html>
@@ -664,15 +679,26 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
       )}
 
       {/* ── Testimonials ── */}
-      {((w.testimonials ?? []).length > 0 || editMode) && (
-        <TestimonialCarousel
-          testimonials={w.testimonials ?? []}
-          eyebrow={c.testimonialsEyebrow}
-          heading={c.testimonialsHeading ?? "What people say"}
-          theme={themeFor("testimonials", "light")}
-          exportMode={exportMode}
-        />
-      )}
+      {(() => {
+        const testimonialItems: TestimonialItem[] =
+          c.testimonialItems ??
+          (w.testimonials ?? []).map((t) => ({
+            quote: t.quote,
+            name: t.name,
+            location: t.location,
+            context: t.context,
+          }));
+        if (testimonialItems.length === 0 && !editMode) return null;
+        return (
+          <TestimonialCarousel
+            items={testimonialItems}
+            eyebrow={c.testimonialsEyebrow}
+            heading={c.testimonialsHeading ?? "What people say"}
+            theme={themeFor("testimonials", "light")}
+            exportMode={exportMode}
+          />
+        );
+      })()}
 
       {/* ── 07b Encourage CTA 2 ── */}
       {(c.encourageText2 || editMode) && (
@@ -779,14 +805,25 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
           <div className="overview-bottom">
             {((c.experienceItems ?? []).length > 0 || editMode) && (
               <div>
-                <h3>What you&apos;ll experience</h3>
+                <h3>
+                  <PageText pageKey="eventLanding" path="experienceHeading" as="span">
+                    {c.experienceHeading ?? "What you'll experience"}
+                  </PageText>
+                </h3>
                 <div className="experience-list">
                   {(c.experienceItems ?? []).map((item, i) => (
                     <div key={i} className="experience-item">
                       <div className="experience-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
-                          <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
-                        </svg>
+                        <EditableIcon
+                          pageKey="eventLanding"
+                          path={`experienceItemIcons.${i}`}
+                          fallback={
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
+                              <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+                            </svg>
+                          }
+                          exportMode={exportMode}
+                        />
                       </div>
                       <p>
                         <PageText pageKey="eventLanding" path={`experienceItems[${i}].title`} as="strong">
@@ -802,23 +839,31 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                 </div>
               </div>
             )}
-            {((c.challengeItems ?? []).length > 0 || editMode) && (
-              <div>
-                <h3>This session is built to address things like</h3>
-                <ul className="challenges-list">
-                  {(c.challengeItems ?? []).map((item, i) => (
-                    <li key={i}>
-                      <PageText pageKey="eventLanding" path={`challengeItems[${i}]`} as="span">
-                        {item}
-                      </PageText>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
         </div>
       </EditableSection>
+
+      {/* ── 14b Challenges (own section, editable heading) ── */}
+      {((c.challengeItems ?? []).length > 0 || editMode) && (
+        <EditableSection pageKey="eventLanding" sectionId="challenges" theme={themeFor("challenges", "light")} exportMode={exportMode}>
+          <div className="container">
+            <h3 className="display-sub">
+              <PageText pageKey="eventLanding" path="challengeHeading" as="span">
+                {c.challengeHeading ?? "This session is built to address things like"}
+              </PageText>
+            </h3>
+            <ul className="challenges-list">
+              {(c.challengeItems ?? []).map((item, i) => (
+                <li key={i}>
+                  <PageText pageKey="eventLanding" path={`challengeItems[${i}]`} as="span">
+                    {item}
+                  </PageText>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </EditableSection>
+      )}
 
       {/* ── Credibility 3 (post-overview) ── */}
       {(c.credibilityQuote3 || editMode) && (
@@ -1056,7 +1101,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
       )}
 
       {/* ── Final CTA (dark) ── */}
-      <EditableSection pageKey="eventLanding" sectionId="register" theme={registerTheme} base="encourage" id="register" exportMode={exportMode}>
+      <EditableSection pageKey="eventLanding" sectionId="register" theme={registerTheme} base="encourage" id="register" deletable={false} exportMode={exportMode}>
         <div className="container">
           <p className="line">
             <EditableText pageKey="eventLanding" path="finalCtaLine" as="span">
@@ -1089,12 +1134,14 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
       <footer className="ty-footer">
         <div className="inner">
           <div className="ty-footer-left">
-            <BrandLogo
-              logoUrl={w.logoUrl}
+            <EditableLogo
+              pageKey="eventLanding"
+              fallbackUrl={w.logoUrl}
               logoTransparent={w.logoTransparent}
               name={brandName}
               className="ty-footer-brand"
               imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}
+              exportMode={exportMode}
             />
             <span className="ty-footer-copy">&copy; {new Date().getFullYear()} {brandName}</span>
           </div>
@@ -1112,20 +1159,23 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
 }
 
 // ── Testimonial carousel — always 3 visible, circular navigation ───────────
-interface Testimonial { quote: string; name: string; location?: string; context?: string; }
+function testimonialHeading(t: TestimonialItem): string {
+  if (t.heading && t.heading.trim()) return t.heading;
+  return t.quote.length > 60 ? t.quote.slice(0, 60) + "…" : t.quote;
+}
 
 function TestimonialCarousel({
-  testimonials, eyebrow, heading, theme, exportMode,
+  items, eyebrow, heading, theme, exportMode,
 }: {
-  testimonials: Testimonial[];
-  perSlide?: number;
-  totalSlides?: number;
+  items: TestimonialItem[];
   eyebrow?: string;
   heading: string;
   theme: SectionThemeT;
   exportMode?: boolean;
 }) {
-  const n = testimonials.length;
+  const editor = useEditorOptional();
+  const editMode = !exportMode && Boolean(editor?.isEditMode);
+  const n = items.length;
   const [start, setStart] = useState(0);
   const [animKey, setAnimKey] = useState(0);
 
@@ -1134,10 +1184,25 @@ function TestimonialCarousel({
     setAnimKey(k => k + 1);
   }
 
+  // Whole-array writes seed `testimonialItems` from the wizard fallback on first
+  // edit (the page passes the merged list as `items`), avoiding sparse arrays.
+  function writeItems(next: TestimonialItem[]) {
+    editor?.updateField("eventLanding", "testimonialItems", next);
+  }
+  function updateItem(i: number, patch: Partial<TestimonialItem>) {
+    writeItems(items.map((t, idx) => (idx === i ? { ...t, ...patch } : t)));
+  }
+  function removeItem(i: number) {
+    writeItems(items.filter((_, idx) => idx !== i));
+  }
+  function addItem() {
+    writeItems([...items, { quote: "", name: "" }]);
+  }
+
   // Always pick exactly 3 cards, wrapping circularly so no slide is ever short
   const visible = n <= 3
-    ? testimonials
-    : [0, 1, 2].map(offset => testimonials[(start + offset) % n]);
+    ? items
+    : [0, 1, 2].map(offset => items[(start + offset) % n]);
 
   const showControls = n > 3;
 
@@ -1155,51 +1220,188 @@ function TestimonialCarousel({
           </h2>
         </div>
 
-        {/* key change triggers the fade-in animation on each navigation */}
-        <div key={animKey} className="testimonial-track">
-          {visible.map((t, i) => (
-            <article key={i} className="testimonial-card">
-              <h3 className="h3">&ldquo;{t.quote.length > 60 ? t.quote.slice(0, 60) + "…" : t.quote}&rdquo;</h3>
-              <p className="quote">{t.quote}</p>
-              <div className="attrib">
-                <span className="name">{t.name}</span>
-                {(t.location || t.context) && (
-                  <span className="loc">{[t.location, t.context].filter(Boolean).join(" · ")}</span>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {showControls && (
-          <div className="carousel-controls">
-            <button onClick={() => navigate(-1)} aria-label="Previous testimonials">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 18l-6-6 6-6"/>
-              </svg>
+        {editMode ? (
+          <div style={{ display: "grid", gap: 16, maxWidth: 760, margin: "0 auto" }}>
+            {items.map((t, i) => (
+              <TestimonialEditCard
+                key={i}
+                index={i}
+                item={t}
+                onChange={(patch) => updateItem(i, patch)}
+                onRemove={() => removeItem(i)}
+              />
+            ))}
+            <button
+              type="button"
+              onClick={addItem}
+              style={{
+                padding: "12px 16px",
+                borderRadius: 10,
+                border: "1.5px dashed var(--border-subtle)",
+                background: "transparent",
+                color: "var(--accent-secondary-on-light)",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              + Add testimonial
             </button>
-
-            <div className="carousel-dots" role="tablist">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  role="tab"
-                  aria-selected={i === start}
-                  aria-label={`Testimonial ${i + 1}`}
-                  className={`dot${i === start ? " active" : ""}`}
-                  onClick={() => { setStart(i); setAnimKey(k => k + 1); }}
-                />
+          </div>
+        ) : (
+          <>
+            {/* key change triggers the fade-in animation on each navigation */}
+            <div key={animKey} className="testimonial-track">
+              {visible.map((t, i) => (
+                <article key={i} className="testimonial-card">
+                  <h3 className="h3">&ldquo;{testimonialHeading(t)}&rdquo;</h3>
+                  <p className="quote">{t.quote}</p>
+                  <div className="attrib">
+                    <span className="name">{t.name}</span>
+                    {(t.location || t.context) && (
+                      <span className="loc">{[t.location, t.context].filter(Boolean).join(" · ")}</span>
+                    )}
+                  </div>
+                </article>
               ))}
             </div>
 
-            <button onClick={() => navigate(1)} aria-label="Next testimonials">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 6l6 6-6 6"/>
-              </svg>
-            </button>
-          </div>
+            {showControls && (
+              <div className="carousel-controls">
+                <button onClick={() => navigate(-1)} aria-label="Previous testimonials">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18l-6-6 6-6"/>
+                  </svg>
+                </button>
+
+                <div className="carousel-dots" role="tablist">
+                  {items.map((_, i) => (
+                    <button
+                      key={i}
+                      role="tab"
+                      aria-selected={i === start}
+                      aria-label={`Testimonial ${i + 1}`}
+                      className={`dot${i === start ? " active" : ""}`}
+                      onClick={() => { setStart(i); setAnimKey(k => k + 1); }}
+                    />
+                  ))}
+                </div>
+
+                <button onClick={() => navigate(1)} aria-label="Next testimonials">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 6l6 6-6 6"/>
+                  </svg>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </EditableSection>
+  );
+}
+
+function TestimonialEditCard({
+  index, item, onChange, onRemove,
+}: {
+  index: number;
+  item: TestimonialItem;
+  onChange: (patch: Partial<TestimonialItem>) => void;
+  onRemove: () => void;
+}) {
+  const field: CSSProperties = {
+    width: "100%",
+    padding: "8px 10px",
+    border: "1px solid var(--border-subtle)",
+    borderRadius: 8,
+    background: "var(--surface-raised)",
+    color: "var(--text-primary)",
+    fontSize: 14,
+    fontFamily: "inherit",
+    boxSizing: "border-box",
+  };
+  const label: CSSProperties = {
+    display: "block",
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    color: "var(--text-tertiary)",
+    marginBottom: 4,
+  };
+  return (
+    <div
+      contentEditable={false}
+      style={{
+        position: "relative",
+        textAlign: "left",
+        display: "grid",
+        gap: 10,
+        padding: "16px 18px",
+        borderRadius: 12,
+        border: "1px solid var(--border-subtle)",
+        background: "var(--surface-canvas)",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-tertiary)" }}>
+          Testimonial {index + 1}
+        </span>
+        <button
+          type="button"
+          onClick={onRemove}
+          style={{ background: "none", border: "none", color: "#c0392b", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+        >
+          Remove
+        </button>
+      </div>
+      <div>
+        <span style={label}>Headline (optional)</span>
+        <input
+          style={field}
+          value={item.heading ?? ""}
+          placeholder="Short pull-quote shown above the testimonial"
+          onChange={(e) => onChange({ heading: e.target.value })}
+        />
+      </div>
+      <div>
+        <span style={label}>Quote</span>
+        <textarea
+          style={{ ...field, minHeight: 80, resize: "vertical" }}
+          value={item.quote}
+          placeholder="The full testimonial text"
+          onChange={(e) => onChange({ quote: e.target.value })}
+        />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div>
+          <span style={label}>Name</span>
+          <input
+            style={field}
+            value={item.name}
+            placeholder="e.g. Sarah M."
+            onChange={(e) => onChange({ name: e.target.value })}
+          />
+        </div>
+        <div>
+          <span style={label}>Location</span>
+          <input
+            style={field}
+            value={item.location ?? ""}
+            placeholder="e.g. London"
+            onChange={(e) => onChange({ location: e.target.value })}
+          />
+        </div>
+      </div>
+      <div>
+        <span style={label}>Context (optional)</span>
+        <input
+          style={field}
+          value={item.context ?? ""}
+          placeholder="e.g. Cohort 3 graduate"
+          onChange={(e) => onChange({ context: e.target.value })}
+        />
+      </div>
+    </div>
   );
 }

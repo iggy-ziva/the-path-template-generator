@@ -27,6 +27,16 @@ export function brandImageBackground(overlay: string, url: string): string {
 // "light"  → surface-canvas background   (warm cream)  default dark text
 export type SectionTheme = "dark" | "accent" | "light";
 
+/** A single testimonial card (editor-editable). `heading` is an optional short
+ *  pull-quote shown above the full quote; when empty the UI derives one. */
+export interface TestimonialItem {
+  heading?: string;
+  quote: string;
+  name: string;
+  location?: string;
+  context?: string;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Wizard snapshot (user-entered data passed from the wizard form)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -121,6 +131,8 @@ export interface EventLandingContent {
   // Per-section theme overrides — keyed by section id (see editor/section-theme.ts).
   // Takes priority over the legacy per-section *Theme fields below.
   sectionThemes?: Partial<Record<string, SectionTheme>>;
+  /** Editor logo override. Unset → wizard logo; null → removed (text fallback). */
+  logoUrl?: string | null;
   // Image assignments — Claude picks from available uploaded images
   heroBackgroundImageUrl?:  string | null;   // primary hero background (full-section)
   heroVisualImageUrl?:       string | null;   // side visual card in the hero grid
@@ -187,6 +199,9 @@ export interface EventLandingContent {
   // 12 Testimonials
   testimonialsEyebrow?: string;
   testimonialsHeading?: string;
+  /** Editor override for testimonial cards. Materialized from the wizard
+   *  snapshot (w.testimonials) on first edit; falls back to it when unset. */
+  testimonialItems?: TestimonialItem[];
   // 07b Encourage CTA 2
   encourageText2?: string;
   encourage2Theme?: SectionTheme;   // default: "accent"
@@ -197,7 +212,10 @@ export interface EventLandingContent {
   // 14 Event overview
   eventOverviewHeading?: string;
   recordingNote?: string;
+  experienceHeading?: string;
   experienceItems?: { title: string; body: string }[];
+  // 14b Challenges (own section)
+  challengeHeading?: string;
   challengeItems?: string[];
   // Post-overview Credibility 3 (inline)
   credibilityQuote3?: string;

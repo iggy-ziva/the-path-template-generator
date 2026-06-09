@@ -1,0 +1,627 @@
+﻿Jun 9, 2026
+Meeting Jun 9, 2026 at 16:06 SAST - Transcript
+00:00:01
+
+
+Michael Glover: Okay. Um, I just want to quickly get you back in the screen like this. See this? Okay. Do you know how to how to do it so that I can see while I'm looking at the dock?
+Iggy Vermaak: Uh you you you'll need to split screen, bro.
+Michael Glover: f****** hell.
+Iggy Vermaak: Yeah.
+Michael Glover: Recording and sharing screen is obviously not the same
+Iggy Vermaak: Yeah.
+Michael Glover: thing.
+Iggy Vermaak: You'll have to open up a second browser with tab and um have it side by side tabs you have
+Michael Glover: Yeah, there you go. Okay.
+Iggy Vermaak: openly
+Michael Glover: Yeah.
+Iggy Vermaak: don't know how people work like Yes.
+Michael Glover: Dude, I work on so many f****** things at the same time. Let me get out. Okay. Anyway, let me stop. Okay. So, uh, yeah, I I read quite a few comments because there's 10 pages here of comments. Um, okay. Overall, it's an impressive outcome. It's in beta stage. Um, not quite ready for clients to use themselves.
+
+
+
+
+00:01:43
+
+
+Michael Glover: could probably get to a point of clients be able to use the wlet themselves um at a later
+Iggy Vermaak: Yeah.
+Michael Glover: stage. Okay, for now I think the aim should be to get the wizard to a point where it can make an MVP LP, so minimal viable product LP based on Zea inputs. Um and it's not there that far away in terms of
+Iggy Vermaak: Why do you say that? Do you think that the um wizard is too intensive?
+Michael Glover: for a client. Yeah.
+Iggy Vermaak: It off too much for clients.
+Michael Glover: For a client. Yeah. So, so this feedback isn't even about
+Iggy Vermaak: Bro, have you seen our our landing page intake form?
+Michael Glover: the I have I I have um and and it's crazy complicated. Um I agree with that. But I know like how I had to like so so that this this input the input I've put on here isn't isn't about the form. It's about like the So I to me that's how I see it is like is first like adjust the output options more like the editing options and then later go back to the input the form input
+
+
+
+
+00:03:08
+
+
+Iggy Vermaak: Okay. So,
+Michael Glover: things.
+Iggy Vermaak: you think the output is not good enough yet?
+Michael Glover: Um no I'm I'm not I'm I don't say it's not good enough yet. I just think that um it is I just f****** hell. Okay, it's not that I don't think it's good enough yet. It's that I I'm just giving feedback at the level of the um at the level of of the of the output. And I think that that's the stage. There's like stages to the to the development of the page builder. And the the output is like the first stage and then the second stage would be the the form and the and and how the
+Iggy Vermaak: Yeah,
+Michael Glover: inputs.
+Iggy Vermaak: but you're putting the cart before the horse.
+Michael Glover: Oh. Um well, let's see. Maybe maybe we can go through some of these and then see what see what you reckon. How about
+Iggy Vermaak: Yeah.
+Michael Glover: that?
+Iggy Vermaak: Um uh what ultimately what I need from this meeting is actionable changes that I need to
+
+
+
+
+00:04:34
+
+
+Michael Glover: Yeah. So,
+Iggy Vermaak: make.
+Michael Glover: so I'm kind of seeing this this doc as a little bit as like John would see it. Um, so there's like some like highle stuff here. Um, so I would say so, so the actionable items, um, would be great if the hero at the back. So not so you see there's two heroes at the hero at the back could be changed in edit mode. So that would be like an action item. So I'll put that in a we'll just
+Iggy Vermaak: Okay.
+Michael Glover: make it. So yeah I'll do those
+Iggy Vermaak: Okay, that has to do with the front end data.
+Michael Glover: is it so yeah. So that so that's kind of why I wanted to wanted to chat because I because I don't know the implications of like what I'm
+Iggy Vermaak: Yeah.
+Michael Glover: saying. Um so yeah that's why I thought it's better to
+Iggy Vermaak: Yeah.
+Michael Glover: chat to you than um just just have it padding to me like I think there's a little bit too much padding between some of the sections.
+
+
+
+
+00:05:48
+
+
+Michael Glover: So like there after this credibility state and an outcomes like to me that's like a little bit too much white space. Um so that would be an action
+Iggy Vermaak: action actionable item.
+Michael Glover: item.
+Iggy Vermaak: So she could add a bullet
+Michael Glover: So that's one
+Iggy Vermaak: point.
+Michael Glover: um Google Docs formatting is not so great anyway. Um okay. Okay. So then you could just Yeah, you could like go through those and see. So like this one note from Lola. There's also like pretty big here the the white the white the white space padding and you could just like here it's quite big.
+Iggy Vermaak: Okay,
+Michael Glover: So that's pretty pretty easy.
+Iggy Vermaak: cool.
+Michael Glover: Um, okay. If it's possible to add to add icons in here, like edit these, that would be great. If that's if that's like a huge mission, if that's like then then don't worry about it.
+Iggy Vermaak: Yeah,
+Michael Glover: um as featured in so because not all of
+Iggy Vermaak: sure.
+Michael Glover: them are featured in magazines and podcasts and stuff.
+
+
+
+
+00:07:10
+
+
+Michael Glover: If you could just if it's possible to to delete this section or not have to fill it in.
+Iggy Vermaak: I Okay,
+Michael Glover: Yeah.
+Iggy Vermaak: it's fine.
+Michael Glover: So that's one. Um, okay. Um, images. The wizard currently outputs five images, two heroes. So, this is this thing of the of the of the double heroes where there's like there's this background image of this chick on the with her hand on her heart and then there's this one that's overlaid. So, like it's it's a it's it's just a thing of of working out how to how to get the the like style guide to to like come into um equal
+Iggy Vermaak: Sorry, can you can you click out of that um uh little popup from Meet
+Michael Glover: loop.
+Iggy Vermaak: Google? If you close it, it won't end our meeting.
+Michael Glover: I know, but I was hoping to see your face. But I can close it. What if I put it like that?
+Iggy Vermaak: Yeah, put it like that because I can't see what you're talking about.
+
+
+
+
+00:08:30
+
+
+Iggy Vermaak: If you scroll
+Michael Glover: Okay.
+Iggy Vermaak: down.
+Michael Glover: So, you see how So, can you see that there's there's this background image of this chick here, and then there's this one. So,
+Iggy Vermaak: Yeah.
+Michael Glover: that's that's like that's difficult because you basically like you can't really choose you can't get rid of this thing. So, so this one doesn't work in this instance. So,
+Iggy Vermaak: Yeah.
+Michael Glover: so it would be good to be able to like at least have the option to get rid of it. And then like to me the ideal one would be to be able to if you could
+Iggy Vermaak: We're talking about the the hero section here.
+Michael Glover: change for
+Iggy Vermaak: Sorry, I'm just um want to Yeah. Yeah.
+Michael Glover: the
+Iggy Vermaak: So, the AI transcript uh reference is basically what we're talking about.
+Michael Glover: Yeah. So for the for the hero the hero image currently there two images and
+Iggy Vermaak: Yeah.
+Michael Glover: the image that's towards the front it would be good to have the option to delete that image if it doesn't work and for
+
+
+
+
+00:09:23
+
+
+Iggy Vermaak: Yeah.
+Michael Glover: the image at the back ideally you'd be able to upload a specific image with specific dimensions. So for example this image at the back this main hero image you can see that her face is cut off just above her mouth. So that would, you know, obviously just look look ridiculous.
+Iggy Vermaak: Yeah.
+Michael Glover: Um, so I'm not sure what the process is from the front end, but if if there was image dimensions, then a designer could make an image or they could crop an image from found online and put it in certain dimensions so that it would fit neatly as the hero.
+Iggy Vermaak: Mhm.
+Michael Glover: Yeah. So that that's the hero images and image one.
+Iggy Vermaak: Yeah.
+Michael Glover: And then um yeah, so I'll make that a bullet point. And then an image option for this is use section. So I don't know. I mean this is also like a I think actually think I can remove that point because yeah it's awesome that you can add this background. Like I don't know if you notice how much of a difference that makes to have this like it just adds so much amazing texture.
+
+
+
+
+00:10:44
+
+
+Iggy Vermaak: Yeah.
+Michael Glover: Yeah. So then
+Iggy Vermaak: Um well I mean that's that's that's purely because of the image is good you know
+Michael Glover: this
+Iggy Vermaak: um the AI just
+Michael Glover: Yeah. So I No,
+Iggy Vermaak: chose the right image for this section you know
+Michael Glover: no, no. So So this one didn't.
+Iggy Vermaak: like
+Michael Glover: So this here I put this image in.
+Iggy Vermaak: okay well that's the point
+Michael Glover: I went and selected it. So yeah. So so yeah. So if you removed it, it would that would be a scent.
+Iggy Vermaak: Okay.
+Michael Glover: That would be dark. This is for the this is for you section. Yeah. So this is dark. This is a scent. This is light. And then if you go light and then choose this then look how
+Iggy Vermaak: Switch it to dark now.
+Michael Glover: beautiful.
+Iggy Vermaak: You did it on the on the header.
+Michael Glover: Uh so it just it it just goes very dark.
+
+
+
+
+00:11:51
+
+
+Iggy Vermaak: Yeah. Which is the idea.
+Michael Glover: Yeah. Yeah. So this is why I think like it like like with with some options for
+Iggy Vermaak: Yeah.
+Michael Glover: ZA then you can like edit the stuff around a little bit and you know like and like play with it a little bit at the level of of editing as opposed to
+Iggy Vermaak: Yes.
+Michael Glover: the
+Iggy Vermaak: Um, but Mike,
+Michael Glover: input.
+Iggy Vermaak: we do I don't want to overload people with options, you
+Michael Glover: I know that and that's why I wanted to chat to you because I don't want to recommend stuff where
+Iggy Vermaak: know,
+Michael Glover: where you basically end up having it too many options.
+Iggy Vermaak: you know,
+Michael Glover: Yeah,
+Iggy Vermaak: it's just like uh um like choice paralysis that I'm trying to avoid.
+Michael Glover: I know. It's like then you end up with, you know, like Photoshop level complexity. That's the absurd case. If you kept kept adding
+Iggy Vermaak: Yeah, exactly. Yeah, that would be the hips case.
+
+
+
+
+00:12:49
+
+
+Iggy Vermaak: It's not going to ever get anywhere near that.
+Michael Glover: options
+Iggy Vermaak: But I do want to I do want us to be careful about the amount of options that we give them. The the the check boxes you have in the dock at the moment. Sure. are I can work on implement implementmenting that but I do think we need to be very careful about adding way too many options for people here you know
+Michael Glover: Yeah.
+Iggy Vermaak: um there's an issue
+Michael Glover: Yeah. So this so this is a an interesting one. Some of these backgrounds. So for example, I'm not sure what this section is is called. It just says your heart and soul ready to experience relief. I think it's like a kind of value proposition or something. So if you go dark,
+Iggy Vermaak: Yeah.
+Michael Glover: the background is affected and goes dark, right? Not the font. If you go ascent, the background is affected. If you go light,
+Iggy Vermaak: Yeah.
+Michael Glover: the background is affected and then the font is affected.
+
+
+
+
+00:13:55
+
+
+Michael Glover: But there's some other cases where you can't change. I'm trying to think that's not an example. So for example on the hero if so this is dark if you go ascent there's like almost no difference and then if you go light it only
+Iggy Vermaak: Mhm.
+Michael Glover: changes the font to dark as if the background would change to light but the background isn't changed to light.
+Iggy Vermaak: Okay, that's a bug.
+Michael Glover: Yeah. Yeah. So, I'm going to leave it as Yeah. Yeah. Anyway, so that that's one. Um, should I put that in the
+Iggy Vermaak: Um, it's okay.
+Michael Glover: notes?
+Iggy Vermaak: the AI transcript will um how it is as another there's a problem in the Euro that when you switch to light it doesn't always um make the background light and it takes dark.
+Michael Glover: Yeah. Yeah.
+Iggy Vermaak: Yeah, it's
+Michael Glover: Okay. Then this date and time one.
+Iggy Vermaak: fine.
+Michael Glover: Um, basically it's just it's just the the redundancy of of the words date and time because they're already there and then you because you can't edit them out.
+
+
+
+
+00:15:20
+
+
+Michael Glover: Uh, okay. Images as backgrounds. Yeah, I was just showing you here the nice examples like look how beautiful that those two came out about the about your host. For some reason, the AI created two sections. So, she they took the the like bio about your host copy and they made an an about your host section and then also a note from Lola Jones section which was the same copy.
+Iggy Vermaak: Okay,
+Michael Glover: So, I don't know if the answer if what the solution is there.
+Iggy Vermaak: cool.
+Michael Glover: Like I wonder if it's the solution to to like be able to delete
+Iggy Vermaak: Um, yeah. Uh to be able to delete sections is definitely a thing um that we need to have.
+Michael Glover: sections.
+Iggy Vermaak: Um a note from Lola Jones. Uh we often have that. Um we have it with uh Lisa Barnett which uh
+Michael Glover: Yeah.
+Iggy Vermaak: these templates were basically built on um you know trained on you know um and I think I just need to put a
+
+
+
+
+00:16:32
+
+
+Michael Glover: Yeah.
+Iggy Vermaak: directive in the ad schema that the about your host and a note from said author whatever can't be the And you know it needs to generate new content.
+Michael Glover: Yeah. Yeah. And Lola Jones is a weird one because she her her about your host wasn't written in a typical
+Iggy Vermaak: Yeah.
+Michael Glover: way. She wrote it in like a very much like a first person narrative type of way. Whereas other people will write like you know I'm an author of this many books and I you know meditated for 20 years or
+Iggy Vermaak: Yeah. Well, I mean, yeah.
+Michael Glover: whatever.
+Iggy Vermaak: Um, the wizard doesn't ask people those questions, you know, all these questions. It doesn't ask you every single question in the world, you know, in order to fill out these pages. Uh, which is the idea, you know. Um, I'm trying to keep the wizard as short as possible, even though it's already very quite long,
+Michael Glover: Yeah,
+Iggy Vermaak: you know.
+Michael Glover: totally got to um this one we went over last time.
+
+
+
+
+00:17:41
+
+
+Michael Glover: It's whether it's whether you have whether this is an input thing, so I'm going to just ignore it for now. It's whether you can just submit a doc
+Iggy Vermaak: Yeah, I mean what I told you basically is yeah, we can change that in the wizard where they either upload a
+Michael Glover: test.
+Iggy Vermaak: PDF or a uh word document or a spreadsheet. Um, and then the AI will be able to extract those testimonials and put them in. Yeah. Uh, is that something we definitely want rather than them having to or we do both options? They can input them one by one or they can upload a document of uh testimonials. The other option is also to say um can you
+Michael Glover: Yo.
+Iggy Vermaak: give us a link to where your testimonials exist and then the AI can read that page and extract it
+Michael Glover: In my experience,
+Iggy Vermaak: itself.
+Michael Glover: they typically don't have a link like that. They might have a document, but I would say like it would probably be better for them to upload a document or just or just paste all of them in. So they they usually have them in like a document somewhere so they can just paste them all in.
+
+
+
+
+00:19:05
+
+
+Iggy Vermaak: Okay. So, add a paste in option basically uh plus uh upload
+Michael Glover: Um,
+Iggy Vermaak: documents plus just give us a link. That's pretty f****** hardcore that to do, but it it can be
+Michael Glover: so I I don't think that I I really don't think the link thing is necessary,
+Iggy Vermaak: done.
+Michael Glover: I I've just never seen it. I've never seen anyone have that um have a link or or it's or they're going to send you like it's going to be just so
+Iggy Vermaak: Would you be surprising how how
+Michael Glover: many
+Iggy Vermaak: good AI is at crawling a page and extracting?
+Michael Glover: Yeah. I just Yeah. I Yeah.
+Iggy Vermaak: Yeah.
+Michael Glover: If if it can if it can do it within those nar narrow parameters, I just I just worry that that that it'll pull other information and then conflate it and then suddenly it's writing a a live event banning page copy that's based on like a website. You know what I mean? That's the one I worry
+
+
+
+
+00:20:14
+
+
+Iggy Vermaak: Mike, what do you what do you think about this? Um,
+Michael Glover: about.
+Iggy Vermaak: that we we basically explain to people, you know, like when they use this that the AI is going to editorialize to a certain extent. um you will have an opportunity to edit it afterwards
+Michael Glover: Yeah,
+Iggy Vermaak: but it is going to by the very nature of AI you know it's because we don't ask them every like the exact copy for every single section you know like
+Michael Glover: I'm gonna write that down.
+Iggy Vermaak: yeah I mean I could build a form that asks them every single you know in to input every single piece of copy that they want, but then that wizard is going to become so bloody long,
+Michael Glover: Yeah.
+Iggy Vermaak: you know.
+Michael Glover: No, no,
+Iggy Vermaak: So the idea here really is to
+Michael Glover: no.
+Iggy Vermaak: ask the minimum amount of questions and get some sort of output. You
+Michael Glover: Exactly. And that and that and that's the and that's the trade-off is that is that is that what you're trying to not make it so
+
+
+
+
+00:21:25
+
+
+Iggy Vermaak: know,
+Michael Glover: complicated that you get the perfect output but you're trying to make you're trying to get a good output. No, I know it's I know exactly what you're saying and
+Iggy Vermaak: yeah.
+Michael Glover: that's why and that's why this this that's why I'm being I'm trying to be careful with this feedback because I'm not just trying to dump you know every thought in my head on onto the page and and it has like
+Iggy Vermaak: Yeah.
+Michael Glover: implications for how you how you you know implementing that implementing that feedback. Okay. Um, there's more output. Then then this one about the colors. This is more just to note and I don't I don't even know that if there's really an action item here, but at the input stage, it's important that that they choose three colors like and and that those colors are like quite carefully selected.
+Iggy Vermaak: Yeah. Have you been finding that the colors are not carefully selected? Because you know you're going to edit the colors in the wizard.
+Michael Glover: No, I know you can.
+
+
+
+
+00:22:44
+
+
+Michael Glover: I know you can.
+Iggy Vermaak: Yeah.
+Michael Glover: Um, all I was noting here and it's like So, you go for it.
+Iggy Vermaak: Yeah. Because at the end of the day like you know like I have a link there where you know we can analyze their website and their colors but like I mean if if they already have bad color palette you know that's not like duo tone tronee or you know they don't make sense
+Michael Glover: No.
+Iggy Vermaak: together the the AI is going to pick that up you know and it's going to use those colors. So at the end of the day, you know, that's something that uh you're kind of at the behest of, you know, how good this person is at at picking colors that are contrasting enough and things like that, you
+Michael Glover: Exactly. Exactly. And that's why like and and and that I think is is one is one of the is one of the real challenges
+Iggy Vermaak: know.
+Michael Glover: is that you basically have to have some kind of a design mind to to select the right colors and and and if you and if you go and select three weird colors.
+
+
+
+
+00:23:52
+
+
+Iggy Vermaak: Yeah.
+Michael Glover: So, so what I did here was I I didn't I didn't check the hex numbers, okay? I just blasted in the style guide and I was like, let's just see if it if it can pick out the style from the style guide. But the style guide has got one, two, three, four, five, six, six color palettes and then it's got an additional font color palette. So, it's got like seven different hex numbers. So if you if you don't choose the right three colors as you're saying, okay, or it pulls it from your website and your website has weird colors then
+Iggy Vermaak: Yeah.
+Michael Glover: and with good reason, you don't edit it. Those colors are kind of set once the page is generated. So to to go back and change the colors, you'll have to go back to the wizard and regenerate the page. Yeah.
+Iggy Vermaak: Correct.
+Michael Glover: So it's basically it's like it's trying to communicate that like that. That's what this point here means. It's important to select your
+
+
+
+
+00:25:05
+
+
+Iggy Vermaak: What about this?
+Michael Glover: colors.
+Iggy Vermaak: Um, go back to the Figma style guide. God, this stuff is so badly named in this style, guys. Um, no, scroll up. I want to I want to look at that more. And I feel like I need to break the wizard up into color palette. But I mean, look at like the font colors are exactly the same as the color palette here.
+Michael Glover: So the only one that's different is One
+Iggy Vermaak: The only one that's different is there, you know,
+Michael Glover: of these is different.
+Iggy Vermaak: like and then if you go back
+Michael Glover: Yeah, I think this one's actually just repeated.
+Iggy Vermaak: to No,
+Michael Glover: Anyway
+Iggy Vermaak: it's a gradient. Yeah.
+Michael Glover: gradient.
+Iggy Vermaak: which uh yeah, I'm not sure I want to get into f****** adding gradients to
+Michael Glover: So, so, so this so this is this is a key thing to understand.
+Iggy Vermaak: the
+Michael Glover: This is a that's what I'm keep saying about that like the old paradigm of like there's like the customizable LP that's got you know it's got like seven colors and then there's like a templatized AI made one which has got three colors and so it's like we've got like old LP way of thinking
+
+
+
+
+00:26:23
+
+
+Iggy Vermaak: Yeah.
+Michael Glover: and of setting stuff up and then we've got like new LP templatized way of of thinking about things and and
+Iggy Vermaak: which has only six
+Michael Glover: uh what as the old
+Iggy Vermaak: colors. No.
+Michael Glover: way.
+Iggy Vermaak: Uh if you go back to the wizard,
+Michael Glover: Yeah.
+Iggy Vermaak: uh go to wizard uh top left.
+Michael Glover: Yeah. I just don't want I just want to save this so I don't lose it. Yeah.
+Iggy Vermaak: Get a color profile. Um, your brand. Yeah, I only have room for six colors.
+Michael Glover: Uh, okay. Yeah. Yeah. Yeah. Yeah. f***. I
+Iggy Vermaak: And it's primary secondary tertiary and then text on light
+Michael Glover: wonder.
+Iggy Vermaak: background text on dark background and then link accent
+Michael Glover: Yeah.
+Iggy Vermaak: color you know
+Michael Glover: Yeah. Okay. I see what she's saying.
+Iggy Vermaak: and
+Michael Glover: So I was wrong. It's you have colors. You have it background
+
+
+
+
+00:27:39
+
+
+Iggy Vermaak: yeah
+Michael Glover: colors.
+Iggy Vermaak: Yeah.
+Michael Glover: Yeah, that's why I thought this call is important because otherwise this feedback is just going to some of it is just going to be
+Iggy Vermaak: No,
+Michael Glover: incorrect.
+Iggy Vermaak: because I need I I need to explain to you how it actually works and you don't know.
+Michael Glover: Yeah.
+Iggy Vermaak: Um and so some the feedback might be a little unrealistic, you know,
+Michael Glover: Yeah.
+Iggy Vermaak: um and and the schema file, this AI schema file is already uh pushed along, you know, to set up like rules about how it should generate things, you know. Um,
+Michael Glover: What do you think about this? Sorry.
+Iggy Vermaak: I I just think that we need to kind of keep in
+Michael Glover: You go first.
+Iggy Vermaak: mind that there are things that are practical to do with AI. Uh and we kind of need to limit ourselves to like you know do do what what we want uh at the end of the day is something for path clients to easily use and be able to create a possible result that we can launch with.
+
+
+
+
+00:29:10
+
+
+Iggy Vermaak: You
+Michael Glover: Yeah. Yeah.
+Iggy Vermaak: know,
+Michael Glover: I to me I think that's that's stage two is is is is when you can like hand it over to the client. To me I think stage one is being us being able to make an LP quickly. That's how that's how I see it.
+Iggy Vermaak: yeah.
+Michael Glover: I I just Yeah.
+Iggy Vermaak: But does that uh LP have to be perfectly optimized, you know, and as if we handcrafted it, you
+Michael Glover: Um, I suppose like
+Iggy Vermaak: know,
+Michael Glover: No, it doesn't have to be perfectly optimized. No, suppose their face actually isn't cut off. Like, I was wrong. Um, it doesn't have to be perfectly optimized. No, but you know you would you would need it to be desktop and hero for
+Iggy Vermaak: Yeah.
+Michael Glover: example. Yeah.
+Iggy Vermaak: Jesus.
+Michael Glover: Um okay let me just keep driving through and then and then I suppose this is another one of those like kind of trade-off decisions is um so the section this session is built to address things like I'll come back to the the so like for example here what you'll experience This
+
+
+
+
+00:30:50
+
+
+Iggy Vermaak: Thank you. What's up?
+Michael Glover: is a very important section. Um, and it should probably be by itself. And then this this thing is built is this session is built to address things like should probably be a different section.
+Iggy Vermaak: Okay,
+Michael Glover: And then I was just saying it should and then I was just saying if the heading could be editable.
+Iggy Vermaak: cool. Yeah. Um,
+Michael Glover: So like
+Iggy Vermaak: it it the AI missed a few things um that is not editable right now
+Michael Glover: Okay.
+Iggy Vermaak: and I need to fix that. Yeah.
+Michael Glover: Okay, how back are these icons
+Iggy Vermaak: Yeah. But like most of your feedback here, dude,
+Michael Glover: like?
+Iggy Vermaak: is not about the output. It's about the front-end editing capabilities.
+Michael Glover: Yeah.
+Iggy Vermaak: It doesn't sound to me like you have a particular problem with the output. It's the that there are that I haven't completed the work on front-end editing and that there's features that are missing.
+Michael Glover: kind of.
+
+
+
+
+00:31:59
+
+
+Michael Glover: Yeah. Or or there's like or there's Yeah. Or there's there's slightly more editing capabilities so that Zea can generate an LP quickly.
+Iggy Vermaak: Yeah. Okay. Still though, this is the front end editor. You know, the AI will make mistakes. It will do weird things here and there.
+Michael Glover: for
+Iggy Vermaak: Uh, and that's fine.
+Michael Glover: sure.
+Iggy Vermaak: Uh, as long as we can go in and edit it ourselves,
+Michael Glover: Yeah.
+Iggy Vermaak: you know, and fix,
+Michael Glover: Yeah.
+Iggy Vermaak: you know, like
+Michael Glover: So you totally.
+Iggy Vermaak: that's
+Michael Glover: So you'll see here for example um this is on the this is the testimonial section. Okay.
+Iggy Vermaak: Yeah.
+Michael Glover: You see Julie G Germany. this one.
+Iggy Vermaak: Yeah.
+Michael Glover: So, this is her text testimonial text, like the primary text, and then the heading, it made the heading the same as the as the primary text,
+Iggy Vermaak: Yeah.
+Michael Glover: and then you and then you can't edit the um text testimonial.
+Iggy Vermaak: Yeah.
+
+
+
+
+00:33:02
+
+
+Michael Glover: So, that would be one.
+Iggy Vermaak: Okay.
+Michael Glover: It's like testimonial headings if they could be editable.
+Iggy Vermaak: Yeah, dude. Um, this was never even the plan to do this. uh you know and I knew this this is going to take a lot of work to get working completely right you know it's uh we're we're basically building an
+Michael Glover: No,
+Iggy Vermaak: application with full-on front-end editing like a a proper CMS.
+Michael Glover: no.
+Iggy Vermaak: So, yeah, I take all these notes and I know that it's uh not where it needs to be yet. I'm fully aware of that. Yeah.
+Michael Glover: No. Yeah. I mean it's but it's also Yeah. It's also an amazing achievement that I got
+Iggy Vermaak: But yeah, dude. And I mean I I I mean what I'm very proud of is the fact that we can
+Michael Glover: here.
+Iggy Vermaak: output uh a page even to begin with you know uh and not only that we can do the checkout the upsell page all of that you know the entire funnel
+
+
+
+
+00:34:10
+
+
+Michael Glover: No, like I haven't even looked at event.
+Iggy Vermaak: So, what I'm going to do tonight now is I'm just going to uh
+Michael Glover: Yeah.
+Iggy Vermaak: um put the um feedback that you've given me into it and see how much fix. But then we'll have to test more, you know,
+Michael Glover: Yeah,
+Iggy Vermaak: until it's solid,
+Michael Glover: I know.
+Iggy Vermaak: you know,
+Michael Glover: Yeah. Do you think I should stick this feedback in the chat with John or
+Iggy Vermaak: stick it in there.
+Michael Glover: not?
+Iggy Vermaak: Um, and then, um, I'll, uh, I'll start working on it right away.
+Michael Glover: Yeah. Okay. Yeah. I I think I think I think if if if if people can understand that there's like a few key points that they can understand. The one is you're trying to keep this thing simple. So you don't want to make like endless editing end edit front end editing options. That's the one part.
+Iggy Vermaak: Yeah.
+Michael Glover: The other part is like there's there's the old way of making landing pages which is the custom way and then there's a new way which is like a simplified less options version.
+
+
+
+
+00:35:39
+
+
+Michael Glover: That's important to understand as well. And then the third one to understand is that there's a difference. There's there's the ability to make an LP through the LP builder like to make an LP quickly. That's one thing. And then there's a much much much more difficult task of creating a form that is client-f facing that you can send to a client and they can navigate their way through it, get it up to 80% and then make the LP themselves.
+Iggy Vermaak: Yeah.
+Michael Glover: And I think that that that one of them being able to do it completely by themselves is like Yeah, I I I don't even know if that should be the goal perhaps ever, but but not at this particular stage.
+Iggy Vermaak: No, not in this particular stage. That's a that's a different thing. Um,
+Michael Glover: That's that's a
+Iggy Vermaak: eventually we c we can get it to a point where,
+Michael Glover: different
+Iggy Vermaak: you know, clients can pretty much build a funnel using our system by themselves, you know. Um,
+
+
+
+
+00:36:53
+
+
+Michael Glover: Yeah.
+Iggy Vermaak: but we're not anywhere close to that. Um,
+Michael Glover: Yeah.
+Iggy Vermaak: that's that's that's like a phase four or five thing.
+Michael Glover: Yeah. Yes. Just look at this.
+Iggy Vermaak: Yeah.
+Michael Glover: That's crazy, bro. It's crazy to see this
+Iggy Vermaak: Yeah. Dude, I never thought that I would ever build a freaking AI product in my
+Michael Glover: out. No.
+Iggy Vermaak: life. Um,
+Michael Glover: No.
+Iggy Vermaak: it's just a question of getting the front end editing right now, but there's just so many little things to look at, you know, and see if they work right and all that. Um, yeah. So, yeah. Okay, cool. Um, all right. Let me get started on this. Uh, and then yeah, I'm going to wait for this AI transcript to come through because I think there's a lot that we discussed.
+Michael Glover: at all.
+Iggy Vermaak: I'm digging this AI note takingaking bride and the way it summarizes and can create lists for you and all that, man.
+
+
+
+
+00:38:11
+
+
+Iggy Vermaak: Are you do you use that? E.
+Michael Glover: Yeah, big time, bro.
+Iggy Vermaak: Yeah.
+Michael Glover: That's a huge help. It's hard to imagine doing it any other way.
+Iggy Vermaak: Yeah.
+Michael Glover: Um, okay. L Iggy L.
+Iggy Vermaak: All right, bro. I'm going to go have some dinner and then uh Yes,
+Michael Glover: Dude, I think it's your birthday tomorrow.
+Iggy Vermaak: it is. Yeah, it is.
+Michael Glover: Oh, dude, that's exciting, man. Have you got anything
+Iggy Vermaak: Yeah. Not really,
+Michael Glover: planned?
+Iggy Vermaak: man. I'm not really big on birthdays. Same. Not my own in particular. Yeah.
+Michael Glover: Okay,
+Iggy Vermaak: Particularly.
+Michael Glover: I'll give you a call tomorrow.
+Iggy Vermaak: Yeah. You can um but yeah. Um and I don't like surprises and yeah, I'm just gonna just going to be working and me and Kavina are going to hang out and all that. Cool.
+Michael Glover: I totally agree.
+Iggy Vermaak: All right.
+Michael Glover: Okay.
+Iggy Vermaak: But thanks time.
+Michael Glover: All right. Bud,
+Iggy Vermaak: I appreciate it.
+Michael Glover: man. Great.
+
+
+
+
+Transcription ended after 00:39:22
+
+
+This editable transcript was computer generated and might contain errors. People can also change the text after it was created.

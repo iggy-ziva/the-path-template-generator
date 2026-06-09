@@ -10,6 +10,8 @@ interface Props {
   /** Called with the chosen URL, or null to remove the image entirely. */
   onSelect: (url: string | null) => void;
   onClose: () => void;
+  /** Optional guidance (e.g. recommended dimensions) shown in the header. */
+  dimensionHint?: string;
 }
 
 const OVERLAY: CSSProperties = {
@@ -62,7 +64,7 @@ const FOOTER: CSSProperties = {
   borderTop: "1px solid #ececec",
 };
 
-export default function ImagePickerModal({ library, currentUrl, onSelect, onClose }: Props) {
+export default function ImagePickerModal({ library, currentUrl, onSelect, onClose, dimensionHint }: Props) {
   const [uploading, setUploading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -107,6 +109,11 @@ export default function ImagePickerModal({ library, currentUrl, onSelect, onClos
                 ? "Reuse an image from your wizard uploads, or upload a new one."
                 : "Upload an image to use here."}
             </div>
+            {dimensionHint && (
+              <div style={{ fontSize: 11, color: "#999", marginTop: 4 }}>
+                {dimensionHint}
+              </div>
+            )}
           </div>
           <button
             type="button"

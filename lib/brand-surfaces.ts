@@ -134,7 +134,7 @@ export function structuralSectionClass(
 ): string {
   if (base === "hero") {
     if (theme === "accent") return "hero accent-bg on-dark";
-    if (theme === "light") return "hero sunken-bg";
+    if (theme === "light") return "hero light-bg on-light";
     return "hero on-dark";
   }
   if (base === "final-vp") {

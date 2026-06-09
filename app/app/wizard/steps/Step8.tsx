@@ -231,8 +231,16 @@ function PressLogoRow({
 
 interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; }
 
+type ParsedTestimonial = { quote: string; name: string; location: string; context: string };
+
 export default function Step8({ data, onChange }: Props) {
   const testimonials = data.testimonials ?? [];
+
+  const [pasteText, setPasteText] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const [parseError, setParseError] = useState("");
+  const [parseNotice, setParseNotice] = useState("");
+  const importFileRef = useRef<HTMLInputElement>(null);
 
   function updateTestimonial(
     index: number,
@@ -246,6 +254,80 @@ export default function Step8({ data, onChange }: Props) {
 
   function addTestimonial() {
     onChange({ testimonials: [...testimonials, { quote: "", name: "", location: "", context: "" }] });
+  }
+
+  function mergeParsed(parsed: ParsedTestimonial[]) {
+    // Drop any blank rows the user hasn't filled in, then append the imports.
+    const existing = testimonials.filter(
+      (t) => (t.quote ?? "").trim() || (t.name ?? "").trim(),
+    );
+    onChange({ testimonials: [...existing, ...parsed] });
+    setParseNotice(`Added ${parsed.length} testimonial${parsed.length === 1 ? "" : "s"}.`);
+  }
+
+  async function handleParseText() {
+    if (!pasteText.trim() || parsing) return;
+    setParsing(true);
+    setParseError("");
+    setParseNotice("");
+    try {
+      const res = await fetch("/api/wizard/parse-testimonials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: pasteText }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Could not extract testimonials");
+      const parsed: ParsedTestimonial[] = Array.isArray(json.testimonials) ? json.testimonials : [];
+      if (parsed.length === 0) throw new Error("No testimonials found in the pasted text.");
+      mergeParsed(parsed);
+      setPasteText("");
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : "Could not extract testimonials");
+    } finally {
+      setParsing(false);
+    }
+  }
+
+  async function handleParseFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setParsing(true);
+    setParseError("");
+    setParseNotice("");
+    try {
+      const ext = file.name.split(".").pop() ?? "bin";
+      const signRes = await fetch("/api/wizard/signed-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ext }),
+      });
+      const sign = await signRes.json();
+      if (!signRes.ok) throw new Error(sign.error ?? "Could not start upload");
+
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { error: upErr } = await supabase.storage
+        .from(sign.bucket)
+        .uploadToSignedUrl(sign.path, sign.token, file);
+      if (upErr) throw new Error(upErr.message);
+
+      const res = await fetch("/api/wizard/parse-testimonials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl: sign.publicUrl }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Could not extract testimonials");
+      const parsed: ParsedTestimonial[] = Array.isArray(json.testimonials) ? json.testimonials : [];
+      if (parsed.length === 0) throw new Error("No testimonials found in that document.");
+      mergeParsed(parsed);
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : "Could not parse that file");
+    } finally {
+      setParsing(false);
+      if (importFileRef.current) importFileRef.current.value = "";
+    }
   }
 
   const inputStyle: React.CSSProperties = {
@@ -279,6 +361,64 @@ export default function Step8({ data, onChange }: Props) {
       </p>
 
       <Section title="Text testimonials">
+        {/* Quick import — paste a block of testimonials or upload a document; the
+            AI extracts structured rows you can then edit below. */}
+        <div style={{ background: Z.creamMid, border: `1.5px solid ${Z.creamDeep}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+          <p style={{ fontFamily: Z.font, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: Z.muted, marginBottom: 8 }}>
+            Quick import (optional)
+          </p>
+          <p style={{ fontFamily: Z.font, fontSize: 12, color: Z.muted, marginBottom: 10, lineHeight: 1.6 }}>
+            Paste all your testimonials at once (any format) and we&apos;ll split them into separate cards — or upload a document (PDF / screenshot). You can edit everything afterwards.
+          </p>
+          <textarea
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            placeholder={"Paste testimonials here — e.g.\n\n\"This changed everything for me.\" — Sarah T., London\n\n\"Worth every minute.\" — James R."}
+            rows={5}
+            style={{ ...fieldStyle, resize: "vertical", lineHeight: 1.5, marginBottom: 10 }}
+          />
+          <input
+            ref={importFileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
+            onChange={handleParseFile}
+            style={{ display: "none" }}
+            disabled={parsing}
+          />
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <button
+              type="button"
+              onClick={handleParseText}
+              disabled={parsing || !pasteText.trim()}
+              style={{
+                padding: "8px 16px", borderRadius: 8,
+                background: parsing || !pasteText.trim() ? Z.creamMid : Z.white,
+                border: `1.5px solid ${parsing || !pasteText.trim() ? Z.faint : Z.pink}`,
+                color: parsing || !pasteText.trim() ? Z.faint : Z.pink,
+                fontFamily: Z.font, fontSize: 13, fontWeight: 600,
+                cursor: parsing || !pasteText.trim() ? "not-allowed" : "pointer",
+              }}
+            >
+              {parsing ? "Extracting…" : "Extract from text"}
+            </button>
+            <button
+              type="button"
+              onClick={() => importFileRef.current?.click()}
+              disabled={parsing}
+              style={{
+                padding: "8px 16px", borderRadius: 8, background: Z.creamMid,
+                border: `1.5px solid ${Z.creamDeep}`, color: Z.muted,
+                fontFamily: Z.font, fontSize: 13, fontWeight: 600,
+                cursor: parsing ? "not-allowed" : "pointer",
+              }}
+            >
+              {parsing ? "Working…" : "Upload document"}
+            </button>
+            {parseNotice && <span style={{ fontFamily: Z.font, fontSize: 12, color: "#3D6B30", fontWeight: 600 }}>{parseNotice}</span>}
+            {parseError && <span style={{ fontFamily: Z.font, fontSize: 12, color: Z.coral }}>{parseError}</span>}
+          </div>
+        </div>
+
         {testimonials.map((t, i) => (
           <div key={i} style={{ background: Z.creamMid, border: `1.5px solid ${Z.creamDeep}`, borderRadius: 12, padding: 20, marginBottom: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
