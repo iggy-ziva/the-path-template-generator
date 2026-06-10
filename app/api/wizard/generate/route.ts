@@ -11,7 +11,7 @@ export const maxDuration = 300;
 
 const GENERATION_MODEL =
   process.env.ANTHROPIC_GENERATION_MODEL ?? "claude-sonnet-4-5";
-const GENERATION_MAX_TOKENS = 32_000;
+const GENERATION_MAX_TOKENS = 64_000;
 const CLAUDE_TIMEOUT_MS = 15 * 60 * 1000;
 const MAX_CLAUDE_RETRIES = 4;
 const VISION_MAX_IMAGES = 4;
@@ -1390,7 +1390,8 @@ function parseJsonResponse(raw: string, label: string): Record<string, unknown> 
       return parsed as Record<string, unknown>;
     } catch { /* try next */ }
   }
-  console.error(`${label} JSON parse error — first 800 chars:`, raw.slice(0, 800));
+  console.error(`${label} JSON parse error — first 2000 chars:`, raw.slice(0, 2000));
+  console.error(`${label} JSON parse error — last 500 chars:`, raw.slice(-500));
   throw new Error(`${label}: failed to parse AI response as JSON`);
 }
 
@@ -1407,10 +1408,14 @@ function parseGenerationResponse(
   expectedKeys: readonly string[],
 ): Record<string, unknown> {
   const raw = extractResponseText(response);
+
+  console.log(`${label}: stop_reason=${response.stop_reason}, output_tokens=${response.usage?.output_tokens ?? "?"}, raw_length=${raw.length}`);
+
   if (!raw.trim()) throw new Error(`${label}: AI returned an empty response`);
 
   if (response.stop_reason === "max_tokens") {
-    console.warn(`${label}: hit max_tokens — output may be truncated`);
+    console.error(`${label}: HIT MAX_TOKENS LIMIT — output truncated at ${response.usage?.output_tokens ?? "?"} tokens. Raw tail (200 chars):`, raw.slice(-200));
+    throw new Error(`${label}: generation output was truncated (hit token limit). Try reducing the amount of uploaded images or document files and regenerate.`);
   }
 
   const parsed = parseJsonResponse(raw, label);
