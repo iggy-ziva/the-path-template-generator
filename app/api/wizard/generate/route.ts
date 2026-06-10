@@ -11,7 +11,7 @@ export const maxDuration = 300;
 
 const GENERATION_MODEL =
   process.env.ANTHROPIC_GENERATION_MODEL ?? "claude-sonnet-4-5";
-const GENERATION_MAX_TOKENS = 16_000;
+const GENERATION_MAX_TOKENS = 32_000;
 const CLAUDE_TIMEOUT_MS = 15 * 60 * 1000;
 const MAX_CLAUDE_RETRIES = 4;
 const VISION_MAX_IMAGES = 4;
@@ -1348,25 +1348,50 @@ function repairTruncatedJson(json: string): string {
   return repaired;
 }
 
+function stripJsonComments(json: string): string {
+  // Remove single-line // comments that Claude sometimes copies from the schema examples.
+  // Only strips content after // that is NOT inside a string value.
+  let result = "";
+  let inString = false;
+  let escape = false;
+  let i = 0;
+  while (i < json.length) {
+    const ch = json[i];
+    if (inString) {
+      if (escape) { escape = false; result += ch; i++; continue; }
+      if (ch === "\\") { escape = true; result += ch; i++; continue; }
+      if (ch === '"') inString = false;
+      result += ch; i++; continue;
+    }
+    if (ch === '"') { inString = true; result += ch; i++; continue; }
+    if (ch === "/" && json[i + 1] === "/") {
+      // Skip to end of line
+      while (i < json.length && json[i] !== "\n") i++;
+      continue;
+    }
+    result += ch; i++;
+  }
+  return result;
+}
+
 function parseJsonResponse(raw: string, label: string): Record<string, unknown> {
   const jsonStr = extractJsonObject(raw);
-  try {
-    const parsed = JSON.parse(jsonStr);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw new Error("Response is not a JSON object");
-    }
-    return parsed as Record<string, unknown>;
-  } catch {
+  const attempts = [jsonStr, stripJsonComments(jsonStr)];
+  for (const candidate of attempts) {
     try {
-      const repaired = repairTruncatedJson(jsonStr);
-      const parsed = JSON.parse(repaired);
-      console.warn(`${label}: recovered truncated JSON via repair`);
+      const parsed = JSON.parse(candidate);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
       return parsed as Record<string, unknown>;
-    } catch {
-      console.error(`${label} JSON parse error — first 800 chars:`, raw.slice(0, 800));
-      throw new Error(`${label}: failed to parse AI response as JSON`);
-    }
+    } catch { /* try next */ }
+    try {
+      const repaired = repairTruncatedJson(candidate);
+      const parsed = JSON.parse(repaired);
+      console.warn(`${label}: recovered JSON via repair`);
+      return parsed as Record<string, unknown>;
+    } catch { /* try next */ }
   }
+  console.error(`${label} JSON parse error — first 800 chars:`, raw.slice(0, 800));
+  throw new Error(`${label}: failed to parse AI response as JSON`);
 }
 
 function assertPageKeys(content: Record<string, unknown>, keys: readonly string[], label: string) {
