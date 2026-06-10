@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Barlow, Caveat } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import { MarkerIO } from "@/components/MarkerIO";
 
 // Self-hosted via next/font — zero render-blocking network request
 const barlow = Barlow({
@@ -37,6 +38,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
+        <MarkerIO />
         <Script
           id="typekit-load"
           strategy="afterInteractive"
