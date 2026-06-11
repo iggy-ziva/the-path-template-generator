@@ -126,40 +126,34 @@ export async function GET(req: NextRequest) {
 
     if (!submissionRow) return NextResponse.json({ submission: null });
 
-    // Backfill image arrays from the specific funnel's _wizardSnapshot when the
-    // submission's step_data is missing them. IMPORTANT: we use the exact funnel
-    // that was requested (sourceFunnelId) rather than the most-recent funnel for
-    // the submission — that would otherwise cross-contaminate images between
-    // different generations of the same submission.
+    // When the request came in via a generated_funnels ID, image arrays in the
+    // shared submission may belong to a *different* generation of the same
+    // submission. Always override image fields with the values from this exact
+    // funnel's _wizardSnapshot so each generation sees only its own images.
     if (sourceFunnelId) {
       const IMAGE_FIELDS = ["heroImageUrls", "lifestyleImageUrls", "additionalImageUrls"] as const;
-      const stepData = (submissionRow.step_data ?? {}) as Record<string, unknown>;
-      const missingImages = IMAGE_FIELDS.some(
-        (f) => !Array.isArray(stepData[f]) || (stepData[f] as unknown[]).length === 0,
-      );
 
-      if (missingImages) {
-        const { data: sourceFunnel } = await supabase
-          .from("generated_funnels")
-          .select("content")
-          .eq("id", sourceFunnelId)
-          .eq("user_id", userId)
-          .single();
+      const { data: sourceFunnel } = await supabase
+        .from("generated_funnels")
+        .select("content")
+        .eq("id", sourceFunnelId)
+        .eq("user_id", userId)
+        .single();
 
-        const snapshot = (sourceFunnel?.content as Record<string, unknown> | null)
-          ?._wizardSnapshot as Record<string, unknown> | undefined;
+      const snapshot = (sourceFunnel?.content as Record<string, unknown> | null)
+        ?._wizardSnapshot as Record<string, unknown> | undefined;
 
-        if (snapshot) {
-          const patched = { ...stepData };
-          for (const field of IMAGE_FIELDS) {
-            if (!Array.isArray(patched[field]) || (patched[field] as unknown[]).length === 0) {
-              if (Array.isArray(snapshot[field]) && (snapshot[field] as unknown[]).length > 0) {
-                patched[field] = snapshot[field];
-              }
-            }
+      if (snapshot) {
+        const stepData = (submissionRow.step_data ?? {}) as Record<string, unknown>;
+        const patched = { ...stepData };
+        for (const field of IMAGE_FIELDS) {
+          // Snapshot value wins unconditionally — it is the exact set of images
+          // that were used when this funnel was generated.
+          if (Array.isArray(snapshot[field])) {
+            patched[field] = snapshot[field];
           }
-          submissionRow = { ...submissionRow, step_data: patched };
         }
+        submissionRow = { ...submissionRow, step_data: patched };
       }
     }
 
