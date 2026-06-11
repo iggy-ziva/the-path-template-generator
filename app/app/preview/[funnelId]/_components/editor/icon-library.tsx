@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useEditorOptional } from "./EditorContext";
 import { usePageContent } from "./PageContentContext";
 import { getAtPath } from "@/lib/content-path";
@@ -18,9 +18,9 @@ export interface IconOverride {
   /** Rendered size in px. Falls back to the component's `defaultSize` when absent. */
   size?: number;
   /**
-   * MIME type of an uploaded image (e.g. "image/svg+xml", "image/png",
-   * "image/jpeg"). Stored at upload time so the renderer knows whether to apply
-   * a CSS mask (SVG/PNG inherit currentColor) or show the image as-is (JPEG).
+   * MIME type stored at upload time ("image/svg+xml", "image/png", "image/jpeg").
+   * Used by the renderer to decide whether to apply a CSS mask (SVG/PNG inherit
+   * currentColor) or show the image as-is (JPEG).
    */
   mime?: string;
 }
@@ -45,32 +45,18 @@ function isUrl(v: string) {
   return v.startsWith("http://") || v.startsWith("https://") || v.startsWith("/");
 }
 
-/**
- * Returns true when the image should be rendered as a CSS mask so it inherits
- * `currentColor` from its container — ideal for SVG and transparent PNG icons.
- * JPEGs are fully opaque so the mask would just fill a solid box; show as-is.
- */
 function shouldUseMask(override: IconOverride): boolean {
   if (override.mime) {
-    return (
-      override.mime === "image/svg+xml" ||
-      override.mime === "image/png"
-    );
+    return override.mime === "image/svg+xml" || override.mime === "image/png";
   }
-  // Fallback: infer from URL extension when mime wasn't stored
   const lower = override.v.toLowerCase();
   if (/\.(jpg|jpeg)(\?|$)/.test(lower)) return false;
   if (/\.(svg|png)(\?|$)/.test(lower)) return true;
-  // Unknown extension — default to mask so SVGs embedded in Supabase paths work
-  return true;
+  return true; // default to mask for unknown — covers Supabase paths
 }
 
 // ── Curated icon library ──────────────────────────────────────────────────────
 
-/**
- * Small, curated icon set for bullet lists. Kept minimal so designers aren't
- * overwhelmed (per the original brief: "a short list, not a huge library").
- */
 export const ICON_LIBRARY: { name: string; label: string; svg: React.ReactNode }[] = [
   { name: "check",   label: "Check",   svg: <polyline points="20 6 9 17 4 12" /> },
   { name: "star",    label: "Star",    svg: <polygon points="12 2 15 9 22 9.3 16.5 13.8 18.5 21 12 16.8 5.5 21 7.5 13.8 2 9.3 9 9" /> },
@@ -97,7 +83,6 @@ const SIZE_PRESETS = [
 
 // ── Render helpers ─────────────────────────────────────────────────────────────
 
-/** Render a named icon from the curated set as inline SVG. */
 export function renderIcon(name: string | undefined, size = 18): React.ReactNode {
   if (!name) return null;
   const svg = ICON_MAP.get(name);
@@ -118,26 +103,17 @@ export function renderIcon(name: string | undefined, size = 18): React.ReactNode
 }
 
 /**
- * Render an icon from an IconOverride — handles named icons and uploaded images.
- *
- * - Named icons: inline SVG that inherits `currentColor` (stroke).
- * - Uploaded SVG / PNG: CSS mask technique so the image inherits `currentColor`
- *   from its container (e.g. `var(--accent-primary)`), matching the brand theme.
- * - Uploaded JPEG: rendered as a plain `<img>` (no transparency / mask possible).
- *
- * Returns `null` when no override is set; callers render their own fallback.
+ * Render an icon from an IconOverride.
+ * - Named icons: inline SVG (inherits currentColor via stroke).
+ * - Uploaded SVG / PNG: CSS mask so the image inherits currentColor.
+ * - Uploaded JPEG: plain <img> (fully opaque; mask not applicable).
  */
-export function renderIconValue(
-  override: IconOverride | null,
-  defaultSize = 18,
-): React.ReactNode {
+export function renderIconValue(override: IconOverride | null, defaultSize = 18): React.ReactNode {
   if (!override) return null;
   const size = override.size ?? defaultSize;
   const v = override.v;
 
-  if (!isUrl(v)) {
-    return renderIcon(v, size);
-  }
+  if (!isUrl(v)) return renderIcon(v, size);
 
   if (shouldUseMask(override)) {
     return (
@@ -162,7 +138,6 @@ export function renderIconValue(
     );
   }
 
-  // JPEG — fully opaque, show as-is
   // eslint-disable-next-line @next/next/no-img-element
   return (
     <img
@@ -173,42 +148,85 @@ export function renderIconValue(
   );
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── IconContainer ─────────────────────────────────────────────────────────────
 
-interface Props {
+interface IconContainerProps {
   pageKey: FunnelPageKey;
-  /** Content path holding the IconOverride (or a legacy named-icon string). */
+  /** Icon content path (e.g. "audienceItemIcons.0"). Used to read the live size. */
   path: string;
-  /** Rendered when no icon override is stored. */
-  fallback: React.ReactNode;
-  /**
-   * Base size in px used when no explicit size is stored in the override.
-   * Pass 14 for audience lists, 18 for experience lists, 24 for outcome lists.
-   */
+  /** Default icon size in px when no override is stored. */
   defaultSize?: number;
-  exportMode?: boolean;
+  /** Padding added to each side of the icon to form the container dimensions. */
+  containerPadding?: number;
+  tag?: "div" | "span";
+  className?: string;
+  "aria-hidden"?: boolean | "true";
+  style?: React.CSSProperties;
+  children: React.ReactNode;
 }
 
 /**
- * Renders the chosen icon (or fallback) and, in edit mode, opens a picker with
- * the curated set, custom upload (SVG / PNG / JPEG), and size presets.
- *
- * Uploaded SVG and PNG files inherit the container's CSS `color` value via a
- * CSS mask — they automatically match whatever brand theme is active.
- * Uploaded JPEGs are displayed as-is.
+ * A container div/span that reactively tracks the current icon size via
+ * `usePageContent` so its width/height always matches the chosen icon size.
+ * The CSS class provides background, border-radius, and flex centering.
  */
+export function IconContainer({
+  pageKey,
+  path,
+  defaultSize = 18,
+  containerPadding = 6,
+  tag: Tag = "div",
+  className,
+  style,
+  children,
+  ...rest
+}: IconContainerProps) {
+  const pageContent = usePageContent(pageKey);
+  const override = parseIconOverride(getAtPath(pageContent, path));
+  const iconSize = override?.size ?? defaultSize;
+  const dim = iconSize + containerPadding * 2;
+  return (
+    <Tag
+      className={className}
+      style={{ width: dim, height: dim, ...style }}
+      {...(rest as Record<string, unknown>)}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+// ── EditableIcon component ────────────────────────────────────────────────────
+
+interface Props {
+  pageKey: FunnelPageKey;
+  path: string;
+  fallback: React.ReactNode;
+  defaultSize?: number;
+  exportMode?: boolean;
+  /**
+   * When provided, the picker shows an "Apply to all" button that copies the
+   * current icon choice to every path in this list (not just the current one).
+   * Pass all sibling icon paths in the section, e.g.
+   * `["audienceItemIcons.0", "audienceItemIcons.1", ...]`.
+   */
+  siblingPaths?: string[];
+}
+
 export default function EditableIcon({
   pageKey,
   path,
   fallback,
   defaultSize = 18,
   exportMode = false,
+  siblingPaths,
 }: Props) {
   const editor = useEditorOptional();
   const editMode = !exportMode && Boolean(editor?.isEditMode);
   const pageContent = usePageContent(pageKey);
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const containerRef = useRef<HTMLSpanElement>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
 
   const raw = getAtPath(pageContent, path);
@@ -217,18 +235,47 @@ export default function EditableIcon({
 
   const marker = override ? renderIconValue(override, defaultSize) : fallback;
 
-  function write(patch: Partial<IconOverride>) {
-    const v = patch.v ?? override?.v ?? "";
-    const size = patch.size ?? currentSize;
-    // Preserve existing mime when only updating size or switching curated icons
-    const mime = patch.mime ?? (patch.v && isUrl(patch.v) ? undefined : override?.mime);
-    if (!v) {
-      editor?.updateField(pageKey, path, null);
-    } else {
-      const next: IconOverride = { v, size };
-      if (mime) next.mime = mime;
-      editor?.updateField(pageKey, path, next);
+  // Close on click outside
+  useEffect(() => {
+    if (!open) return;
+    function onMouseDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     }
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  function buildOverride(patch: Partial<IconOverride>): IconOverride | null {
+    const v = patch.v ?? override?.v ?? "";
+    if (!v) return null;
+    const size = patch.size ?? currentSize;
+    const mime = patch.mime ?? (patch.v && isUrl(patch.v) ? undefined : override?.mime);
+    const next: IconOverride = { v, size };
+    if (mime) next.mime = mime;
+    return next;
+  }
+
+  function write(patch: Partial<IconOverride>) {
+    const next = buildOverride(patch);
+    editor?.updateField(pageKey, path, next);
+  }
+
+  function applyToAll(patch: Partial<IconOverride>) {
+    const next = buildOverride(patch);
+    const targets = siblingPaths?.length ? siblingPaths : [path];
+    targets.forEach((p) => editor?.updateField(pageKey, p, next));
   }
 
   async function handleUpload(file: File) {
@@ -253,8 +300,10 @@ export default function EditableIcon({
 
   if (!editMode || !editor) return <>{marker}</>;
 
+  const hasMultipleSiblings = siblingPaths && siblingPaths.length > 1;
+
   return (
-    <span style={{ position: "relative", display: "inline-flex" }}>
+    <span ref={containerRef} style={{ position: "relative", display: "inline-flex" }}>
       <button
         type="button"
         contentEditable={false}
@@ -400,6 +449,32 @@ export default function EditableIcon({
               })}
             </div>
           </div>
+
+          {/* Apply to all */}
+          {hasMultipleSiblings && override && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                applyToAll({});
+                setOpen(false);
+              }}
+              style={{
+                width: "100%",
+                padding: "7px 0",
+                borderRadius: 6,
+                border: "1px solid rgba(212,168,120,0.5)",
+                background: "rgba(212,168,120,0.12)",
+                color: "#D4A878",
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Apply to all {siblingPaths!.length} items in this section
+            </button>
+          )}
 
           {/* Reset */}
           <button

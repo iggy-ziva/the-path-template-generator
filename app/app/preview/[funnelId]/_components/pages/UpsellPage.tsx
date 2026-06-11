@@ -7,7 +7,7 @@ import { distillUpsellDescription } from "@/lib/upsell-copy";
 import EditableText from "../editor/EditableText";
 import { EditableImage } from "../editor/EditableList";
 import { PageLink, PageText, useEditMode } from "../editor/page-editable";
-import EditableIcon from "../editor/icon-library";
+import EditableIcon, { IconContainer } from "../editor/icon-library";
 
 interface Props {
   content: UpsellContent;
@@ -162,7 +162,13 @@ export default function UpsellPage({ content: c, wizard: w, exportMode = false }
         <div className="included-list">
           {items.map((item, i) => (
             <div key={i} className="included-item">
-              <div className="included-icon">
+              <IconContainer
+                className="included-icon"
+                pageKey="upsell"
+                path={`includedItemIcons.${i}`}
+                defaultSize={24}
+                containerPadding={12}
+              >
                 <EditableIcon
                   pageKey="upsell"
                   path={`includedItemIcons.${i}`}
@@ -174,8 +180,9 @@ export default function UpsellPage({ content: c, wizard: w, exportMode = false }
                   }
                   defaultSize={24}
                   exportMode={exportMode}
+                  siblingPaths={items.map((_, j) => `includedItemIcons.${j}`)}
                 />
-              </div>
+              </IconContainer>
               <div>
                 <h3>
                   {usingContentItems ? (

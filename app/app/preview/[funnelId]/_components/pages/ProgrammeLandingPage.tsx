@@ -9,7 +9,7 @@ import { PageText } from "../editor/page-editable";
 import { useEditorOptional } from "../editor/EditorContext";
 import EditableSection from "../editor/EditableSection";
 import { resolveSectionTheme, PROGRAMME_LANDING_LEGACY_FIELD } from "../editor/section-theme";
-import EditableIcon from "../editor/icon-library";
+import EditableIcon, { IconContainer } from "../editor/icon-library";
 
 interface Props {
   content: ProgrammeLandingContent;
@@ -207,7 +207,14 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
             <ul className="promise-list">
               {(c.promiseBullets ?? []).map((item, i) => (
                 <li key={i} className="promise-list-item">
-                  <span className="promise-check">
+                  <IconContainer
+                    tag="span"
+                    className="promise-check"
+                    pageKey="programmeLanding"
+                    path={`promiseBulletIcons.${i}`}
+                    defaultSize={10}
+                    containerPadding={6}
+                  >
                     <EditableIcon
                       pageKey="programmeLanding"
                       path={`promiseBulletIcons.${i}`}
@@ -218,8 +225,9 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
                       }
                       defaultSize={10}
                       exportMode={exportMode}
+                      siblingPaths={(c.promiseBullets ?? []).map((_, j) => `promiseBulletIcons.${j}`)}
                     />
-                  </span>
+                  </IconContainer>
                   <EditableText pageKey="programmeLanding" path={`promiseBullets[${i}]`} as="p" html>{item}</EditableText>
                 </li>
               ))}
@@ -502,7 +510,13 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
             <div className="outcome-grid">
               {(c.outcomesItems ?? []).map((item, i) => (
                 <div key={i} className="outcome">
-                  <div className="outcome-icon">
+                  <IconContainer
+                    className="outcome-icon"
+                    pageKey="programmeLanding"
+                    path={`outcomesItemIcons.${i}`}
+                    defaultSize={24}
+                    containerPadding={10}
+                  >
                     <EditableIcon
                       pageKey="programmeLanding"
                       path={`outcomesItemIcons.${i}`}
@@ -513,8 +527,9 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
                       }
                       defaultSize={24}
                       exportMode={exportMode}
+                      siblingPaths={(c.outcomesItems ?? []).map((_, j) => `outcomesItemIcons.${j}`)}
                     />
-                  </div>
+                  </IconContainer>
                   <p>
                     <EditableText pageKey="programmeLanding" path={`outcomesItems[${i}].before`} as="strong">{item.before}</EditableText>
                     {item.after ? (

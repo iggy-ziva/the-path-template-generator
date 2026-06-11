@@ -888,8 +888,6 @@
       justify-content: center;
       flex-shrink: 0;
       align-self: start;
-      width: fit-content;
-      padding: 12px;
       border-radius: var(--r-md);
       background: var(--surface-sunken);
       color: var(--accent-primary);
@@ -2689,8 +2687,6 @@
       justify-content: center;
       flex-shrink: 0;
       align-self: start;
-      width: fit-content;
-      padding: 6px;
       border-radius: 50%;
       background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
       border: 1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent);

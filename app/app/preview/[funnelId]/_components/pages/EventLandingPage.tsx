@@ -4,7 +4,7 @@ import { useState, useEffect, type CSSProperties } from "react";
 import type { EventLandingContent, WizardSnapshot, TestimonialItem } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
 import EditableLogo from "../editor/EditableLogo";
-import EditableIcon from "../editor/icon-library";
+import EditableIcon, { IconContainer } from "../editor/icon-library";
 import EditableText from "../editor/EditableText";
 import { useEditorOptional } from "../editor/EditorContext";
 import { PageText, useEditMode } from "../editor/page-editable";
@@ -441,15 +441,23 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                   className="audience-item"
                   style={editMode ? { gridTemplateColumns: "auto 1fr auto", alignItems: "center", columnGap: 16 } : undefined}
                 >
-                  <div className="audience-icon" aria-hidden="true">
+                  <IconContainer
+                    className="audience-icon"
+                    aria-hidden="true"
+                    pageKey="eventLanding"
+                    path={`audienceItemIcons.${i}`}
+                    defaultSize={14}
+                    containerPadding={6}
+                  >
                     <EditableIcon
                       pageKey="eventLanding"
                       path={`audienceItemIcons.${i}`}
                       fallback={<CheckIcon />}
                       defaultSize={14}
                       exportMode={exportMode}
+                      siblingPaths={(c.audienceItems ?? []).map((_, j) => `audienceItemIcons.${j}`)}
                     />
-                  </div>
+                  </IconContainer>
                   <p>
                     <EditableText pageKey="eventLanding" path={`audienceItems[${i}]`} as="span" html>
                       {item.replace(/<[^>]+>/g, "")}
@@ -814,7 +822,14 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                 <div className="experience-list">
                   {(c.experienceItems ?? []).map((item, i) => (
                     <div key={i} className="experience-item">
-                      <div className="experience-icon" aria-hidden="true">
+                      <IconContainer
+                        className="experience-icon"
+                        aria-hidden="true"
+                        pageKey="eventLanding"
+                        path={`experienceItemIcons.${i}`}
+                        defaultSize={18}
+                        containerPadding={6}
+                      >
                         <EditableIcon
                           pageKey="eventLanding"
                           path={`experienceItemIcons.${i}`}
@@ -825,8 +840,9 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                           }
                           defaultSize={18}
                           exportMode={exportMode}
+                          siblingPaths={(c.experienceItems ?? []).map((_, j) => `experienceItemIcons.${j}`)}
                         />
-                      </div>
+                      </IconContainer>
                       <p>
                         <PageText pageKey="eventLanding" path={`experienceItems[${i}].title`} as="strong">
                           {item.title}
