@@ -41,6 +41,12 @@ export interface IconOverride {
   v: string;
   /** Rendered size in px. Falls back to the component's `defaultSize` when absent. */
   size?: number;
+  /**
+   * MIME type stored at upload time ("image/svg+xml", "image/png", "image/jpeg").
+   * Used by the renderer to decide whether to apply a CSS mask (SVG/PNG inherit
+   * currentColor) or show the image as-is (JPEG).
+   */
+  mime?: string;
 }
 
 /** A single testimonial card (editor-editable). `heading` is an optional short
@@ -304,6 +310,8 @@ export interface UpsellContent {
   description?: string;
   includedTitle?: string;
   includedItems?: { title: string; description: string }[];
+  /** Editor icon overrides for "What's included" items. Not AI-generated. */
+  includedItemIcons?: Record<string, IconOverride | string | null>;
   testimonialQuotes?: { quote: string; attribution?: string }[];
   testimonialQuote?: string;
   testimonialAttribution?: string;
@@ -414,6 +422,8 @@ export interface ProgrammeLandingContent {
   promiseHeading?: string;
   promiseBody?: string[];
   promiseBullets?: string[];
+  /** Editor icon overrides for promise-bullet items. Not AI-generated. */
+  promiseBulletIcons?: Record<string, IconOverride | string | null>;
   // 05 Includes
   includesEyebrow?: string;
   includesHeading?: string;
@@ -442,6 +452,8 @@ export interface ProgrammeLandingContent {
   outcomesHeading?: string;
   outcomesBody?: string;
   outcomesItems?: { before: string; after: string }[];
+  /** Editor icon overrides for outcomes items. Not AI-generated. */
+  outcomesItemIcons?: Record<string, IconOverride | string | null>;
   outcomesCtaText?: string;
   // 12 Testimonials
   testimonialsEyebrow?: string;

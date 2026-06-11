@@ -17,6 +17,12 @@ export interface IconOverride {
   v: string;
   /** Rendered size in px. Falls back to the component's `defaultSize` when absent. */
   size?: number;
+  /**
+   * MIME type of an uploaded image (e.g. "image/svg+xml", "image/png",
+   * "image/jpeg"). Stored at upload time so the renderer knows whether to apply
+   * a CSS mask (SVG/PNG inherit currentColor) or show the image as-is (JPEG).
+   */
+  mime?: string;
 }
 
 export function parseIconOverride(raw: unknown): IconOverride | null {
@@ -28,6 +34,7 @@ export function parseIconOverride(raw: unknown): IconOverride | null {
       return {
         v: obj.v,
         size: typeof obj.size === "number" ? obj.size : undefined,
+        mime: typeof obj.mime === "string" ? obj.mime : undefined,
       };
     }
   }
@@ -36,6 +43,26 @@ export function parseIconOverride(raw: unknown): IconOverride | null {
 
 function isUrl(v: string) {
   return v.startsWith("http://") || v.startsWith("https://") || v.startsWith("/");
+}
+
+/**
+ * Returns true when the image should be rendered as a CSS mask so it inherits
+ * `currentColor` from its container — ideal for SVG and transparent PNG icons.
+ * JPEGs are fully opaque so the mask would just fill a solid box; show as-is.
+ */
+function shouldUseMask(override: IconOverride): boolean {
+  if (override.mime) {
+    return (
+      override.mime === "image/svg+xml" ||
+      override.mime === "image/png"
+    );
+  }
+  // Fallback: infer from URL extension when mime wasn't stored
+  const lower = override.v.toLowerCase();
+  if (/\.(jpg|jpeg)(\?|$)/.test(lower)) return false;
+  if (/\.(svg|png)(\?|$)/.test(lower)) return true;
+  // Unknown extension — default to mask so SVGs embedded in Supabase paths work
+  return true;
 }
 
 // ── Curated icon library ──────────────────────────────────────────────────────
@@ -91,9 +118,14 @@ export function renderIcon(name: string | undefined, size = 18): React.ReactNode
 }
 
 /**
- * Render an icon from an IconOverride — handles both named icons and uploaded
- * image URLs (SVG/PNG/JPEG). Returns `null` when no override is set; callers
- * are responsible for rendering their own fallback in that case.
+ * Render an icon from an IconOverride — handles named icons and uploaded images.
+ *
+ * - Named icons: inline SVG that inherits `currentColor` (stroke).
+ * - Uploaded SVG / PNG: CSS mask technique so the image inherits `currentColor`
+ *   from its container (e.g. `var(--accent-primary)`), matching the brand theme.
+ * - Uploaded JPEG: rendered as a plain `<img>` (no transparency / mask possible).
+ *
+ * Returns `null` when no override is set; callers render their own fallback.
  */
 export function renderIconValue(
   override: IconOverride | null,
@@ -101,17 +133,44 @@ export function renderIconValue(
 ): React.ReactNode {
   if (!override) return null;
   const size = override.size ?? defaultSize;
-  if (isUrl(override.v)) {
-    // eslint-disable-next-line @next/next/no-img-element
+  const v = override.v;
+
+  if (!isUrl(v)) {
+    return renderIcon(v, size);
+  }
+
+  if (shouldUseMask(override)) {
     return (
-      <img
-        src={override.v}
-        alt=""
-        style={{ width: size, height: size, objectFit: "contain", display: "block", flexShrink: 0 }}
+      <span
+        aria-hidden="true"
+        style={{
+          display: "block",
+          width: size,
+          height: size,
+          flexShrink: 0,
+          backgroundColor: "currentColor",
+          WebkitMaskImage: `url(${v})`,
+          maskImage: `url(${v})`,
+          WebkitMaskSize: "contain",
+          maskSize: "contain",
+          WebkitMaskRepeat: "no-repeat",
+          maskRepeat: "no-repeat",
+          WebkitMaskPosition: "center",
+          maskPosition: "center",
+        } as React.CSSProperties}
       />
     );
   }
-  return renderIcon(override.v, size);
+
+  // JPEG — fully opaque, show as-is
+  // eslint-disable-next-line @next/next/no-img-element
+  return (
+    <img
+      src={v}
+      alt=""
+      style={{ width: size, height: size, objectFit: "contain", display: "block", flexShrink: 0 }}
+    />
+  );
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -124,7 +183,7 @@ interface Props {
   fallback: React.ReactNode;
   /**
    * Base size in px used when no explicit size is stored in the override.
-   * Defaults to 18. Pass 14 for the audience list, 18 for the experience list.
+   * Pass 14 for audience lists, 18 for experience lists, 24 for outcome lists.
    */
   defaultSize?: number;
   exportMode?: boolean;
@@ -133,6 +192,10 @@ interface Props {
 /**
  * Renders the chosen icon (or fallback) and, in edit mode, opens a picker with
  * the curated set, custom upload (SVG / PNG / JPEG), and size presets.
+ *
+ * Uploaded SVG and PNG files inherit the container's CSS `color` value via a
+ * CSS mask — they automatically match whatever brand theme is active.
+ * Uploaded JPEGs are displayed as-is.
  */
 export default function EditableIcon({
   pageKey,
@@ -157,10 +220,14 @@ export default function EditableIcon({
   function write(patch: Partial<IconOverride>) {
     const v = patch.v ?? override?.v ?? "";
     const size = patch.size ?? currentSize;
+    // Preserve existing mime when only updating size or switching curated icons
+    const mime = patch.mime ?? (patch.v && isUrl(patch.v) ? undefined : override?.mime);
     if (!v) {
       editor?.updateField(pageKey, path, null);
     } else {
-      editor?.updateField(pageKey, path, { v, size } satisfies IconOverride);
+      const next: IconOverride = { v, size };
+      if (mime) next.mime = mime;
+      editor?.updateField(pageKey, path, next);
     }
   }
 
@@ -175,7 +242,7 @@ export default function EditableIcon({
         throw new Error((body as { error?: string }).error ?? "Upload failed");
       }
       const data = (await res.json()) as { url?: string };
-      if (data.url) write({ v: data.url, size: currentSize });
+      if (data.url) write({ v: data.url, size: currentSize, mime: file.type });
     } catch (err) {
       alert(`Icon upload failed — ${err instanceof Error ? err.message : "please try again."}`);
     } finally {
@@ -296,7 +363,7 @@ export default function EditableIcon({
             </button>
             {override && isUrl(override.v) && (
               <p style={{ margin: "4px 0 0", fontSize: 10, color: "rgba(255,255,255,0.45)", textAlign: "center" }}>
-                Custom icon active
+                {shouldUseMask(override) ? "Custom icon (theme colour applied)" : "Custom icon active"}
               </p>
             )}
           </div>

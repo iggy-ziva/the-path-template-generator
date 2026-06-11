@@ -975,11 +975,12 @@ section {
   .audience-item p { font-size: 16px; }
 }
 .audience-icon {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   align-self: start;
+  width: fit-content;
   padding: 6px;
   border-radius: 50%;
   background: var(--surface-sunken);
@@ -1128,14 +1129,17 @@ section {
   align-items: start;
 }
 .outcome-icon {
-  width: 44px; height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: start;
+  width: fit-content;
+  padding: 10px;
   border-radius: var(--r-md);
   background: var(--surface-sunken);
   color: var(--accent-primary);
-  display: grid; place-items: center;
-  flex-shrink: 0;
 }
-.outcome-icon svg { width: 24px; height: 24px; }
 .outcome p {
   margin: 0;
   font-size: 17px;
@@ -1385,11 +1389,12 @@ section {
   align-items: start;
 }
 .experience-icon {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   align-self: start;
+  width: fit-content;
   padding: 6px;
   background: var(--surface-canvas);
   color: var(--accent-primary);

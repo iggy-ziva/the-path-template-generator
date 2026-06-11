@@ -9,6 +9,7 @@ import { PageText } from "../editor/page-editable";
 import { useEditorOptional } from "../editor/EditorContext";
 import EditableSection from "../editor/EditableSection";
 import { resolveSectionTheme, PROGRAMME_LANDING_LEGACY_FIELD } from "../editor/section-theme";
+import EditableIcon from "../editor/icon-library";
 
 interface Props {
   content: ProgrammeLandingContent;
@@ -207,9 +208,17 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               {(c.promiseBullets ?? []).map((item, i) => (
                 <li key={i} className="promise-list-item">
                   <span className="promise-check">
-                    <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1.5 5l2.5 2.5 4.5-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <EditableIcon
+                      pageKey="programmeLanding"
+                      path={`promiseBulletIcons.${i}`}
+                      fallback={
+                        <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 10, height: 10, display: "block" }}>
+                          <path d="M1.5 5l2.5 2.5 4.5-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      }
+                      defaultSize={10}
+                      exportMode={exportMode}
+                    />
                   </span>
                   <EditableText pageKey="programmeLanding" path={`promiseBullets[${i}]`} as="p" html>{item}</EditableText>
                 </li>
@@ -494,9 +503,17 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
               {(c.outcomesItems ?? []).map((item, i) => (
                 <div key={i} className="outcome">
                   <div className="outcome-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="9" /><path d="M16 8l-4 6-3-2" />
-                    </svg>
+                    <EditableIcon
+                      pageKey="programmeLanding"
+                      path={`outcomesItemIcons.${i}`}
+                      fallback={
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 24, height: 24, display: "block" }}>
+                          <circle cx="12" cy="12" r="9" /><path d="M16 8l-4 6-3-2" />
+                        </svg>
+                      }
+                      defaultSize={24}
+                      exportMode={exportMode}
+                    />
                   </div>
                   <p>
                     <EditableText pageKey="programmeLanding" path={`outcomesItems[${i}].before`} as="strong">{item.before}</EditableText>

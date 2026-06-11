@@ -951,6 +951,7 @@ The JSON must have exactly this structure:
     "headline": "TAGLINE ONLY (maps to .offer-tagline) — max 15 words. Rewrite wizard upsellHeadline as a tight emotional promise. Do NOT repeat upsellOfferName. No prices or bullet lists.",
     "description": "MAX 2 sentences for .offer-desc — distill wizard upsellDescription to what this adds after the event. Never include pricing, savings, or deliverable bullets (those belong in price block + includedItems).",
     "includedTitle": "e.g. 'What's in the bundle'",
+    // NOTE: includedItemIcons is an EDITOR-ONLY field — do NOT generate it.
     "includedItems": [
       { "title": "item title — use wizard upsellIncludedItems verbatim if provided", "description": "item description — use wizard upsellIncludedItems verbatim if provided" }
     ],
@@ -1165,6 +1166,8 @@ The JSON must have exactly this structure:
     "alreadyTriedTheme": "MUST be exactly one of: \"dark\", \"accent\", or \"light\". Empathy/problem sections often work best with \"dark\".",
     "promiseHeading": "promise section heading",
     "promiseBody": ["paragraph 1 about the promise", "paragraph 2"],
+    // NOTE: promiseBulletIcons is an EDITOR-ONLY field — do NOT generate it.
+    // Users assign icons (curated set or uploaded SVG/PNG/JPEG) via the preview editor.
     "promiseBullets": [
       "Promise bullet 1 — a specific transformation this programme delivers. Use <strong>bold</strong> for the key outcome.",
       "Promise bullet 2 — a different dimension of the transformation",
@@ -1205,6 +1208,7 @@ The JSON must have exactly this structure:
     "outcomesEyebrow": "e.g. 'The transformation'",
     "outcomesHeading": "outcomes section heading",
     "outcomesBody": "1–2 sentence intro to outcomes section",
+    // NOTE: outcomesItemIcons is an EDITOR-ONLY field — do NOT generate it.
     "outcomesItems": [
       { "before": "where they are before — specific, named, recognisable", "after": "where they'll be after — concrete, observable, derived from transformation promise" }
     ],

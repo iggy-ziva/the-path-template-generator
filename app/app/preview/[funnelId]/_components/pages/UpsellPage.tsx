@@ -7,6 +7,7 @@ import { distillUpsellDescription } from "@/lib/upsell-copy";
 import EditableText from "../editor/EditableText";
 import { EditableImage } from "../editor/EditableList";
 import { PageLink, PageText, useEditMode } from "../editor/page-editable";
+import EditableIcon from "../editor/icon-library";
 
 interface Props {
   content: UpsellContent;
@@ -162,10 +163,18 @@ export default function UpsellPage({ content: c, wizard: w, exportMode = false }
           {items.map((item, i) => (
             <div key={i} className="included-item">
               <div className="included-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <path d="M14 2v6h6M9 13h6M9 17h6"/>
-                </svg>
+                <EditableIcon
+                  pageKey="upsell"
+                  path={`includedItemIcons.${i}`}
+                  fallback={
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 24, height: 24, display: "block" }}>
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <path d="M14 2v6h6M9 13h6M9 17h6"/>
+                    </svg>
+                  }
+                  defaultSize={24}
+                  exportMode={exportMode}
+                />
               </div>
               <div>
                 <h3>
