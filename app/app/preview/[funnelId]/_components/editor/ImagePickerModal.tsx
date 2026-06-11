@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import type { ImageLibraryItem } from "./wizard-image-library";
+import { useEditorOptional } from "./EditorContext";
 
 interface Props {
   library: ImageLibraryItem[];
@@ -52,8 +53,11 @@ const HEADER: CSSProperties = {
 };
 
 const GRID: CSSProperties = {
+  flex: "1 1 0",
+  minHeight: 0,
   display: "grid",
   gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+  alignContent: "start",
   gap: 10,
   padding: 20,
   overflowY: "auto",
@@ -69,6 +73,7 @@ const FOOTER: CSSProperties = {
 };
 
 export default function ImagePickerModal({ library, currentUrl, canRemove, onSelect, onClose, dimensionHint }: Props) {
+  const editor = useEditorOptional();
   const [uploading, setUploading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -90,6 +95,8 @@ export default function ImagePickerModal({ library, currentUrl, canRemove, onSel
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
       if (data.url) {
+        // Refresh the library so the just-uploaded image appears immediately.
+        editor?.refreshImageLibrary();
         onSelect(data.url as string);
       } else {
         throw new Error("No URL returned");

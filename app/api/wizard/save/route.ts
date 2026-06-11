@@ -88,13 +88,71 @@ export async function GET(req: NextRequest) {
   const specificId = req.nextUrl.searchParams.get("id");
 
   if (specificId) {
-    const { data } = await supabase
+    // Try direct wizard_submissions lookup first; specificId may also be a
+    // generated_funnels ID (when navigating back from the preview).
+    let submissionRow: Record<string, unknown> | null = null;
+
+    const { data: direct } = await supabase
       .from("wizard_submissions")
       .select("id, name, step_data, current_step, status, updated_at, created_at")
       .eq("id", specificId)
       .eq("user_id", userId)
       .single();
-    return NextResponse.json({ submission: data ?? null });
+    submissionRow = direct ?? null;
+
+    if (!submissionRow) {
+      // specificId is a generated_funnels ID — find the linked submission.
+      const { data: gf } = await supabase
+        .from("generated_funnels")
+        .select("submission_id")
+        .eq("id", specificId)
+        .eq("user_id", userId)
+        .single();
+      if (gf?.submission_id) {
+        const { data: linked } = await supabase
+          .from("wizard_submissions")
+          .select("id, name, step_data, current_step, status, updated_at, created_at")
+          .eq("id", gf.submission_id)
+          .eq("user_id", userId)
+          .single();
+        submissionRow = linked ?? null;
+      }
+    }
+
+    if (!submissionRow) return NextResponse.json({ submission: null });
+
+    // Backfill image arrays from the most recent generated_funnel's _wizardSnapshot
+    // in case step_data lost them (e.g. upload happened before a save race, or an older
+    // schema version didn't capture them).
+    const IMAGE_FIELDS = ["heroImageUrls", "lifestyleImageUrls", "additionalImageUrls"] as const;
+    const stepData = (submissionRow.step_data ?? {}) as Record<string, unknown>;
+    const missingImages = IMAGE_FIELDS.some((f) => !Array.isArray(stepData[f]) || (stepData[f] as unknown[]).length === 0);
+
+    if (missingImages) {
+      const { data: latestFunnel } = await supabase
+        .from("generated_funnels")
+        .select("content")
+        .eq("submission_id", submissionRow.id as string)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      const snapshot = (latestFunnel?.content as Record<string, unknown> | null)?._wizardSnapshot as Record<string, unknown> | undefined;
+      if (snapshot) {
+        const patched = { ...stepData };
+        for (const field of IMAGE_FIELDS) {
+          if (!Array.isArray(patched[field]) || (patched[field] as unknown[]).length === 0) {
+            if (Array.isArray(snapshot[field]) && (snapshot[field] as unknown[]).length > 0) {
+              patched[field] = snapshot[field];
+            }
+          }
+        }
+        submissionRow = { ...submissionRow, step_data: patched };
+      }
+    }
+
+    return NextResponse.json({ submission: submissionRow });
   }
 
   const { data } = await supabase

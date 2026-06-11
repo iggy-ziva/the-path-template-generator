@@ -769,29 +769,28 @@ export function MultipleFileUpload({
   return (
     <div>
       {currentUrls.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 10, marginBottom: 14 }}>
           {currentUrls.map((url) => (
             <div
               key={url}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                background: Z.creamMid,
-                border: `1px solid ${Z.creamDeep}`,
-                borderRadius: 8,
-                padding: "5px 10px",
-                fontFamily: Z.font,
-                fontSize: 12,
-              }}
+              style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: `1.5px solid ${Z.creamDeep}`, background: Z.creamMid }}
             >
-              <span style={{ color: Z.pink, fontWeight: 700 }}>✓</span>
-              <span style={{ color: Z.muted, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {url.split("/").pop()}
-              </span>
+              <img
+                src={url}
+                alt=""
+                style={{ width: "100%", aspectRatio: "1", objectFit: "cover", display: "block" }}
+              />
               <button
                 onClick={() => remove(url)}
-                style={{ background: "none", border: "none", color: Z.faint, cursor: "pointer", fontSize: 16, padding: 0, lineHeight: 1 }}
+                title="Remove image"
+                style={{
+                  position: "absolute", top: 4, right: 4,
+                  background: "rgba(0,0,0,0.55)", color: "#fff",
+                  border: "none", borderRadius: "50%",
+                  width: 22, height: 22, fontSize: 14, lineHeight: "22px",
+                  textAlign: "center", cursor: "pointer", padding: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
               >
                 ×
               </button>

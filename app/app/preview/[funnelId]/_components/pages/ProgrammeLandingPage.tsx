@@ -71,6 +71,7 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
 
   // Claude's assigned URLs take priority; fall back to wizard arrays; safeUrl guards against instruction strings
   const programmeFeatureUrl  = safeUrl(c.programmeFeatureImageUrl ?? w.lifestyleImageUrls?.[0]);
+  const hostImageUrl = safeUrl((c as Record<string, unknown>).bioImageUrl as string | undefined ?? w.hostHeadshotUrl);
 
   return (
     <>
@@ -648,13 +649,17 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
         <EditableSection pageKey="programmeLanding" sectionId="host" theme={themeFor("host", "light")} className="host" exportMode={exportMode}>
           <div className="container">
             <div className="host-photo">
-              {w.hostHeadshotUrl ? (
-                <img src={w.hostHeadshotUrl} alt={hostName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              ) : (
+              <EditableImage
+                pageKey="programmeLanding"
+                path="bioImageUrl"
+                url={hostImageUrl}
+                alt={hostName ?? "Host photo"}
+                imgStyle={{ width: "100%", height: "100%", objectFit: "cover" }}
+              >
                 <div className="host-photo-inner">
                   <p className="host-photo-label">Host photo<br />3:4 portrait</p>
                 </div>
-              )}
+              </EditableImage>
             </div>
             <div className="host-content">
               {c.bioEyebrow && (

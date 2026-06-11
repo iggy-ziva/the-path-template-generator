@@ -126,6 +126,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
   const heroVisualUrl = safeUrl(c.heroVisualImageUrl       ?? w.heroImageUrls?.[0]);
   const lifestyle1Url = safeUrl(c.valuePropImageUrl        ?? w.lifestyleImageUrls?.[0]);
   const outcomes1Url  = safeUrl(c.outcomesImageUrl         ?? w.lifestyleImageUrls?.[1]);
+  const bioImageUrl   = safeUrl((c as Record<string, unknown>).bioImageUrl as string | undefined ?? w.hostHeadshotUrl);
   const brandName = w.businessName ?? w.hostName ?? "Your Brand";
   const ctaText = c.ctaText ?? c.heroCtaText ?? "Register Now";
   // Prefer Claude-generated price copy; fall back to wizard fields.
@@ -184,6 +185,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
         base="plain"
         bgViaClass
         deletable={false}
+        noPositionOverride
         as="div"
         id="stickyBar"
         className="sticky-bar is-visible"
@@ -999,12 +1001,17 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
           <div className="container">
             <div className="bio">
               <div className="bio-image">
-                {w.hostHeadshotUrl
-                  ? <img src={w.hostHeadshotUrl} alt={w.hostName} style={{ width: "100%", aspectRatio: "3/4", objectFit: "cover", borderRadius: "var(--r-xl)" }} />
-                  : <div className="img-placeholder tint-bronze ratio-3-4">
-                      <span className="img-label">Host portrait · 3:4</span>
-                    </div>
-                }
+                <EditableImage
+                  pageKey="eventLanding"
+                  path="bioImageUrl"
+                  url={bioImageUrl}
+                  alt={w.hostName ?? "Host portrait"}
+                  imgStyle={{ width: "100%", aspectRatio: "3/4", objectFit: "cover", borderRadius: "var(--r-xl)" }}
+                >
+                  <div className="img-placeholder tint-bronze">
+                    <span className="img-label">Host portrait · 3:4</span>
+                  </div>
+                </EditableImage>
               </div>
               <div className="bio-text">
                 <PageText pageKey="eventLanding" path="bioEyebrow" as="span" className="eyebrow">

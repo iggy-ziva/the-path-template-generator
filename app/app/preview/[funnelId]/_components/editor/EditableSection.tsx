@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useEditorOptional } from "./EditorContext";
 import { usePageContent } from "./PageContentContext";
 import { getAtPath } from "@/lib/content-path";
@@ -107,6 +108,8 @@ interface Props {
   controlsTopOffset?: number;
   /** Whether the section can be removed/hidden from the editor. Defaults to true. */
   deletable?: boolean;
+  /** When true, skip the edit-mode `position: relative` inline override (use for fixed/sticky elements whose CSS position must not be overridden). */
+  noPositionOverride?: boolean;
   as?: "section" | "div";
   id?: string;
   className?: string;
@@ -146,6 +149,7 @@ export default function EditableSection({
   bgDimensionHint,
   controlsTopOffset = 8,
   deletable = true,
+  noPositionOverride = false,
   as = "section",
   id,
   className = "",
@@ -219,7 +223,8 @@ export default function EditableSection({
     resolvedStyle.background = themeBackground(theme);
   }
   // Ensure the absolutely-positioned edit controls/handles anchor to this section.
-  if (editMode) resolvedStyle.position = resolvedStyle.position ?? "relative";
+  // Skip for fixed/sticky sections (noPositionOverride) to avoid collapsing them into document flow.
+  if (editMode && !noPositionOverride) resolvedStyle.position = resolvedStyle.position ?? "relative";
   if (hidden && editMode) {
     resolvedStyle.outline = "2px dashed rgba(193, 122, 67, 0.85)";
     resolvedStyle.outlineOffset = -4;
@@ -311,7 +316,7 @@ export default function EditableSection({
           bgPosition={(bgPosition as BgPosition) ?? "center"}
           onOpen={() => setPickerOpen(true)}
           onRemove={() => {
-            editor.updateField(pageKey, bgPath, null);
+            // Only set the flag — preserve URL so Restore can bring the image back.
             editor.updateField(pageKey, bgNoImagePath, true);
           }}
           onOpenMobile={() => setMobilePickerOpen(true)}
@@ -390,8 +395,7 @@ export default function EditableSection({
         dimensionHint={bgDimensionHint}
         onSelect={(url) => {
           if (url === null) {
-            // Explicitly remove — set noImage flag so fallback is also suppressed.
-            editor.updateField(pageKey, bgPath, null);
+            // Only set the flag — preserve URL so Restore can bring the image back.
             editor.updateField(pageKey, bgNoImagePath, true);
           } else {
             // New image chosen — clear noImage flag and store the URL.
@@ -645,12 +649,27 @@ function BackgroundControl({
   onPositionChange: (p: BgPosition) => void;
 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [panelPos, setPanelPos] = useState<{ top: number; right: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const dotsRef = useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const openSettings = useCallback(() => {
+    if (dotsRef.current) {
+      const rect = dotsRef.current.getBoundingClientRect();
+      setPanelPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+    }
+    setSettingsOpen(true);
+  }, []);
 
   useEffect(() => {
     if (!settingsOpen) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setSettingsOpen(false);
+      if (
+        ref.current && !ref.current.contains(e.target as Node) &&
+        dotsRef.current && !dotsRef.current.contains(e.target as Node)
+      ) setSettingsOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -670,10 +689,10 @@ function BackgroundControl({
   };
 
   const settingsPanel: React.CSSProperties = {
-    position: "absolute",
-    top: "calc(100% + 6px)",
-    right: 0,
-    zIndex: 200,
+    position: "fixed",
+    top: panelPos?.top ?? 0,
+    right: panelPos?.right ?? 0,
+    zIndex: 2147483001,
     background: "rgba(20,20,18,0.97)",
     border: "1px solid rgba(255,255,255,0.14)",
     borderRadius: 10,
@@ -683,6 +702,7 @@ function BackgroundControl({
     display: "grid",
     gap: 8,
     minWidth: 280,
+    fontFamily: "system-ui, -apple-system, sans-serif",
   };
 
   const rowLabel: React.CSSProperties = {
@@ -708,41 +728,9 @@ function BackgroundControl({
     transition: "background 100ms ease",
   });
 
-  return (
-    <div ref={ref} style={{ position: "relative" }}>
-      <div style={CONTROL_WRAP}>
-        <button
-          type="button"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpen(); }}
-          title="Set or swap this section's background image"
-          style={btn}
-        >
-          {hasImage ? "Swap bg" : "+ Image"}
-        </button>
-        {hasImage && (
-          <>
-            <button
-              type="button"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
-              title="Remove background image"
-              style={{ ...btn, color: "#f1b0b0" }}
-            >
-              ✕
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSettingsOpen(s => !s); }}
-              title="Image options — overlay, position, mobile"
-              style={{ ...btn, color: settingsOpen ? "#D4A878" : "#e8e4dd" }}
-            >
-              ⋯
-            </button>
-          </>
-        )}
-      </div>
-
-      {settingsOpen && hasImage && (
-        <div style={settingsPanel} onClick={(e) => e.stopPropagation()}>
+  const panel = mounted && settingsOpen && hasImage && panelPos
+    ? createPortal(
+        <div ref={ref} style={settingsPanel} onClick={(e) => e.stopPropagation()}>
           {/* Overlay strength */}
           <div>
             <span style={rowLabel}>Overlay</span>
@@ -811,8 +799,47 @@ function BackgroundControl({
               )}
             </div>
           </div>
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <>
+      <div style={{ position: "relative" }}>
+        <div style={CONTROL_WRAP}>
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpen(); }}
+            title="Set or swap this section's background image"
+            style={btn}
+          >
+            {hasImage ? "Swap bg" : "+ Image"}
+          </button>
+          {hasImage && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
+                title="Remove background image"
+                style={{ ...btn, color: "#f1b0b0" }}
+              >
+                ✕
+              </button>
+              <button
+                ref={dotsRef}
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); settingsOpen ? setSettingsOpen(false) : openSettings(); }}
+                title="Image options — overlay, position, mobile"
+                style={{ ...btn, color: settingsOpen ? "#D4A878" : "#e8e4dd" }}
+              >
+                ⋯
+              </button>
+            </>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+      {panel}
+    </>
   );
 }

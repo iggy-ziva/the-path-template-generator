@@ -4,6 +4,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -25,6 +26,8 @@ interface EditorContextValue {
   lastSavedAt: string | null;
   /** Images the user uploaded during the wizard, offered for reuse in the image picker. */
   imageLibrary: ImageLibraryItem[];
+  /** Re-fetch and merge the user's image library (call after a new upload). */
+  refreshImageLibrary: () => void;
   /** Brand colours the user entered in the wizard, offered in the text colour picker. */
   colorPalette: BrandColorOption[];
   updateField: (pageKey: FunnelPageKey, path: ContentPath, value: unknown) => void;
@@ -58,7 +61,7 @@ interface Props {
 export function EditorProvider({
   funnelId,
   initialContent,
-  imageLibrary = [],
+  imageLibrary: snapshotLibrary = [],
   colorPalette = [],
   children,
 }: Props) {
@@ -67,6 +70,48 @@ export function EditorProvider({
   const [draftContent, setDraftContent] = useState<FunnelContent>(initialContent);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+
+  // Start with the wizard snapshot items so the library is immediately available,
+  // then replace with the authoritative user-scoped list from the server.
+  // This ensures it is structurally impossible for another user's images to appear.
+  const [imageLibrary, setImageLibrary] = useState<ImageLibraryItem[]>(snapshotLibrary);
+
+  const buildLibrary = useCallback((urls: string[], snapshot: ImageLibraryItem[]) => {
+    // Prefer snapshot labels (e.g. "Hero image 1", "Lifestyle 3") over generic "Upload N".
+    const snapshotLabels = new Map(snapshot.map((item) => [item.url, item.label]));
+    const seen = new Set<string>();
+    const merged: ImageLibraryItem[] = [];
+    let uploadIdx = 0;
+    urls.forEach((url) => {
+      if (!seen.has(url)) {
+        seen.add(url);
+        merged.push({ url, label: snapshotLabels.get(url) ?? `Upload ${++uploadIdx}` });
+      }
+    });
+    snapshot.forEach((item) => {
+      if (!seen.has(item.url)) {
+        seen.add(item.url);
+        merged.push(item);
+      }
+    });
+    return merged;
+  }, []);
+
+  const refreshImageLibrary = useCallback(() => {
+    fetch("/api/wizard/images")
+      .then((r) => r.json())
+      .then(({ urls }: { urls?: string[] }) => {
+        if (!Array.isArray(urls) || urls.length === 0) return;
+        setImageLibrary((prev) => buildLibrary(urls, prev));
+      })
+      .catch(() => {/* keep current library on error */});
+  }, [buildLibrary]);
+
+  // Initial load — runs once on mount.
+  useEffect(() => {
+    refreshImageLibrary();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isDirty = useMemo(
     () => JSON.stringify(draftContent) !== JSON.stringify(savedContent),
@@ -141,6 +186,7 @@ export function EditorProvider({
     isSaving,
     lastSavedAt,
     imageLibrary,
+    refreshImageLibrary,
     colorPalette,
     updateField,
     addListItem,

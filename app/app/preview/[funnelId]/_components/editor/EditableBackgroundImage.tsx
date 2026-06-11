@@ -67,18 +67,21 @@ export default function EditableBackgroundImage({
         | string | null | undefined)
     : undefined;
 
-  // hasCurrentImage: image is rendering (either from content or wizard fallback)
+  // hasCurrentImage: an image is rendering (from content or wizard fallback)
   // and has NOT been explicitly removed.
   const hasCurrentImage =
     !isRemoved && (Boolean(currentUrl) || (hasImage && currentUrl === undefined));
 
   function remove() {
-    editor?.updateField(pageKey, path, null);
+    // Only set the flag — leave the URL intact so Restore can bring the image back.
     editor?.updateField(pageKey, noImagePath, true);
   }
   function restore() {
     editor?.updateField(pageKey, noImagePath, null);
   }
+
+  // In export/view mode, a removed slot renders nothing (collapses from layout).
+  if (!isEditMode && isRemoved) return null;
 
   // Suppress the parent-provided backgroundImage when removed.
   const effectiveStyle: CSSProperties = isRemoved
@@ -98,59 +101,59 @@ export default function EditableBackgroundImage({
 
   return (
     <div className={className} aria-hidden={ariaHidden} style={editStyle}>
-      {children}
+      {!isRemoved && children}
 
       {isEditMode && editor && (
         isRemoved ? (
-          /* ── Removed state ── */
+          /* ── Removed state: compact restore chip ── */
           <div
             contentEditable={false}
             style={{
               position: "absolute",
               inset: 0,
+              zIndex: 10,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               gap: 10,
-              background: "rgba(0,0,0,0.45)",
+              background: "rgba(0,0,0,0.55)",
               backdropFilter: "blur(2px)",
             }}
           >
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
-              Image removed
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+              Slot hidden
             </span>
             <button
               type="button"
-              style={{ ...PILL, color: "#D4A878", borderColor: "rgba(212,168,120,0.5)", background: "rgba(17,17,17,0.85)" }}
-              onClick={restore}
+              style={{ ...PILL, color: "#D4A878", borderColor: "rgba(212,168,120,0.5)", background: "rgba(17,17,17,0.88)" }}
+              onClick={(e) => { e.stopPropagation(); restore(); }}
             >
-              Restore image
+              Restore
             </button>
           </div>
         ) : (
-          /* ── Normal state ── */
+          /* ── Normal state: Add/Swap + Remove ── */
           <div
             contentEditable={false}
-            style={{ position: "absolute", bottom: 10, right: 10, zIndex: 2, display: "flex", gap: 6 }}
+            style={{ position: "absolute", bottom: 10, right: 10, zIndex: 10, display: "flex", gap: 6 }}
           >
             <button
               type="button"
               style={{ ...PILL, color: "#fff" }}
-              onClick={() => setPickerOpen(true)}
+              onClick={(e) => { e.stopPropagation(); setPickerOpen(true); }}
             >
               {hasCurrentImage ? "Swap image" : "Add image"}
             </button>
-            {hasCurrentImage && (
-              <button
-                type="button"
-                style={{ ...PILL, color: "#f87171", borderColor: "rgba(248,113,113,0.45)" }}
-                onClick={remove}
-                title="Remove image"
-              >
-                Remove
-              </button>
-            )}
+            {/* Remove is always available — hides the slot entirely even when empty */}
+            <button
+              type="button"
+              style={{ ...PILL, color: "#f87171", borderColor: "rgba(248,113,113,0.45)" }}
+              onClick={(e) => { e.stopPropagation(); remove(); }}
+              title="Remove / hide this image slot"
+            >
+              Remove
+            </button>
           </div>
         )
       )}

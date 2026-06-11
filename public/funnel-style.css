@@ -752,6 +752,11 @@ section {
   gap: var(--s-9);
   align-items: center;
 }
+/* When hero visual is removed (returns null), the text column is the only child
+   — span it full-width so the hero becomes a single-column layout */
+.hero-grid > :only-child {
+  grid-column: 1 / -1;
+}
 @media (max-width: 1024px) {
   .hero-grid { grid-template-columns: 1fr; gap: var(--s-7); }
 }
@@ -768,6 +773,7 @@ section {
 .hero-visual::after {
   content: "";
   position: absolute; inset: 0;
+  pointer-events: none;
   background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
   background-size: 3px 3px;
   mix-blend-mode: overlay;
@@ -1152,6 +1158,7 @@ section {
   text-align: center;
   max-width: 28ch;
   margin: 0 auto var(--s-6);
+  text-wrap: balance;
   font-family: var(--font-display);
   font-size: clamp(22px, 2.4vw, 28px);
   font-style: italic;

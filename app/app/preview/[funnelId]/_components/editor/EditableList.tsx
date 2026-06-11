@@ -138,7 +138,7 @@ export function EditableImage({
   if (!isEditMode && isRemoved) return null;
 
   function remove() {
-    editor?.updateField(pageKey, path, null);
+    // Only set the flag — leave the URL intact so Restore can bring the image back.
     editor?.updateField(pageKey, noImagePath, true);
   }
   function restore() {
@@ -167,6 +167,7 @@ export function EditableImage({
             style={{
               position: "absolute",
               inset: 0,
+              zIndex: 10,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -177,11 +178,11 @@ export function EditableImage({
             }}
           >
             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-              Removed
+              Hidden
             </span>
             <button
               type="button"
-              onClick={restore}
+              onClick={(e) => { e.stopPropagation(); restore(); }}
               style={{ ...IMG_BTN, background: "rgba(212,168,120,0.9)", color: "#141412" }}
             >
               Restore
@@ -191,24 +192,23 @@ export function EditableImage({
           /* ── Normal state ── */
           <div
             contentEditable={false}
-            style={{ position: "absolute", bottom: 8, right: 8, display: "flex", gap: 5 }}
+            style={{ position: "absolute", bottom: 8, right: 8, zIndex: 10, display: "flex", gap: 5 }}
           >
             <button
               type="button"
-              onClick={() => setPickerOpen(true)}
+              onClick={(e) => { e.stopPropagation(); setPickerOpen(true); }}
               style={{ ...IMG_BTN, background: "rgba(17,17,17,0.82)", color: "#fff", backdropFilter: "blur(4px)" }}
             >
               {effectiveUrl ? "Swap" : "Add image"}
             </button>
-            {effectiveUrl && (
-              <button
-                type="button"
-                onClick={remove}
-                style={{ ...IMG_BTN, background: "rgba(248,113,113,0.12)", color: "#f87171", border: "1px solid rgba(248,113,113,0.35)" }}
-              >
-                Remove
-              </button>
-            )}
+            {/* Remove always visible — hides the slot even when empty */}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); remove(); }}
+              style={{ ...IMG_BTN, background: "rgba(248,113,113,0.12)", color: "#f87171", border: "1px solid rgba(248,113,113,0.35)" }}
+            >
+              Remove
+            </button>
           </div>
         )}
 
