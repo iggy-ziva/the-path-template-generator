@@ -7,6 +7,9 @@ import type { ImageLibraryItem } from "./wizard-image-library";
 interface Props {
   library: ImageLibraryItem[];
   currentUrl?: string | null;
+  /** When true the Remove button is shown even if currentUrl is empty
+   *  (e.g. when the rendered image comes from a wizard fallback, not stored in content). */
+  canRemove?: boolean;
   /** Called with the chosen URL, or null to remove the image entirely. */
   onSelect: (url: string | null) => void;
   onClose: () => void;
@@ -18,8 +21,8 @@ const OVERLAY: CSSProperties = {
   position: "fixed",
   inset: 0,
   zIndex: 2147483000,
-  background: "rgba(17,17,17,0.55)",
-  backdropFilter: "blur(2px)",
+  background: "rgba(0,0,0,0.65)",
+  backdropFilter: "blur(4px)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -31,26 +34,27 @@ const PANEL: CSSProperties = {
   maxHeight: "85vh",
   display: "flex",
   flexDirection: "column",
-  background: "#fff",
-  color: "#111",
-  borderRadius: 14,
-  boxShadow: "0 24px 80px rgba(0,0,0,0.35)",
+  background: "#1c1c1a",
+  color: "#e8e4dd",
+  borderRadius: 16,
+  border: "1px solid rgba(255,255,255,0.1)",
+  boxShadow: "0 24px 80px rgba(0,0,0,0.7)",
   overflow: "hidden",
   fontFamily: "system-ui, -apple-system, sans-serif",
 };
 
 const HEADER: CSSProperties = {
   display: "flex",
-  alignItems: "center",
+  alignItems: "flex-start",
   justifyContent: "space-between",
-  padding: "16px 20px",
-  borderBottom: "1px solid #ececec",
+  padding: "18px 20px 14px",
+  borderBottom: "1px solid rgba(255,255,255,0.08)",
 };
 
 const GRID: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-  gap: 12,
+  gap: 10,
   padding: 20,
   overflowY: "auto",
 };
@@ -61,10 +65,10 @@ const FOOTER: CSSProperties = {
   justifyContent: "space-between",
   gap: 12,
   padding: "14px 20px",
-  borderTop: "1px solid #ececec",
+  borderTop: "1px solid rgba(255,255,255,0.08)",
 };
 
-export default function ImagePickerModal({ library, currentUrl, onSelect, onClose, dimensionHint }: Props) {
+export default function ImagePickerModal({ library, currentUrl, canRemove, onSelect, onClose, dimensionHint }: Props) {
   const [uploading, setUploading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -96,21 +100,25 @@ export default function ImagePickerModal({ library, currentUrl, onSelect, onClos
     }
   }
 
+  const showRemove = canRemove || Boolean(currentUrl);
+
   if (!mounted) return null;
 
   return createPortal(
     <div style={OVERLAY} onClick={onClose} role="dialog" aria-modal="true">
       <div style={PANEL} onClick={(e) => e.stopPropagation()}>
+
+        {/* ── Header ── */}
         <div style={HEADER}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700 }}>Choose an image</div>
-            <div style={{ fontSize: 12, color: "#777", marginTop: 2 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#e8e4dd" }}>Choose an image</div>
+            <div style={{ fontSize: 12, color: "rgba(232,228,221,0.5)", marginTop: 3 }}>
               {library.length > 0
-                ? "Reuse an image from your wizard uploads, or upload a new one."
-                : "Upload an image to use here."}
+                ? "Select from your wizard uploads, or upload a new one."
+                : "No uploads found — upload a new image below."}
             </div>
             {dimensionHint && (
-              <div style={{ fontSize: 11, color: "#999", marginTop: 4 }}>
+              <div style={{ fontSize: 11, color: "#D4A878", marginTop: 4 }}>
                 {dimensionHint}
               </div>
             )}
@@ -125,14 +133,17 @@ export default function ImagePickerModal({ library, currentUrl, onSelect, onClos
               fontSize: 22,
               lineHeight: 1,
               cursor: "pointer",
-              color: "#888",
+              color: "rgba(232,228,221,0.45)",
               padding: 4,
+              flexShrink: 0,
+              marginLeft: 12,
             }}
           >
             ×
           </button>
         </div>
 
+        {/* ── Image grid ── */}
         {library.length > 0 ? (
           <div style={GRID}>
             {library.map((item) => {
@@ -146,12 +157,16 @@ export default function ImagePickerModal({ library, currentUrl, onSelect, onClos
                   style={{
                     position: "relative",
                     padding: 0,
-                    border: active ? "3px solid #111" : "1px solid #e2e2e2",
+                    border: active
+                      ? "2px solid #D4A878"
+                      : "1px solid rgba(255,255,255,0.1)",
                     borderRadius: 10,
                     overflow: "hidden",
                     cursor: "pointer",
-                    background: "#f6f6f6",
+                    background: "rgba(255,255,255,0.04)",
                     aspectRatio: "4 / 3",
+                    outline: active ? "2px solid rgba(212,168,120,0.3)" : "none",
+                    outlineOffset: 1,
                   }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -166,40 +181,65 @@ export default function ImagePickerModal({ library, currentUrl, onSelect, onClos
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      padding: "4px 6px",
+                      padding: "4px 7px",
                       fontSize: 10,
                       fontWeight: 600,
                       color: "#fff",
-                      background: "linear-gradient(transparent, rgba(0,0,0,0.6))",
+                      background: "linear-gradient(transparent, rgba(0,0,0,0.72))",
                       textAlign: "left",
                     }}
                   >
                     {item.label}
                   </span>
+                  {active && (
+                    <span
+                      aria-hidden
+                      style={{
+                        position: "absolute",
+                        top: 6,
+                        right: 6,
+                        width: 18,
+                        height: 18,
+                        borderRadius: "50%",
+                        background: "#D4A878",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 10,
+                        color: "#141412",
+                        fontWeight: 900,
+                      }}
+                    >
+                      ✓
+                    </span>
+                  )}
                 </button>
               );
             })}
           </div>
         ) : (
-          <div style={{ padding: "32px 20px", textAlign: "center", color: "#888", fontSize: 13 }}>
+          <div style={{ padding: "36px 20px", textAlign: "center", color: "rgba(232,228,221,0.4)", fontSize: 13 }}>
             No images were uploaded during the wizard. Upload one below.
           </div>
         )}
 
+        {/* ── Footer ── */}
         <div style={FOOTER}>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <label
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 700,
-                color: "#fff",
-                background: "#111",
+                letterSpacing: "0.03em",
+                color: "#141412",
+                background: uploading ? "rgba(212,168,120,0.5)" : "#D4A878",
                 borderRadius: 8,
                 padding: "10px 16px",
                 cursor: uploading ? "wait" : "pointer",
+                transition: "background 120ms ease",
               }}
             >
               {uploading ? "Uploading…" : "Upload new image"}
@@ -214,16 +254,16 @@ export default function ImagePickerModal({ library, currentUrl, onSelect, onClos
                 }}
               />
             </label>
-            {currentUrl && (
+            {showRemove && (
               <button
                 type="button"
                 onClick={() => onSelect(null)}
                 style={{
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: 600,
-                  color: "#c0392b",
-                  background: "none",
-                  border: "1px solid #f5c6c2",
+                  color: "#f87171",
+                  background: "rgba(248,113,113,0.08)",
+                  border: "1px solid rgba(248,113,113,0.3)",
                   borderRadius: 8,
                   padding: "10px 16px",
                   cursor: "pointer",
@@ -237,11 +277,11 @@ export default function ImagePickerModal({ library, currentUrl, onSelect, onClos
             type="button"
             onClick={onClose}
             style={{
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 600,
-              color: "#555",
-              background: "none",
-              border: "1px solid #ddd",
+              color: "rgba(232,228,221,0.6)",
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.1)",
               borderRadius: 8,
               padding: "10px 16px",
               cursor: "pointer",

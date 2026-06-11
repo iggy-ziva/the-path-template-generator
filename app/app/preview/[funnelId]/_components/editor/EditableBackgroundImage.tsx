@@ -100,6 +100,7 @@ export default function EditableBackgroundImage({
         <ImagePickerModal
           library={editor.imageLibrary}
           currentUrl={currentUrl ?? null}
+          canRemove={hasCurrentImage}
           onSelect={(url) => {
             editor.updateField(pageKey, path, url ?? null);
             setPickerOpen(false);
