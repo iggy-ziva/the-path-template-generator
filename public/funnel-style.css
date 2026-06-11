@@ -975,15 +975,16 @@ section {
   .audience-item p { font-size: 16px; }
 }
 .audience-icon {
-  width: 28px; height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: start;
+  padding: 6px;
   border-radius: 50%;
   background: var(--surface-sunken);
   color: var(--accent-primary);
-  display: grid; place-items: center;
-  flex-shrink: 0;
-  margin-top: 2px;
 }
-.audience-icon svg { width: 14px; height: 14px; }
 .audience-item strong { color: var(--text-primary); }
 .audience-close {
   text-align: center;
@@ -1384,13 +1385,16 @@ section {
   align-items: start;
 }
 .experience-icon {
-  width: 32px; height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: start;
+  padding: 6px;
   background: var(--surface-canvas);
   color: var(--accent-primary);
   border-radius: var(--r-sm);
-  display: grid; place-items: center;
 }
-.experience-icon svg { width: 18px; height: 18px; }
 .experience-item p { margin: 0; color: var(--text-secondary); font-size: 16px; }
 .experience-item p strong { color: var(--text-primary); }
 .challenges-list {

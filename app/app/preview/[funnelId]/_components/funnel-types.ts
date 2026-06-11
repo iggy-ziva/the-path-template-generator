@@ -27,6 +27,22 @@ export function brandImageBackground(overlay: string, url: string): string {
 // "light"  → surface-canvas background   (warm cream)  default dark text
 export type SectionTheme = "dark" | "accent" | "light";
 
+/**
+ * Editor icon override stored at paths like `audienceItemIcons.0`.
+ * Legacy plain strings (icon name only) are handled by `parseIconOverride` in
+ * the icon-library component — they are treated as `{ v: string }` with the
+ * component's default size.
+ *
+ * NOTE: This is an editor-only field. The AI generate route does NOT produce
+ * icon assignments — users choose icons manually in the preview editor.
+ */
+export interface IconOverride {
+  /** Named icon from the curated set, or a full https:// URL for a custom upload. */
+  v: string;
+  /** Rendered size in px. Falls back to the component's `defaultSize` when absent. */
+  size?: number;
+}
+
 /** A single testimonial card (editor-editable). `heading` is an optional short
  *  pull-quote shown above the full quote; when empty the UI derives one. */
 export interface TestimonialItem {
@@ -171,6 +187,9 @@ export interface EventLandingContent {
   audienceEyebrow?: string;
   audienceHeading?: string;
   audienceItems?: string[];
+  /** Editor icon overrides for audience list items. Key = item index as string.
+   *  Not AI-generated — assigned manually in the preview editor. */
+  audienceItemIcons?: Record<string, IconOverride | string | null>;
   audienceClosingText?: string;
   audienceMicrocopy?: string;
   // 07 Encourage CTA 1
@@ -214,6 +233,9 @@ export interface EventLandingContent {
   recordingNote?: string;
   experienceHeading?: string;
   experienceItems?: { title: string; body: string }[];
+  /** Editor icon overrides for experience list items. Key = item index as string.
+   *  Not AI-generated — assigned manually in the preview editor. */
+  experienceItemIcons?: Record<string, IconOverride | string | null>;
   // 14b Challenges (own section)
   challengeHeading?: string;
   challengeItems?: string[];

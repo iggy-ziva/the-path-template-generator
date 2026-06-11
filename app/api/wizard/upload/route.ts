@@ -16,6 +16,7 @@ const ALLOWED_TYPES = [
   "image/png",
   "image/webp",
   "image/gif",
+  "image/svg+xml",
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/plain",

@@ -1,15 +1,48 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useEditorOptional } from "./EditorContext";
 import { usePageContent } from "./PageContentContext";
 import { getAtPath } from "@/lib/content-path";
 import type { FunnelPageKey } from "@/lib/funnel-export/config";
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 /**
- * A small, curated icon set for bullet lists. Kept deliberately minimal (per the
- * meeting: a short list, not a huge library) so designers aren't overwhelmed.
- * Each entry is the inner SVG markup for a 24×24 stroke icon.
+ * Stored at content paths like `audienceItemIcons.0`.
+ * Plain strings are treated as legacy named-icon values (backward compat).
+ */
+export interface IconOverride {
+  /** Named icon from the curated set, OR a full https:// URL for an uploaded image. */
+  v: string;
+  /** Rendered size in px. Falls back to the component's `defaultSize` when absent. */
+  size?: number;
+}
+
+export function parseIconOverride(raw: unknown): IconOverride | null {
+  if (!raw) return null;
+  if (typeof raw === "string" && raw) return { v: raw }; // backward compat
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    const obj = raw as Record<string, unknown>;
+    if (typeof obj.v === "string" && obj.v) {
+      return {
+        v: obj.v,
+        size: typeof obj.size === "number" ? obj.size : undefined,
+      };
+    }
+  }
+  return null;
+}
+
+function isUrl(v: string) {
+  return v.startsWith("http://") || v.startsWith("https://") || v.startsWith("/");
+}
+
+// ── Curated icon library ──────────────────────────────────────────────────────
+
+/**
+ * Small, curated icon set for bullet lists. Kept minimal so designers aren't
+ * overwhelmed (per the original brief: "a short list, not a huge library").
  */
 export const ICON_LIBRARY: { name: string; label: string; svg: React.ReactNode }[] = [
   { name: "check",   label: "Check",   svg: <polyline points="20 6 9 17 4 12" /> },
@@ -28,40 +61,128 @@ export const ICON_LIBRARY: { name: string; label: string; svg: React.ReactNode }
 
 const ICON_MAP = new Map(ICON_LIBRARY.map((i) => [i.name, i.svg]));
 
+const SIZE_PRESETS = [
+  { label: "S",  size: 14 },
+  { label: "M",  size: 18 },
+  { label: "L",  size: 24 },
+  { label: "XL", size: 32 },
+];
+
+// ── Render helpers ─────────────────────────────────────────────────────────────
+
+/** Render a named icon from the curated set as inline SVG. */
 export function renderIcon(name: string | undefined, size = 18): React.ReactNode {
   if (!name) return null;
   const svg = ICON_MAP.get(name);
   if (!svg) return null;
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: size, height: size }}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: size, height: size, flexShrink: 0, display: "block" }}
+    >
       {svg}
     </svg>
   );
 }
 
+/**
+ * Render an icon from an IconOverride — handles both named icons and uploaded
+ * image URLs (SVG/PNG/JPEG). Returns `null` when no override is set; callers
+ * are responsible for rendering their own fallback in that case.
+ */
+export function renderIconValue(
+  override: IconOverride | null,
+  defaultSize = 18,
+): React.ReactNode {
+  if (!override) return null;
+  const size = override.size ?? defaultSize;
+  if (isUrl(override.v)) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return (
+      <img
+        src={override.v}
+        alt=""
+        style={{ width: size, height: size, objectFit: "contain", display: "block", flexShrink: 0 }}
+      />
+    );
+  }
+  return renderIcon(override.v, size);
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 interface Props {
   pageKey: FunnelPageKey;
-  /** Content path holding the chosen icon name. */
+  /** Content path holding the IconOverride (or a legacy named-icon string). */
   path: string;
-  /** Default marker rendered when no icon is chosen. */
+  /** Rendered when no icon override is stored. */
   fallback: React.ReactNode;
-  size?: number;
+  /**
+   * Base size in px used when no explicit size is stored in the override.
+   * Defaults to 18. Pass 14 for the audience list, 18 for the experience list.
+   */
+  defaultSize?: number;
   exportMode?: boolean;
 }
 
 /**
- * Renders the chosen icon (or a fallback marker) and, in edit mode, lets the
- * user pick from the curated set or reset to the default.
+ * Renders the chosen icon (or fallback) and, in edit mode, opens a picker with
+ * the curated set, custom upload (SVG / PNG / JPEG), and size presets.
  */
-export default function EditableIcon({ pageKey, path, fallback, size = 18, exportMode = false }: Props) {
+export default function EditableIcon({
+  pageKey,
+  path,
+  fallback,
+  defaultSize = 18,
+  exportMode = false,
+}: Props) {
   const editor = useEditorOptional();
   const editMode = !exportMode && Boolean(editor?.isEditMode);
   const pageContent = usePageContent(pageKey);
   const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const uploadRef = useRef<HTMLInputElement>(null);
 
-  const chosen = getAtPath(pageContent, path);
-  const chosenName = typeof chosen === "string" && chosen ? chosen : undefined;
-  const marker = chosenName ? renderIcon(chosenName, size) : fallback;
+  const raw = getAtPath(pageContent, path);
+  const override = parseIconOverride(raw);
+  const currentSize = override?.size ?? defaultSize;
+
+  const marker = override ? renderIconValue(override, defaultSize) : fallback;
+
+  function write(patch: Partial<IconOverride>) {
+    const v = patch.v ?? override?.v ?? "";
+    const size = patch.size ?? currentSize;
+    if (!v) {
+      editor?.updateField(pageKey, path, null);
+    } else {
+      editor?.updateField(pageKey, path, { v, size } satisfies IconOverride);
+    }
+  }
+
+  async function handleUpload(file: File) {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/wizard/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? "Upload failed");
+      }
+      const data = (await res.json()) as { url?: string };
+      if (data.url) write({ v: data.url, size: currentSize });
+    } catch (err) {
+      alert(`Icon upload failed — ${err instanceof Error ? err.message : "please try again."}`);
+    } finally {
+      setUploading(false);
+      if (uploadRef.current) uploadRef.current.value = "";
+    }
+  }
 
   if (!editMode || !editor) return <>{marker}</>;
 
@@ -88,6 +209,7 @@ export default function EditableIcon({ pageKey, path, fallback, size = 18, expor
       >
         {marker}
       </button>
+
       {open && (
         <div
           contentEditable={false}
@@ -97,47 +219,122 @@ export default function EditableIcon({ pageKey, path, fallback, size = 18, expor
             top: "calc(100% + 6px)",
             left: 0,
             zIndex: 140,
-            display: "grid",
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 4,
-            padding: 8,
-            width: 232,
-            background: "rgba(20, 20, 18, 0.95)",
+            width: 248,
+            padding: 10,
+            background: "rgba(20, 20, 18, 0.97)",
             border: "1px solid rgba(255,255,255,0.16)",
             borderRadius: 10,
             boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
           }}
         >
-          {ICON_LIBRARY.map((icon) => {
-            const active = icon.name === chosenName;
-            return (
-              <button
-                key={icon.name}
-                type="button"
-                title={icon.label}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  editor.updateField(pageKey, path, icon.name);
-                  setOpen(false);
-                }}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 32,
-                  height: 32,
-                  borderRadius: 6,
-                  border: "none",
-                  cursor: "pointer",
-                  color: active ? "#141412" : "#e8e4dd",
-                  background: active ? "#D4A878" : "transparent",
-                }}
-              >
-                {renderIcon(icon.name, 18)}
-              </button>
-            );
-          })}
+          {/* Curated icons */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4 }}>
+            {ICON_LIBRARY.map((icon) => {
+              const active = override?.v === icon.name;
+              return (
+                <button
+                  key={icon.name}
+                  type="button"
+                  title={icon.label}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    write({ v: icon.name });
+                    setOpen(false);
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 32,
+                    height: 32,
+                    borderRadius: 6,
+                    border: "none",
+                    cursor: "pointer",
+                    color: active ? "#141412" : "#e8e4dd",
+                    background: active ? "#D4A878" : "transparent",
+                  }}
+                >
+                  {renderIcon(icon.name, 16)}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Custom upload */}
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 8 }}>
+            <p style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
+              Custom icon
+            </p>
+            <input
+              ref={uploadRef}
+              type="file"
+              accept="image/svg+xml,image/png,image/jpeg"
+              hidden
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); }}
+            />
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); uploadRef.current?.click(); }}
+              disabled={uploading}
+              style={{
+                width: "100%",
+                padding: "7px 0",
+                borderRadius: 6,
+                border: "1px solid rgba(255,255,255,0.2)",
+                background: "transparent",
+                color: "#e8e4dd",
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: uploading ? "wait" : "pointer",
+              }}
+            >
+              {uploading ? "Uploading…" : "↑ Upload SVG / PNG / JPEG"}
+            </button>
+            {override && isUrl(override.v) && (
+              <p style={{ margin: "4px 0 0", fontSize: 10, color: "rgba(255,255,255,0.45)", textAlign: "center" }}>
+                Custom icon active
+              </p>
+            )}
+          </div>
+
+          {/* Size presets */}
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 8 }}>
+            <p style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
+              Size
+            </p>
+            <div style={{ display: "flex", gap: 4 }}>
+              {SIZE_PRESETS.map((p) => {
+                const active = currentSize === p.size;
+                return (
+                  <button
+                    key={p.label}
+                    type="button"
+                    title={`${p.size}px`}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); write({ size: p.size }); }}
+                    style={{
+                      flex: 1,
+                      padding: "5px 0",
+                      borderRadius: 6,
+                      border: "1px solid rgba(255,255,255,0.2)",
+                      background: active ? "#D4A878" : "transparent",
+                      color: active ? "#141412" : "#e8e4dd",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Reset */}
           <button
             type="button"
             onClick={(e) => {
@@ -147,9 +344,8 @@ export default function EditableIcon({ pageKey, path, fallback, size = 18, expor
               setOpen(false);
             }}
             style={{
-              gridColumn: "1 / -1",
-              marginTop: 2,
-              padding: "5px 0",
+              width: "100%",
+              padding: "6px 0",
               borderRadius: 6,
               border: "1px solid rgba(255,255,255,0.16)",
               background: "transparent",

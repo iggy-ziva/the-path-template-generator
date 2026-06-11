@@ -11,7 +11,7 @@ import type { WizardData } from "@/lib/wizard-types";
 // are non-negotiable for the AI to produce a usable funnel.
 //
 // Overall completeness = (weight of passed checks) / (weight of all checks) × 100.
-// Generate threshold   = 80 (configurable via GENERATE_THRESHOLD below).
+// Generate threshold   = 70 (configurable via GENERATE_THRESHOLD below).
 // ─────────────────────────────────────────────────────────────────────────
 
 export const GENERATE_THRESHOLD = 70;
