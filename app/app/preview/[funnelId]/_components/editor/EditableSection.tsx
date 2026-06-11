@@ -161,9 +161,11 @@ export default function EditableSection({
 
   const bgPath = backgroundPath ?? `sectionBackgrounds.${sectionId}`;
   const mobileBgPath = `sectionBackgroundsMobile.${sectionId}`;
+  const bgNoImagePath = `sectionBgNoImage.${sectionId}`;
   const pageContent = usePageContent(pageKey);
   const overrideUrl = safeUrl(getAtPath(pageContent, bgPath) as string | null | undefined);
-  const bgUrl = overrideUrl ?? safeUrl(backgroundFallbackUrl ?? null);
+  const bgNoImage = Boolean(getAtPath(pageContent, bgNoImagePath));
+  const bgUrl = bgNoImage ? null : (overrideUrl ?? safeUrl(backgroundFallbackUrl ?? null));
   const mobileBgUrl = safeUrl(getAtPath(pageContent, mobileBgPath) as string | null | undefined);
   const overlayStrength = getAtPath(pageContent, `sectionBgOverlayStrength.${sectionId}`) as string | undefined;
   const bgPosition = (getAtPath(pageContent, `sectionBgPosition.${sectionId}`) as string | undefined) ?? "center";
@@ -303,12 +305,15 @@ export default function EditableSection({
       />
       {showBgControl && (
         <BackgroundControl
-          hasImage={Boolean(overrideUrl)}
+          hasImage={Boolean(bgUrl) || bgNoImage}
           hasMobileImage={Boolean(mobileBgUrl)}
           overlayStrength={(overlayStrength as OverlayStrength | undefined) ?? "auto"}
           bgPosition={(bgPosition as BgPosition) ?? "center"}
           onOpen={() => setPickerOpen(true)}
-          onRemove={() => editor.updateField(pageKey, bgPath, null)}
+          onRemove={() => {
+            editor.updateField(pageKey, bgPath, null);
+            editor.updateField(pageKey, bgNoImagePath, true);
+          }}
           onOpenMobile={() => setMobilePickerOpen(true)}
           onRemoveMobile={() => editor.updateField(pageKey, mobileBgPath, null)}
           onOverlayChange={(s) => editor.updateField(pageKey, `sectionBgOverlayStrength.${sectionId}`, s)}
@@ -381,9 +386,18 @@ export default function EditableSection({
       <ImagePickerModal
         library={editor.imageLibrary}
         currentUrl={overrideUrl}
+        canRemove={Boolean(bgUrl) || bgNoImage}
         dimensionHint={bgDimensionHint}
         onSelect={(url) => {
-          editor.updateField(pageKey, bgPath, url);
+          if (url === null) {
+            // Explicitly remove — set noImage flag so fallback is also suppressed.
+            editor.updateField(pageKey, bgPath, null);
+            editor.updateField(pageKey, bgNoImagePath, true);
+          } else {
+            // New image chosen — clear noImage flag and store the URL.
+            editor.updateField(pageKey, bgNoImagePath, false);
+            editor.updateField(pageKey, bgPath, url);
+          }
           setPickerOpen(false);
         }}
         onClose={() => setPickerOpen(false)}
