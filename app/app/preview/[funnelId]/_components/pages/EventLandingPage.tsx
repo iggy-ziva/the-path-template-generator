@@ -40,9 +40,9 @@ const EDIT_PILL_REMOVE: CSSProperties = {
   fontWeight: 700,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
-  color: "#b91c1c",
-  background: "rgba(220,38,38,0.08)",
-  border: "1px solid rgba(220,38,38,0.35)",
+  color: "var(--text-secondary)",
+  background: "color-mix(in srgb, var(--text-primary) 6%, transparent)",
+  border: "1px solid var(--border-subtle)",
   borderRadius: 999,
   padding: "4px 10px",
   cursor: "pointer",
@@ -1368,7 +1368,7 @@ function TestimonialEditCard({
         <button
           type="button"
           onClick={onRemove}
-          style={{ background: "none", border: "none", color: "#c0392b", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+          style={{ background: "none", border: "none", color: "var(--text-secondary)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
         >
           Remove
         </button>
