@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useEditorOptional } from "./EditorContext";
 import { usePageContent } from "./PageContentContext";
 import { getAtPath } from "@/lib/content-path";
@@ -44,6 +44,42 @@ function stepPadding(current: number, dir: 1 | -1): number {
 }
 
 type OverlayKind = "hero" | "section" | "light" | "auto";
+
+/** Stored overlay strength values — "auto" defers to the theme/base default. */
+type OverlayStrength = "auto" | "none" | "light" | "medium" | "heavy";
+const OVERLAY_STRENGTHS: { value: OverlayStrength; label: string; opacity: number | null }[] = [
+  { value: "auto",   label: "Auto",  opacity: null },
+  { value: "none",   label: "None",  opacity: 0 },
+  { value: "light",  label: "Light", opacity: 0.35 },
+  { value: "medium", label: "Med",   opacity: 0.60 },
+  { value: "heavy",  label: "Heavy", opacity: 0.82 },
+];
+
+type BgPosition = "top" | "center" | "bottom";
+const POSITION_OPTIONS: { value: BgPosition; label: string }[] = [
+  { value: "top",    label: "Top"    },
+  { value: "center", label: "Center" },
+  { value: "bottom", label: "Bottom" },
+];
+
+function buildOverlayGradient(
+  strength: string | undefined,
+  overlayKind: OverlayKind,
+  base: "plain" | "hero" | "encourage" | "final-vp" | undefined,
+  theme: SectionTheme,
+): string | null {
+  if (strength === "none") return null;
+  if (strength && strength !== "auto") {
+    const opt = OVERLAY_STRENGTHS.find(o => o.value === strength);
+    if (opt && opt.opacity !== null) {
+      return theme === "light"
+        ? brandLightSectionOverlay(opt.opacity)
+        : brandSectionOverlay(opt.opacity);
+    }
+  }
+  // "auto" or unset → use the section's default
+  return resolveOverlay(overlayKind, base, theme);
+}
 
 interface Props {
   pageKey: FunnelPageKey;
@@ -120,12 +156,17 @@ export default function EditableSection({
   const editor = useEditorOptional();
   const editMode = !exportMode && Boolean(editor?.isEditMode);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [mobilePickerOpen, setMobilePickerOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
 
   const bgPath = backgroundPath ?? `sectionBackgrounds.${sectionId}`;
+  const mobileBgPath = `sectionBackgroundsMobile.${sectionId}`;
   const pageContent = usePageContent(pageKey);
   const overrideUrl = safeUrl(getAtPath(pageContent, bgPath) as string | null | undefined);
   const bgUrl = overrideUrl ?? safeUrl(backgroundFallbackUrl ?? null);
+  const mobileBgUrl = safeUrl(getAtPath(pageContent, mobileBgPath) as string | null | undefined);
+  const overlayStrength = getAtPath(pageContent, `sectionBgOverlayStrength.${sectionId}`) as string | undefined;
+  const bgPosition = (getAtPath(pageContent, `sectionBgPosition.${sectionId}`) as string | undefined) ?? "center";
 
   // Per-section padding overrides (top/bottom, px). Unset = inherit CSS default.
   const padTopRaw = getAtPath(pageContent, `sectionPadding.${sectionId}.top`);
@@ -200,19 +241,42 @@ export default function EditableSection({
     />
   ) : null;
 
-  const bgLayer = showsBgImage ? (
-    <div
-      aria-hidden
-      style={{
-        position: "absolute",
-        inset: 0,
-        zIndex: -1,
-        backgroundImage: brandImageBackground(resolveOverlay(backgroundOverlay, base, theme), bgUrl!),
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        pointerEvents: "none",
-      }}
-    />
+  // Build a CSS-class name used to swap desktop → mobile image via a <style> tag.
+  const bgLayerClass = showsBgImage && mobileBgUrl
+    ? `bgl-${pageKey}-${sectionId}`.replace(/[^a-zA-Z0-9_-]/g, "-")
+    : "";
+  const overlayGradient = showsBgImage
+    ? buildOverlayGradient(overlayStrength, backgroundOverlay, base, theme)
+    : null;
+  const desktopBgImage = showsBgImage
+    ? (overlayGradient ? brandImageBackground(overlayGradient, bgUrl!) : `url(${bgUrl})`)
+    : undefined;
+  const mobileBgImage = showsBgImage && mobileBgUrl
+    ? (overlayGradient ? brandImageBackground(overlayGradient, mobileBgUrl) : `url(${mobileBgUrl})`)
+    : undefined;
+
+  const bgLayerEl = showsBgImage ? (
+    <>
+      {bgLayerClass && (
+        <style dangerouslySetInnerHTML={{ __html:
+          `@media(max-width:768px){.${bgLayerClass}{background-image:${mobileBgImage}!important}}` +
+          `@media(min-width:769px){.${bgLayerClass}--mob{display:none!important}}`
+        }} />
+      )}
+      <div
+        aria-hidden
+        className={bgLayerClass || undefined}
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: -1,
+          backgroundImage: desktopBgImage,
+          backgroundSize: "cover",
+          backgroundPosition: bgPosition,
+          pointerEvents: "none",
+        }}
+      />
+    </>
   ) : null;
 
   const showBgControl = editMode && editor && !noBackground && !bgViaClass;
@@ -240,8 +304,15 @@ export default function EditableSection({
       {showBgControl && (
         <BackgroundControl
           hasImage={Boolean(overrideUrl)}
+          hasMobileImage={Boolean(mobileBgUrl)}
+          overlayStrength={(overlayStrength as OverlayStrength | undefined) ?? "auto"}
+          bgPosition={(bgPosition as BgPosition) ?? "center"}
           onOpen={() => setPickerOpen(true)}
           onRemove={() => editor.updateField(pageKey, bgPath, null)}
+          onOpenMobile={() => setMobilePickerOpen(true)}
+          onRemoveMobile={() => editor.updateField(pageKey, mobileBgPath, null)}
+          onOverlayChange={(s) => editor.updateField(pageKey, `sectionBgOverlayStrength.${sectionId}`, s)}
+          onPositionChange={(p) => editor.updateField(pageKey, `sectionBgPosition.${sectionId}`, p)}
         />
       )}
       {deletable && <DeleteControl onRemove={toggleHidden} />}
@@ -319,6 +390,20 @@ export default function EditableSection({
       />
     ) : null;
 
+  const mobilePicker =
+    mobilePickerOpen && editor ? (
+      <ImagePickerModal
+        library={editor.imageLibrary}
+        currentUrl={mobileBgUrl}
+        dimensionHint="Mobile background — recommended: 800×1200px (portrait), under 500 KB."
+        onSelect={(url) => {
+          editor.updateField(pageKey, mobileBgPath, url);
+          setMobilePickerOpen(false);
+        }}
+        onClose={() => setMobilePickerOpen(false)}
+      />
+    ) : null;
+
   const paddingHandles = editMode && editor && hovered ? (
     <>
       <PaddingHandle
@@ -346,10 +431,11 @@ export default function EditableSection({
     as,
     domProps,
     padStyleEl,
-    bgLayer,
+    bgLayerEl,
     hidden ? hiddenOverlay : controls,
     hidden ? null : paddingHandles,
     picker,
+    mobilePicker,
     children,
   );
 }
@@ -523,13 +609,39 @@ function DeleteControl({ onRemove }: { onRemove: () => void }) {
 
 function BackgroundControl({
   hasImage,
+  hasMobileImage,
+  overlayStrength,
+  bgPosition,
   onOpen,
   onRemove,
+  onOpenMobile,
+  onRemoveMobile,
+  onOverlayChange,
+  onPositionChange,
 }: {
   hasImage: boolean;
+  hasMobileImage: boolean;
+  overlayStrength: OverlayStrength;
+  bgPosition: BgPosition;
   onOpen: () => void;
   onRemove: () => void;
+  onOpenMobile: () => void;
+  onRemoveMobile: () => void;
+  onOverlayChange: (s: OverlayStrength) => void;
+  onPositionChange: (p: BgPosition) => void;
 }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setSettingsOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [settingsOpen]);
+
   const btn: React.CSSProperties = {
     padding: "3px 9px",
     borderRadius: 6,
@@ -542,33 +654,150 @@ function BackgroundControl({
     color: "#e8e4dd",
     background: "transparent",
   };
+
+  const settingsPanel: React.CSSProperties = {
+    position: "absolute",
+    top: "calc(100% + 6px)",
+    right: 0,
+    zIndex: 200,
+    background: "rgba(20,20,18,0.97)",
+    border: "1px solid rgba(255,255,255,0.14)",
+    borderRadius: 10,
+    boxShadow: "0 8px 28px rgba(0,0,0,0.55)",
+    backdropFilter: "blur(8px)",
+    padding: "10px 12px",
+    display: "grid",
+    gap: 8,
+    minWidth: 280,
+  };
+
+  const rowLabel: React.CSSProperties = {
+    fontSize: 9,
+    fontWeight: 700,
+    letterSpacing: "0.07em",
+    textTransform: "uppercase",
+    color: "rgba(232,228,221,0.45)",
+    marginBottom: 3,
+    display: "block",
+  };
+
+  const optionBtn = (active: boolean): React.CSSProperties => ({
+    padding: "3px 8px",
+    borderRadius: 5,
+    border: "none",
+    cursor: "pointer",
+    fontSize: 10,
+    fontWeight: 700,
+    lineHeight: 1.4,
+    color: active ? "#141412" : "#e8e4dd",
+    background: active ? "#D4A878" : "transparent",
+    transition: "background 100ms ease",
+  });
+
   return (
-    <div style={CONTROL_WRAP}>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onOpen();
-        }}
-        title="Set or swap this section's background image"
-        style={btn}
-      >
-        {hasImage ? "Swap bg" : "+ Image"}
-      </button>
-      {hasImage && (
+    <div ref={ref} style={{ position: "relative" }}>
+      <div style={CONTROL_WRAP}>
         <button
           type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onRemove();
-          }}
-          title="Remove background image"
-          style={{ ...btn, color: "#f1b0b0" }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpen(); }}
+          title="Set or swap this section's background image"
+          style={btn}
         >
-          ✕
+          {hasImage ? "Swap bg" : "+ Image"}
         </button>
+        {hasImage && (
+          <>
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
+              title="Remove background image"
+              style={{ ...btn, color: "#f1b0b0" }}
+            >
+              ✕
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSettingsOpen(s => !s); }}
+              title="Image options — overlay, position, mobile"
+              style={{ ...btn, color: settingsOpen ? "#D4A878" : "#e8e4dd" }}
+            >
+              ⋯
+            </button>
+          </>
+        )}
+      </div>
+
+      {settingsOpen && hasImage && (
+        <div style={settingsPanel} onClick={(e) => e.stopPropagation()}>
+          {/* Overlay strength */}
+          <div>
+            <span style={rowLabel}>Overlay</span>
+            <div style={{ display: "flex", gap: 2 }}>
+              {OVERLAY_STRENGTHS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => onOverlayChange(opt.value)}
+                  style={optionBtn(overlayStrength === opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Background position */}
+          <div>
+            <span style={rowLabel}>Position</span>
+            <div style={{ display: "flex", gap: 2 }}>
+              {POSITION_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => onPositionChange(opt.value)}
+                  style={optionBtn(bgPosition === opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile image */}
+          <div>
+            <span style={rowLabel}>Mobile version</span>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <button
+                type="button"
+                onClick={onOpenMobile}
+                style={{
+                  ...btn,
+                  background: "rgba(255,255,255,0.07)",
+                  borderRadius: 6,
+                  padding: "4px 10px",
+                  color: hasMobileImage ? "#D4A878" : "#e8e4dd",
+                }}
+              >
+                {hasMobileImage ? "Swap mobile" : "+ Upload mobile"}
+              </button>
+              {hasMobileImage && (
+                <button
+                  type="button"
+                  onClick={onRemoveMobile}
+                  title="Remove mobile background"
+                  style={{ ...btn, color: "#f1b0b0", padding: "4px 8px" }}
+                >
+                  ✕
+                </button>
+              )}
+              {!hasMobileImage && (
+                <span style={{ fontSize: 9, color: "rgba(232,228,221,0.35)", lineHeight: 1.4, maxWidth: 130 }}>
+                  Portrait crop shown on phones
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

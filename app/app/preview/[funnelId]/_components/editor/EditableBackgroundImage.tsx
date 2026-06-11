@@ -19,11 +19,7 @@ interface Props {
   children?: ReactNode;
 }
 
-const SWAP_PILL: CSSProperties = {
-  position: "absolute",
-  bottom: 10,
-  right: 10,
-  zIndex: 2,
+const PILL_BASE: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 6,
@@ -31,7 +27,6 @@ const SWAP_PILL: CSSProperties = {
   fontWeight: 700,
   letterSpacing: "0.04em",
   textTransform: "uppercase",
-  color: "#fff",
   background: "rgba(17,17,17,0.82)",
   border: "1px solid rgba(255,255,255,0.35)",
   borderRadius: 999,
@@ -42,12 +37,10 @@ const SWAP_PILL: CSSProperties = {
 };
 
 /**
- * Editable background-image wrapper. In edit mode it overlays an upload button
- * that swaps the image and writes the new URL via editor.updateField — i.e. it
- * only mutates the in-memory draft. Persistence happens through the editor's
- * normal full-content save, so this can't partially overwrite stored content.
- * Outside edit mode (and in export, where there's no editor) it renders a plain
- * element, preserving what-you-see-is-what-you-get parity.
+ * Editable background-image wrapper. In edit mode it overlays upload / remove
+ * buttons that write the new URL via editor.updateField — i.e. only mutating
+ * the in-memory draft. Outside edit mode it renders a plain element, preserving
+ * what-you-see-is-what-you-get parity.
  */
 export default function EditableBackgroundImage({
   pageKey,
@@ -69,6 +62,9 @@ export default function EditableBackgroundImage({
         | undefined)
     : undefined;
 
+  // Use draft URL to determine current state (hasImage prop may reflect stale initial content)
+  const hasCurrentImage = Boolean(currentUrl) || (hasImage && currentUrl === undefined);
+
   const editStyle: CSSProperties = isEditMode
     ? { ...style, position: "relative", outline: "2px dashed rgba(255,255,255,0.6)", outlineOffset: -4 }
     : (style ?? {});
@@ -77,14 +73,28 @@ export default function EditableBackgroundImage({
     <div className={className} aria-hidden={ariaHidden} style={editStyle}>
       {children}
       {isEditMode && editor && (
-        <button
-          type="button"
-          style={SWAP_PILL}
+        <div
           contentEditable={false}
-          onClick={() => setPickerOpen(true)}
+          style={{ position: "absolute", bottom: 10, right: 10, zIndex: 2, display: "flex", gap: 6 }}
         >
-          {hasImage ? "Swap image" : "Add image"}
-        </button>
+          <button
+            type="button"
+            style={{ ...PILL_BASE, color: "#fff" }}
+            onClick={() => setPickerOpen(true)}
+          >
+            {hasCurrentImage ? "Swap image" : "Add image"}
+          </button>
+          {hasCurrentImage && (
+            <button
+              type="button"
+              style={{ ...PILL_BASE, color: "#f87171", borderColor: "rgba(248,113,113,0.45)" }}
+              onClick={() => editor.updateField(pageKey, path, null)}
+              title="Remove image"
+            >
+              Remove
+            </button>
+          )}
+        </div>
       )}
       {pickerOpen && editor && (
         <ImagePickerModal
