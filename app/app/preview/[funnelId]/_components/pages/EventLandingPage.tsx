@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, type CSSProperties } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import type { EventLandingContent, WizardSnapshot, TestimonialItem } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
 import EditableLogo from "../editor/EditableLogo";
@@ -1196,6 +1197,7 @@ function TestimonialCarousel({
   const n = items.length;
   const [start, setStart] = useState(0);
   const [animKey, setAnimKey] = useState(0);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   function navigate(dir: 1 | -1) {
     setStart(s => (s + dir + n) % n);
@@ -1214,7 +1216,9 @@ function TestimonialCarousel({
     writeItems(items.filter((_, idx) => idx !== i));
   }
   function addItem() {
-    writeItems([...items, { quote: "", name: "" }]);
+    const next = [...items, { quote: "", name: "" }];
+    writeItems(next);
+    setEditingIndex(next.length - 1);
   }
 
   // Always pick exactly 3 cards, wrapping circularly so no slide is ever short
@@ -1239,32 +1243,57 @@ function TestimonialCarousel({
         </div>
 
         {editMode ? (
-          <div style={{ display: "grid", gap: 16, maxWidth: 760, margin: "0 auto" }}>
-            {items.map((t, i) => (
-              <TestimonialEditCard
-                key={i}
-                index={i}
-                item={t}
-                onChange={(patch) => updateItem(i, patch)}
-                onRemove={() => removeItem(i)}
+          <div contentEditable={false}>
+            {items.length === 0 ? (
+              <p style={{ textAlign: "center", color: "var(--text-tertiary)", fontSize: 14, marginBottom: 16 }}>
+                No testimonials yet — add your first one below.
+              </p>
+            ) : (
+              <div
+                className="testimonial-track"
+                style={{ animation: "none", marginBottom: 20 }}
+              >
+                {items.map((t, i) => (
+                  <TestimonialCardHoverable
+                    key={i}
+                    item={t}
+                    onEdit={() => setEditingIndex(i)}
+                  />
+                ))}
+              </div>
+            )}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <button
+                type="button"
+                onClick={addItem}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "10px 20px",
+                  borderRadius: 999,
+                  border: "1.5px dashed var(--border-subtle)",
+                  background: "transparent",
+                  color: "var(--text-secondary)",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  letterSpacing: "0.03em",
+                }}
+              >
+                + Add testimonial
+              </button>
+            </div>
+            {editingIndex !== null && editingIndex < items.length && (
+              <TestimonialEditDialog
+                index={editingIndex}
+                item={items[editingIndex]}
+                onChange={(patch) => updateItem(editingIndex, patch)}
+                onRemove={() => { removeItem(editingIndex); setEditingIndex(null); }}
+                onClose={() => setEditingIndex(null)}
+                onAddNew={addItem}
               />
-            ))}
-            <button
-              type="button"
-              onClick={addItem}
-              style={{
-                padding: "12px 16px",
-                borderRadius: 10,
-                border: "1.5px dashed var(--border-subtle)",
-                background: "transparent",
-                color: "var(--accent-secondary-on-light)",
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              + Add testimonial
-            </button>
+            )}
           </div>
         ) : (
           <>
@@ -1319,107 +1348,236 @@ function TestimonialCarousel({
   );
 }
 
-function TestimonialEditCard({
-  index, item, onChange, onRemove,
+/** A testimonial card shown in edit mode — identical to the published card but
+ *  with a hover overlay that reveals the Edit button. */
+function TestimonialCardHoverable({
+  item, onEdit,
+}: {
+  item: TestimonialItem;
+  onEdit: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <article
+      className="testimonial-card"
+      style={{ position: "relative", cursor: "default" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <h3 className="h3">&ldquo;{testimonialHeading(item)}&rdquo;</h3>
+      <p className="quote">{item.quote || <em style={{ opacity: 0.4 }}>No quote yet</em>}</p>
+      <div className="attrib">
+        <span className="name">{item.name || <em style={{ opacity: 0.4 }}>No name</em>}</span>
+        {(item.location || item.context) && (
+          <span className="loc">{[item.location, item.context].filter(Boolean).join(" · ")}</span>
+        )}
+      </div>
+      {hovered && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: "inherit",
+            background: "rgba(0,0,0,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backdropFilter: "blur(2px)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={onEdit}
+            style={{
+              padding: "9px 22px",
+              borderRadius: 999,
+              background: "#fff",
+              color: "#111",
+              border: "none",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              letterSpacing: "0.02em",
+            }}
+          >
+            Edit
+          </button>
+        </div>
+      )}
+    </article>
+  );
+}
+
+/** Portal-based dialog for editing a single testimonial card. */
+function TestimonialEditDialog({
+  index, item, onChange, onRemove, onClose, onAddNew,
 }: {
   index: number;
   item: TestimonialItem;
   onChange: (patch: Partial<TestimonialItem>) => void;
   onRemove: () => void;
+  onClose: () => void;
+  onAddNew: () => void;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  if (typeof document === "undefined") return null;
+
   const field: CSSProperties = {
     width: "100%",
-    padding: "8px 10px",
-    border: "1px solid var(--border-subtle)",
+    padding: "9px 11px",
+    border: "1px solid rgba(255,255,255,0.12)",
     borderRadius: 8,
-    background: "var(--surface-raised)",
-    color: "var(--text-primary)",
+    background: "rgba(255,255,255,0.06)",
+    color: "#e8e4dd",
     fontSize: 14,
     fontFamily: "inherit",
     boxSizing: "border-box",
+    outline: "none",
   };
   const label: CSSProperties = {
     display: "block",
     fontSize: 10,
     fontWeight: 700,
-    letterSpacing: "0.06em",
+    letterSpacing: "0.07em",
     textTransform: "uppercase",
-    color: "var(--text-tertiary)",
-    marginBottom: 4,
+    color: "rgba(232,228,221,0.5)",
+    marginBottom: 5,
   };
-  return (
-    <div
-      contentEditable={false}
-      style={{
-        position: "relative",
-        textAlign: "left",
-        display: "grid",
-        gap: 10,
-        padding: "16px 18px",
-        borderRadius: 12,
-        border: "1px solid var(--border-subtle)",
-        background: "var(--surface-canvas)",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-tertiary)" }}>
-          Testimonial {index + 1}
-        </span>
-        <button
-          type="button"
-          onClick={onRemove}
-          style={{ background: "none", border: "none", color: "var(--text-secondary)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-        >
-          Remove
-        </button>
-      </div>
-      <div>
-        <span style={label}>Headline (optional)</span>
-        <input
-          style={field}
-          value={item.heading ?? ""}
-          placeholder="Short pull-quote shown above the testimonial"
-          onChange={(e) => onChange({ heading: e.target.value })}
-        />
-      </div>
-      <div>
-        <span style={label}>Quote</span>
-        <textarea
-          style={{ ...field, minHeight: 80, resize: "vertical" }}
-          value={item.quote}
-          placeholder="The full testimonial text"
-          onChange={(e) => onChange({ quote: e.target.value })}
-        />
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+
+  return createPortal(
+    <>
+      {/* Backdrop */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.55)",
+          zIndex: 9998,
+          backdropFilter: "blur(3px)",
+        }}
+        onClick={onClose}
+      />
+      {/* Panel */}
+      <div
+        ref={ref}
+        contentEditable={false}
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 9999,
+          width: "min(520px, 92vw)",
+          background: "#1c1c1a",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 16,
+          padding: "22px 24px",
+          display: "grid",
+          gap: 14,
+          maxHeight: "88vh",
+          overflowY: "auto",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#D4A878" }}>
+            Testimonial {index + 1}
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ background: "none", border: "none", color: "rgba(232,228,221,0.5)", fontSize: 20, lineHeight: 1, cursor: "pointer", padding: "0 2px" }}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Fields */}
         <div>
-          <span style={label}>Name</span>
+          <span style={label}>Headline (optional)</span>
           <input
             style={field}
-            value={item.name}
-            placeholder="e.g. Sarah M."
-            onChange={(e) => onChange({ name: e.target.value })}
+            value={item.heading ?? ""}
+            placeholder="Short pull-quote shown above the testimonial"
+            onChange={(e) => onChange({ heading: e.target.value })}
           />
         </div>
         <div>
-          <span style={label}>Location</span>
-          <input
-            style={field}
-            value={item.location ?? ""}
-            placeholder="e.g. London"
-            onChange={(e) => onChange({ location: e.target.value })}
+          <span style={label}>Quote</span>
+          <textarea
+            style={{ ...field, minHeight: 90, resize: "vertical" }}
+            value={item.quote}
+            placeholder="The full testimonial text"
+            onChange={(e) => onChange({ quote: e.target.value })}
           />
         </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div>
+            <span style={label}>Name</span>
+            <input
+              style={field}
+              value={item.name}
+              placeholder="e.g. Sarah M."
+              onChange={(e) => onChange({ name: e.target.value })}
+            />
+          </div>
+          <div>
+            <span style={label}>Location</span>
+            <input
+              style={field}
+              value={item.location ?? ""}
+              placeholder="e.g. London"
+              onChange={(e) => onChange({ location: e.target.value })}
+            />
+          </div>
+        </div>
+        <div>
+          <span style={label}>Context (optional)</span>
+          <input
+            style={field}
+            value={item.context ?? ""}
+            placeholder="e.g. Cohort 3 graduate"
+            onChange={(e) => onChange({ context: e.target.value })}
+          />
+        </div>
+
+        {/* Footer actions */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: 2 }}>
+          <button
+            type="button"
+            onClick={onRemove}
+            style={{ background: "none", border: "none", color: "#f87171", fontSize: 13, fontWeight: 600, cursor: "pointer", padding: 0 }}
+          >
+            Remove testimonial
+          </button>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              type="button"
+              onClick={onAddNew}
+              style={{ background: "none", border: "1px solid rgba(212,168,120,0.4)", color: "#D4A878", borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "7px 16px" }}
+            >
+              + Add another
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{ background: "#D4A878", border: "none", color: "#141412", borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "7px 16px" }}
+            >
+              Done
+            </button>
+          </div>
+        </div>
       </div>
-      <div>
-        <span style={label}>Context (optional)</span>
-        <input
-          style={field}
-          value={item.context ?? ""}
-          placeholder="e.g. Cohort 3 graduate"
-          onChange={(e) => onChange({ context: e.target.value })}
-        />
-      </div>
-    </div>
+    </>,
+    document.body,
   );
 }
