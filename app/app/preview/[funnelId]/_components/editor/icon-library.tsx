@@ -329,11 +329,16 @@ export default function EditableIcon({
           alignItems: "center",
           justifyContent: "center",
           padding: 0,
+          width: currentSize,
+          height: currentSize,
+          minWidth: currentSize,
+          minHeight: currentSize,
           border: "1px dashed transparent",
           borderRadius: 6,
           background: "none",
           color: "inherit",
           cursor: "pointer",
+          flexShrink: 0,
         }}
         onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "currentColor"; }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "transparent"; }}
