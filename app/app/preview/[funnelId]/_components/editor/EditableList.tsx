@@ -2,7 +2,9 @@
 
 import React, { useState } from "react";
 import { useEditorOptional } from "./EditorContext";
+import { usePageContent } from "./PageContentContext";
 import type { FunnelPageKey } from "@/lib/funnel-export/config";
+import { getAtPath } from "@/lib/content-path";
 import EditableText from "./EditableText";
 import ImagePickerModal from "./ImagePickerModal";
 
@@ -95,6 +97,23 @@ interface EditableImageProps {
   children?: React.ReactNode;
 }
 
+const IMG_BTN: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 700,
+  border: "none",
+  padding: "5px 11px",
+  borderRadius: 6,
+  cursor: "pointer",
+  lineHeight: 1,
+};
+
+/**
+ * Editable inline-image wrapper.
+ *
+ * Stores a `${path}NoImage` flag in content so the image can be removed
+ * even when the parent page has a wizard fallback — and fully restored
+ * via a Restore button that clears the flag.
+ */
 export function EditableImage({
   pageKey,
   path,
@@ -108,6 +127,24 @@ export function EditableImage({
   const [pickerOpen, setPickerOpen] = useState(false);
   const isEditMode = editor?.isEditMode ?? false;
 
+  const noImagePath = `${path}NoImage`;
+  const pageContent = usePageContent(pageKey);
+  const isRemoved = Boolean(getAtPath(pageContent, noImagePath));
+
+  // Suppress fallback URL when explicitly removed.
+  const effectiveUrl = isRemoved ? null : url;
+
+  // In export/view mode, a removed image renders nothing.
+  if (!isEditMode && isRemoved) return null;
+
+  function remove() {
+    editor?.updateField(pageKey, path, null);
+    editor?.updateField(pageKey, noImagePath, true);
+  }
+  function restore() {
+    editor?.updateField(pageKey, noImagePath, null);
+  }
+
   const wrap = (node: React.ReactNode) => {
     if (!isEditMode || !editor) return node;
     return (
@@ -115,36 +152,78 @@ export function EditableImage({
         className={`editable-image-wrap${className ? ` ${className}` : ""}`}
         style={{
           position: "relative",
-          outline: "1px dashed var(--accent-secondary-on-dark)",
+          outline: isRemoved
+            ? "1px dashed rgba(248,113,113,0.5)"
+            : "1px dashed rgba(255,255,255,0.35)",
           outlineOffset: 4,
         }}
       >
         {node}
-        <button
-          type="button"
-          onClick={() => setPickerOpen(true)}
-          style={{
-            position: "absolute",
-            bottom: 8,
-            right: 8,
-            fontSize: 11,
-            fontWeight: 700,
-            background: "var(--surface-inverse)",
-            color: "var(--text-inverse)",
-            border: "none",
-            padding: "4px 10px",
-            borderRadius: 6,
-            cursor: "pointer",
-          }}
-        >
-          {url ? "Swap image" : "Add image"}
-        </button>
+
+        {isRemoved ? (
+          /* ── Removed state ── */
+          <div
+            contentEditable={false}
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              background: "rgba(0,0,0,0.5)",
+              backdropFilter: "blur(2px)",
+              borderRadius: 4,
+            }}
+          >
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Removed
+            </span>
+            <button
+              type="button"
+              onClick={restore}
+              style={{ ...IMG_BTN, background: "rgba(212,168,120,0.9)", color: "#141412" }}
+            >
+              Restore
+            </button>
+          </div>
+        ) : (
+          /* ── Normal state ── */
+          <div
+            contentEditable={false}
+            style={{ position: "absolute", bottom: 8, right: 8, display: "flex", gap: 5 }}
+          >
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              style={{ ...IMG_BTN, background: "rgba(17,17,17,0.82)", color: "#fff", backdropFilter: "blur(4px)" }}
+            >
+              {effectiveUrl ? "Swap" : "Add image"}
+            </button>
+            {effectiveUrl && (
+              <button
+                type="button"
+                onClick={remove}
+                style={{ ...IMG_BTN, background: "rgba(248,113,113,0.12)", color: "#f87171", border: "1px solid rgba(248,113,113,0.35)" }}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        )}
+
         {pickerOpen && (
           <ImagePickerModal
             library={editor.imageLibrary}
-            currentUrl={url}
+            currentUrl={effectiveUrl}
+            canRemove={Boolean(effectiveUrl)}
             onSelect={(newUrl) => {
-              editor.updateField(pageKey, path, newUrl);
+              if (newUrl === null) {
+                remove();
+              } else {
+                editor.updateField(pageKey, noImagePath, null);
+                editor.updateField(pageKey, path, newUrl);
+              }
               setPickerOpen(false);
             }}
             onClose={() => setPickerOpen(false)}
@@ -154,9 +233,10 @@ export function EditableImage({
     );
   };
 
-  if (url) {
+  if (effectiveUrl) {
     return wrap(
-      <img src={url} alt={alt} style={imgStyle} className={!isEditMode ? className : undefined} />,
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={effectiveUrl} alt={alt} style={imgStyle} className={!isEditMode ? className : undefined} />,
     );
   }
 

@@ -772,6 +772,9 @@ The JSON must have exactly this structure:
     // • sectionBgPosition.<id> — "top"|"center"|"bottom" for background-position
     // • sectionBackgroundsMobile.<id> — portrait-crop image URL for ≤768 px
     // • sectionBgNoImage.<id> — true when the user explicitly removed all bg images
+    // • <imageFieldName>NoImage — e.g. heroVisualImageUrlNoImage, valuePropImageUrlNoImage,
+    //   outcomesImageUrlNoImage, productImageUrlNoImage, etc. — true when that image slot
+    //   was explicitly removed; the editor adds a Restore button to undo removal.
     // ────────────────────────────────────────────────────────────────────────
     "heroBackgroundImageUrl": "REQUIRED if hero images exist — copy the exact URL of the most atmospheric hero image from the IMAGES AVAILABLE list (e.g. the hero-1 URL). Set to null only if no hero images were uploaded.",
     "valuePropImageUrl": "copy the exact URL of the best lifestyle or supporting image for the value prop section. Prefer lifestyle-1, else lifestyle-2, else additional-1. Set to null if none exist.",
@@ -1153,6 +1156,9 @@ The JSON must have exactly this structure:
     // • sectionBgPosition.<id> — "top"|"center"|"bottom" for background-position
     // • sectionBackgroundsMobile.<id> — portrait-crop image URL for ≤768 px
     // • sectionBgNoImage.<id> — true when the user explicitly removed all bg images
+    // • <imageFieldName>NoImage — e.g. heroVisualImageUrlNoImage, valuePropImageUrlNoImage,
+    //   outcomesImageUrlNoImage, productImageUrlNoImage, etc. — true when that image slot
+    //   was explicitly removed; the editor adds a Restore button to undo removal.
     // ────────────────────────────────────────────────────────────────────────
     "heroBackgroundImageUrl": "REQUIRED if hero images exist — copy the exact URL of the most powerful hero image from IMAGES AVAILABLE (prefer hero-1). Set to null only if no hero images were uploaded.",
     "programmeFeatureImageUrl": "copy the exact URL of the best lifestyle or supporting image to use alongside programme content sections. Prefer lifestyle-1 or lifestyle-2. Set to null if none available.",

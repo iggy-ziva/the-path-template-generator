@@ -2,24 +2,25 @@
 
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { useEditorOptional } from "./EditorContext";
+import { usePageContent } from "./PageContentContext";
 import type { FunnelPageKey } from "@/lib/funnel-export/config";
 import { getAtPath } from "@/lib/content-path";
 import ImagePickerModal from "./ImagePickerModal";
 
 interface Props {
   pageKey: FunnelPageKey;
-  /** Content path that stores the image URL, e.g. "heroBackgroundImageUrl". */
+  /** Content path that stores the image URL, e.g. "heroVisualImageUrl". */
   path: string;
   /** Pre-resolved background style for the element (includes the image when present). */
   style?: CSSProperties;
   className?: string;
   ariaHidden?: boolean;
-  /** Whether the field currently has an image (controls Add vs Swap label + placeholder). */
+  /** Whether the field currently has an image (controls Add vs Swap label). */
   hasImage: boolean;
   children?: ReactNode;
 }
 
-const PILL_BASE: CSSProperties = {
+const PILL: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 6,
@@ -37,10 +38,11 @@ const PILL_BASE: CSSProperties = {
 };
 
 /**
- * Editable background-image wrapper. In edit mode it overlays upload / remove
- * buttons that write the new URL via editor.updateField — i.e. only mutating
- * the in-memory draft. Outside edit mode it renders a plain element, preserving
- * what-you-see-is-what-you-get parity.
+ * Editable background-image wrapper.
+ *
+ * Stores a `${path}NoImage` flag alongside the URL so removal is permanent
+ * even when the parent page has a wizard-image fallback — and fully reversible
+ * via a Restore button that clears the flag.
  */
 export default function EditableBackgroundImage({
   pageKey,
@@ -55,54 +57,116 @@ export default function EditableBackgroundImage({
   const isEditMode = editor?.isEditMode ?? false;
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  // noImagePath flag — persists in content alongside the URL field.
+  const noImagePath = `${path}NoImage`;
+  const pageContent = usePageContent(pageKey);
+  const isRemoved = Boolean(getAtPath(pageContent, noImagePath));
+
   const currentUrl = editor
     ? (getAtPath(editor.draftContent[pageKey] as Record<string, unknown> | undefined, path) as
-        | string
-        | null
-        | undefined)
+        | string | null | undefined)
     : undefined;
 
-  // Use draft URL to determine current state (hasImage prop may reflect stale initial content)
-  const hasCurrentImage = Boolean(currentUrl) || (hasImage && currentUrl === undefined);
+  // hasCurrentImage: image is rendering (either from content or wizard fallback)
+  // and has NOT been explicitly removed.
+  const hasCurrentImage =
+    !isRemoved && (Boolean(currentUrl) || (hasImage && currentUrl === undefined));
+
+  function remove() {
+    editor?.updateField(pageKey, path, null);
+    editor?.updateField(pageKey, noImagePath, true);
+  }
+  function restore() {
+    editor?.updateField(pageKey, noImagePath, null);
+  }
+
+  // Suppress the parent-provided backgroundImage when removed.
+  const effectiveStyle: CSSProperties = isRemoved
+    ? { ...style, backgroundImage: "none" }
+    : (style ?? {});
 
   const editStyle: CSSProperties = isEditMode
-    ? { ...style, position: "relative", outline: "2px dashed rgba(255,255,255,0.6)", outlineOffset: -4 }
-    : (style ?? {});
+    ? {
+        ...effectiveStyle,
+        position: "relative",
+        outline: isRemoved
+          ? "2px dashed rgba(248,113,113,0.5)"
+          : "2px dashed rgba(255,255,255,0.6)",
+        outlineOffset: -4,
+      }
+    : effectiveStyle;
 
   return (
     <div className={className} aria-hidden={ariaHidden} style={editStyle}>
       {children}
+
       {isEditMode && editor && (
-        <div
-          contentEditable={false}
-          style={{ position: "absolute", bottom: 10, right: 10, zIndex: 2, display: "flex", gap: 6 }}
-        >
-          <button
-            type="button"
-            style={{ ...PILL_BASE, color: "#fff" }}
-            onClick={() => setPickerOpen(true)}
+        isRemoved ? (
+          /* ── Removed state ── */
+          <div
+            contentEditable={false}
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              background: "rgba(0,0,0,0.45)",
+              backdropFilter: "blur(2px)",
+            }}
           >
-            {hasCurrentImage ? "Swap image" : "Add image"}
-          </button>
-          {hasCurrentImage && (
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Image removed
+            </span>
             <button
               type="button"
-              style={{ ...PILL_BASE, color: "#f87171", borderColor: "rgba(248,113,113,0.45)" }}
-              onClick={() => editor.updateField(pageKey, path, null)}
-              title="Remove image"
+              style={{ ...PILL, color: "#D4A878", borderColor: "rgba(212,168,120,0.5)", background: "rgba(17,17,17,0.85)" }}
+              onClick={restore}
             >
-              Remove
+              Restore image
             </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          /* ── Normal state ── */
+          <div
+            contentEditable={false}
+            style={{ position: "absolute", bottom: 10, right: 10, zIndex: 2, display: "flex", gap: 6 }}
+          >
+            <button
+              type="button"
+              style={{ ...PILL, color: "#fff" }}
+              onClick={() => setPickerOpen(true)}
+            >
+              {hasCurrentImage ? "Swap image" : "Add image"}
+            </button>
+            {hasCurrentImage && (
+              <button
+                type="button"
+                style={{ ...PILL, color: "#f87171", borderColor: "rgba(248,113,113,0.45)" }}
+                onClick={remove}
+                title="Remove image"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        )
       )}
+
       {pickerOpen && editor && (
         <ImagePickerModal
           library={editor.imageLibrary}
           currentUrl={currentUrl ?? null}
           canRemove={hasCurrentImage}
           onSelect={(url) => {
-            editor.updateField(pageKey, path, url ?? null);
+            if (url === null) {
+              remove();
+            } else {
+              editor.updateField(pageKey, noImagePath, null);
+              editor.updateField(pageKey, path, url);
+            }
             setPickerOpen(false);
           }}
           onClose={() => setPickerOpen(false)}
