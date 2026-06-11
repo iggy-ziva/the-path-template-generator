@@ -43,6 +43,20 @@ const STEP_COMPONENTS = [
   WizardStep6, WizardStep7, WizardStep8, WizardStep9, WizardStep10, WizardStep11,
 ];
 
+// Fields populated by file/image uploads. Changes to these must persist
+// immediately (not via the debounce) so an uploaded file's URL is never lost
+// to a navigation/tab-close before the 1.5s autosave fires.
+const IMMEDIATE_SAVE_FIELDS = new Set<string>([
+  "heroImageUrls",
+  "lifestyleImageUrls",
+  "additionalImageUrls",
+  "existingFileUrls",
+  "hostHeadshotUrl",
+  "hostSignatureUrl",
+  "logoUrl",
+  "styleGuide",
+]);
+
 export default function WizardClient({ userEmail }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -57,6 +71,16 @@ export default function WizardClient({ userEmail }: Props) {
   const [nameModalOpen, setNameModalOpen] = useState(false);
   const [funnels, setFunnels] = useState<FunnelSummary[]>([]);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Mirror the latest data/submission/step in refs so a pending flush (funnel
+  // switch, tab close) always persists the freshest values, regardless of the
+  // closure captured when the debounce was scheduled.
+  const dataRef = useRef<WizardData>(data);
+  const submissionIdRef = useRef<string | null>(submissionId);
+  const currentStepRef = useRef<number>(currentStep);
+  useEffect(() => { dataRef.current = data; }, [data]);
+  useEffect(() => { submissionIdRef.current = submissionId; }, [submissionId]);
+  useEffect(() => { currentStepRef.current = currentStep; }, [currentStep]);
 
   // Fetch the sidebar funnel list
   function refreshFunnels() {
@@ -166,6 +190,9 @@ export default function WizardClient({ userEmail }: Props) {
   }
 
   function handleSwitchFunnel(funnel: FunnelSummary) {
+    // Persist any pending edits against the OUTGOING submission before we swap
+    // the id/data out from under the debounce timer.
+    flushPendingSave();
     setSidebarOpen(false);
     setData({});
     setCurrentStep(1);
@@ -225,15 +252,51 @@ export default function WizardClient({ userEmail }: Props) {
 
   const updateData = useCallback(
     (patch: Partial<WizardData>) => {
+      // Uploads (images, files, logo, headshot, fonts) are high-value and the
+      // most common thing a user does right before navigating away. Persist them
+      // immediately rather than waiting out the 1.5s debounce, otherwise the file
+      // lands in storage but its URL never reaches step_data (orphaned upload).
+      const isUploadPatch = Object.keys(patch).some((k) => IMMEDIATE_SAVE_FIELDS.has(k));
       setData((prev) => {
         const next = { ...prev, ...patch };
         if (saveTimer.current) clearTimeout(saveTimer.current);
-        saveTimer.current = setTimeout(() => saveToServer(next, currentStep), 1500);
+        // 0ms for uploads (fires on the next tick, survives StrictMode via the
+        // clearTimeout above); 1.5s debounce for ordinary text edits.
+        saveTimer.current = setTimeout(() => saveToServer(next, currentStep), isUploadPatch ? 0 : 1500);
         return next;
       });
     },
     [currentStep, saveToServer]
   );
+
+  // Synchronously persist any pending changes for the CURRENT submission. Used
+  // before switching funnels (so edits aren't saved against the wrong id) and on
+  // tab close (via sendBeacon, the only reliable way to send during unload).
+  const flushPendingSave = useCallback((useBeacon = false) => {
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    const sid = submissionIdRef.current;
+    if (!sid) return;
+    const body = JSON.stringify({
+      submissionId: sid,
+      stepData: dataRef.current,
+      currentStep: currentStepRef.current,
+    });
+    if (useBeacon && typeof navigator !== "undefined" && navigator.sendBeacon) {
+      navigator.sendBeacon("/api/wizard/save", new Blob([body], { type: "application/json" }));
+    } else {
+      saveToServer(dataRef.current, currentStepRef.current);
+    }
+  }, [saveToServer]);
+
+  // Persist on tab close / refresh so last-second uploads or edits aren't lost.
+  useEffect(() => {
+    const onBeforeUnload = () => flushPendingSave(true);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [flushPendingSave]);
 
   function syncFunnelStep(step: number) {
     if (!submissionId) return;

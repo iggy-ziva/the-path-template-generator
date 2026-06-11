@@ -736,10 +736,15 @@ export function MultipleFileUpload({
         formData.append("file", files[i]);
         const res = await fetch("/api/wizard/upload", { method: "POST", body: formData });
         const json = await res.json();
-        if (json.url) uploaded.push(json.url);
+        if (json.url) {
+          uploaded.push(json.url);
+          // Persist after EACH file rather than only at the end, so a long
+          // multi-file upload interrupted partway through still saves the files
+          // that did complete (avoids orphaned uploads in storage).
+          onUpload([...currentUrls, ...uploaded]);
+        }
         setUploadProgress({ done: i + 1, total: files.length });
       }
-      onUpload([...currentUrls, ...uploaded]);
     } finally {
       setUploading(false);
       setUploadProgress(null);
