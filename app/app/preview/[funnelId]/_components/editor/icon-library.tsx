@@ -257,6 +257,10 @@ export default function EditableIcon({
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // All writes fan out to every sibling in the section so the entire section
+  // stays in sync automatically. siblingPaths includes the current path.
+  const sectionPaths = siblingPaths?.length ? siblingPaths : [path];
+
   function buildOverride(patch: Partial<IconOverride>): IconOverride | null {
     const v = patch.v ?? override?.v ?? "";
     if (!v) return null;
@@ -269,13 +273,11 @@ export default function EditableIcon({
 
   function write(patch: Partial<IconOverride>) {
     const next = buildOverride(patch);
-    editor?.updateField(pageKey, path, next);
+    sectionPaths.forEach((p) => editor?.updateField(pageKey, p, next));
   }
 
-  function applyToAll(patch: Partial<IconOverride>) {
-    const next = buildOverride(patch);
-    const targets = siblingPaths?.length ? siblingPaths : [path];
-    targets.forEach((p) => editor?.updateField(pageKey, p, next));
+  function resetAll() {
+    sectionPaths.forEach((p) => editor?.updateField(pageKey, p, null));
   }
 
   async function handleUpload(file: File) {
@@ -299,8 +301,6 @@ export default function EditableIcon({
   }
 
   if (!editMode || !editor) return <>{marker}</>;
-
-  const hasMultipleSiblings = siblingPaths && siblingPaths.length > 1;
 
   return (
     <span ref={containerRef} style={{ position: "relative", display: "inline-flex" }}>
@@ -346,6 +346,13 @@ export default function EditableIcon({
             gap: 10,
           }}
         >
+          {/* Section scope indicator */}
+          {sectionPaths.length > 1 && (
+            <p style={{ margin: 0, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", textAlign: "center" }}>
+              Applies to all {sectionPaths.length} items in this section
+            </p>
+          )}
+
           {/* Curated icons */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4 }}>
             {ICON_LIBRARY.map((icon) => {
@@ -450,39 +457,13 @@ export default function EditableIcon({
             </div>
           </div>
 
-          {/* Apply to all */}
-          {hasMultipleSiblings && override && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                applyToAll({});
-                setOpen(false);
-              }}
-              style={{
-                width: "100%",
-                padding: "7px 0",
-                borderRadius: 6,
-                border: "1px solid rgba(212,168,120,0.5)",
-                background: "rgba(212,168,120,0.12)",
-                color: "#D4A878",
-                fontSize: 11,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              Apply to all {siblingPaths!.length} items in this section
-            </button>
-          )}
-
           {/* Reset */}
           <button
             type="button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              editor.updateField(pageKey, path, null);
+              resetAll();
               setOpen(false);
             }}
             style={{
