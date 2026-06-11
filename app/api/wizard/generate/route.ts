@@ -783,9 +783,9 @@ The JSON must have exactly this structure:
     "videoUrl": ${hasVideo ? `"use the promo video URL from the brand context above"` : "null"},
     "audienceEyebrow": "e.g. 'For whom this is built'",
     "audienceHeading": "e.g. 'This is for you if…'",
-    // NOTE: audienceItemIcons and experienceItemIcons are EDITOR-ONLY fields.
-    // Do NOT generate them here. Users assign icons manually via the preview editor
-    // (curated set or custom SVG/PNG/JPEG uploads). Generate only the text content below.
+    // NOTE: audienceItemIcons / experienceItemIcons / *Icons are EDITOR-ONLY (icon v,
+    // size, mime, bg). Do NOT generate any *Icons fields anywhere. Users configure
+    // icons, sizes, and background visibility manually via the preview editor.
     "audienceItems": [
       "Audience item 1 — complete sentence, <strong>bold the defining characteristic</strong>. Who they are or what they're experiencing.",
       "Audience item 2 — a different characteristic of the same target audience, specific to this event",
