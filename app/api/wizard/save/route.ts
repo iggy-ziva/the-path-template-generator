@@ -91,6 +91,10 @@ export async function GET(req: NextRequest) {
     // Try direct wizard_submissions lookup first; specificId may also be a
     // generated_funnels ID (when navigating back from the preview).
     let submissionRow: Record<string, unknown> | null = null;
+    // Track when specificId resolved to a funnel ID so we can backfill from
+    // that exact funnel's snapshot (not the most-recent one for the submission,
+    // which would cross-contaminate images between different generations).
+    let sourceFunnelId: string | null = null;
 
     const { data: direct } = await supabase
       .from("wizard_submissions")
@@ -109,6 +113,7 @@ export async function GET(req: NextRequest) {
         .eq("user_id", userId)
         .single();
       if (gf?.submission_id) {
+        sourceFunnelId = specificId; // remember which funnel we came from
         const { data: linked } = await supabase
           .from("wizard_submissions")
           .select("id, name, step_data, current_step, status, updated_at, created_at")
@@ -121,34 +126,40 @@ export async function GET(req: NextRequest) {
 
     if (!submissionRow) return NextResponse.json({ submission: null });
 
-    // Backfill image arrays from the most recent generated_funnel's _wizardSnapshot
-    // in case step_data lost them (e.g. upload happened before a save race, or an older
-    // schema version didn't capture them).
-    const IMAGE_FIELDS = ["heroImageUrls", "lifestyleImageUrls", "additionalImageUrls"] as const;
-    const stepData = (submissionRow.step_data ?? {}) as Record<string, unknown>;
-    const missingImages = IMAGE_FIELDS.some((f) => !Array.isArray(stepData[f]) || (stepData[f] as unknown[]).length === 0);
+    // Backfill image arrays from the specific funnel's _wizardSnapshot when the
+    // submission's step_data is missing them. IMPORTANT: we use the exact funnel
+    // that was requested (sourceFunnelId) rather than the most-recent funnel for
+    // the submission — that would otherwise cross-contaminate images between
+    // different generations of the same submission.
+    if (sourceFunnelId) {
+      const IMAGE_FIELDS = ["heroImageUrls", "lifestyleImageUrls", "additionalImageUrls"] as const;
+      const stepData = (submissionRow.step_data ?? {}) as Record<string, unknown>;
+      const missingImages = IMAGE_FIELDS.some(
+        (f) => !Array.isArray(stepData[f]) || (stepData[f] as unknown[]).length === 0,
+      );
 
-    if (missingImages) {
-      const { data: latestFunnel } = await supabase
-        .from("generated_funnels")
-        .select("content")
-        .eq("submission_id", submissionRow.id as string)
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+      if (missingImages) {
+        const { data: sourceFunnel } = await supabase
+          .from("generated_funnels")
+          .select("content")
+          .eq("id", sourceFunnelId)
+          .eq("user_id", userId)
+          .single();
 
-      const snapshot = (latestFunnel?.content as Record<string, unknown> | null)?._wizardSnapshot as Record<string, unknown> | undefined;
-      if (snapshot) {
-        const patched = { ...stepData };
-        for (const field of IMAGE_FIELDS) {
-          if (!Array.isArray(patched[field]) || (patched[field] as unknown[]).length === 0) {
-            if (Array.isArray(snapshot[field]) && (snapshot[field] as unknown[]).length > 0) {
-              patched[field] = snapshot[field];
+        const snapshot = (sourceFunnel?.content as Record<string, unknown> | null)
+          ?._wizardSnapshot as Record<string, unknown> | undefined;
+
+        if (snapshot) {
+          const patched = { ...stepData };
+          for (const field of IMAGE_FIELDS) {
+            if (!Array.isArray(patched[field]) || (patched[field] as unknown[]).length === 0) {
+              if (Array.isArray(snapshot[field]) && (snapshot[field] as unknown[]).length > 0) {
+                patched[field] = snapshot[field];
+              }
             }
           }
+          submissionRow = { ...submissionRow, step_data: patched };
         }
-        submissionRow = { ...submissionRow, step_data: patched };
       }
     }
 
