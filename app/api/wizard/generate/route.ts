@@ -761,6 +761,17 @@ The JSON must have exactly this structure:
       "testimonials": "\"dark\" | \"accent\" | \"light\"", "finalVp": "keep in sync with finalVpTheme", "bio": "\"dark\" | \"accent\" | \"light\"",
       "faq": "\"dark\" | \"accent\" | \"light\"", "register": "keep in sync with registerTheme", "ftc": "\"dark\" | \"accent\" | \"light\". Alternate the rhythm down the page; never make every section dark."
     },
+    // ── EDITOR-ONLY FIELDS — Do NOT generate any of the following ───────────
+    // These are written exclusively by the preview editor (user interactions)
+    // and must NEVER appear in AI-generated JSON output:
+    // • logoUrl — editor logo swap/remove override (null = text fallback)
+    // • testimonialItems — array materialized from wizard on first editor touch
+    // • sectionPadding.<id>.top / .bottom — per-section vertical padding in px
+    // • hiddenSections.<id> — true when a section is hidden by the editor
+    // • sectionBgOverlayStrength.<id> — "auto"|"none"|"light"|"medium"|"heavy"
+    // • sectionBgPosition.<id> — "top"|"center"|"bottom" for background-position
+    // • sectionBackgroundsMobile.<id> — portrait-crop image URL for ≤768 px
+    // ────────────────────────────────────────────────────────────────────────
     "heroBackgroundImageUrl": "REQUIRED if hero images exist — copy the exact URL of the most atmospheric hero image from the IMAGES AVAILABLE list (e.g. the hero-1 URL). Set to null only if no hero images were uploaded.",
     "valuePropImageUrl": "copy the exact URL of the best lifestyle or supporting image for the value prop section. Prefer lifestyle-1, else lifestyle-2, else additional-1. Set to null if none exist.",
     "outcomesImageUrl": "copy the exact URL of a supporting image for the outcomes section. Prefer a different image from valuePropImageUrl — try lifestyle-2 or additional-1. Set to null if none available.",
@@ -1130,6 +1141,17 @@ The JSON must have exactly this structure:
       "outcomes": "\"dark\" | \"accent\" | \"light\"", "testimonials": "\"dark\" | \"accent\" | \"light\"", "pricing": "\"dark\" | \"accent\" | \"light\"",
       "host": "\"dark\" | \"accent\" | \"light\"", "faq": "\"dark\" | \"accent\" | \"light\"", "finalCta": "keep in sync with finalCtaTheme. Alternate the rhythm down the page; never make every section dark."
     },
+    // ── EDITOR-ONLY FIELDS — Do NOT generate any of the following ───────────
+    // These are written exclusively by the preview editor (user interactions)
+    // and must NEVER appear in AI-generated JSON output:
+    // • logoUrl — editor logo swap/remove override (null = text fallback)
+    // • testimonialItems — array materialized from wizard on first editor touch
+    // • sectionPadding.<id>.top / .bottom — per-section vertical padding in px
+    // • hiddenSections.<id> — true when a section is hidden by the editor
+    // • sectionBgOverlayStrength.<id> — "auto"|"none"|"light"|"medium"|"heavy"
+    // • sectionBgPosition.<id> — "top"|"center"|"bottom" for background-position
+    // • sectionBackgroundsMobile.<id> — portrait-crop image URL for ≤768 px
+    // ────────────────────────────────────────────────────────────────────────
     "heroBackgroundImageUrl": "REQUIRED if hero images exist — copy the exact URL of the most powerful hero image from IMAGES AVAILABLE (prefer hero-1). Set to null only if no hero images were uploaded.",
     "programmeFeatureImageUrl": "copy the exact URL of the best lifestyle or supporting image to use alongside programme content sections. Prefer lifestyle-1 or lifestyle-2. Set to null if none available.",
     "finalCtaBackgroundUrl": "copy the exact URL of an atmospheric image for the final CTA section background, or null if no suitable unused image exists",
