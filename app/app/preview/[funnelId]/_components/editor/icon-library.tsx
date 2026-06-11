@@ -188,7 +188,7 @@ export function IconContainer({
   return (
     <Tag
       className={className}
-      style={{ width: dim, height: dim, ...style }}
+      style={{ alignSelf: "start", width: dim, height: dim, ...style }}
       {...(rest as Record<string, unknown>)}
     >
       {children}

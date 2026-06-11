@@ -439,7 +439,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                 <div
                   key={i}
                   className="audience-item"
-                  style={editMode ? { gridTemplateColumns: "auto 1fr auto", alignItems: "center", columnGap: 16 } : undefined}
+                  style={editMode ? { gridTemplateColumns: "auto 1fr auto", alignItems: "start", columnGap: 16 } : undefined}
                 >
                   <IconContainer
                     className="audience-icon"
