@@ -493,22 +493,25 @@ section {
 .sticky-bar.light-bg .countdown b { color: var(--accent-secondary-on-light); }
 @media (max-width: 768px) {
   .sticky-bar { transform: translateY(0); }
-  /* Single row: logo | days+hours | CTA — logo is the anchor, countdown is compact */
+  /* Two rows: [logo | CTA] on top, countdown centered below with breathing room. */
   .sticky-bar .container {
-    grid-template-columns: auto 1fr auto;
-    grid-template-rows: auto;
-    grid-template-areas: "logo count cta";
-    gap: var(--s-3);
-    padding-block: var(--s-2);
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "logo cta"
+      "count count";
+    column-gap: var(--s-3);
+    row-gap: var(--s-3);
+    padding-block: var(--s-3);
     align-items: center;
   }
   .sticky-bar .logo { grid-area: logo; display: block; font-size: 15px; }
   .sticky-bar .event-title { display: none; }
-  .sticky-bar .countdown { grid-area: count; display: flex; gap: var(--s-2); justify-content: center; }
-  .sticky-bar .countdown span { font-size: 10px; }
+  .sticky-bar .countdown { grid-area: count; display: flex; gap: var(--s-3); justify-content: center; }
+  .sticky-bar .countdown span { font-size: 11px; }
   /* Show only Days + Hours on mobile — hide Mins and Secs */
   .sticky-bar .countdown span:nth-child(n+3) { display: none; }
-  .sticky-bar .btn { grid-area: cta; align-self: center; }
+  .sticky-bar .btn { grid-area: cta; justify-self: end; align-self: center; }
 }
 
 /* =====================================================================
@@ -734,16 +737,41 @@ section {
 .mob-br { display: none; }
 @media (max-width: 768px) {
   .mob-br { display: block; }
-  /* Tighten hero vertical space so the CTA is above the fold */
-  .hero { padding-top: 80px; padding-bottom: var(--s-9); }
+  /* Tighten hero vertical space so the CTA is above the fold.
+     Top padding clears the (now two-row) fixed sticky bar. */
+  .hero { padding-top: 96px; padding-bottom: var(--s-9); }
   .hero h1 { margin-top: var(--s-4); margin-bottom: var(--s-4); }
-  .hero .subtitle { margin-bottom: 0; font-size: 17px; }
+  /* A little breathing room before the price line now that the hero is full-height */
+  .hero .subtitle { margin-bottom: var(--s-5); font-size: 17px; }
   .hero-host-badge { margin-block: var(--s-4); }
   .hero-meta { margin-top: 0; margin-bottom: 0; }
-  .price-line { margin-bottom: var(--s-5); padding: var(--s-3) var(--s-4); }
+  /* Compact price-line — it was dominating the mobile hero. Smaller label,
+     value, padding and gap so it reads as a tidy inline chip. */
+  .price-line {
+    margin-bottom: var(--s-4);
+    padding: var(--s-2) var(--s-4);
+    gap: var(--s-2);
+  }
+  .price-line .price-label { font-size: 10px; letter-spacing: 0.06em; }
+  .price-line .price-value { font-size: 19px; }
   .hero-cta-row { margin-bottom: var(--s-5); gap: var(--s-3); }
   /* Hide the hero visual panel on mobile — it adds ~450px of dead space */
   .hero-visual { display: none; }
+
+  /* When the hero has a background image, treat it as a full-bleed backdrop:
+     give the section height and anchor all the copy to the bottom so the image
+     shows above and the headline/CTA sit at the base of the viewport. */
+  .hero.has-bg-image {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 100vh;
+    min-height: 100svh; /* fit the visible viewport, ignoring browser chrome */
+  }
+  .hero.has-bg-image > .container {
+    margin-top: auto;
+    width: 100%;
+  }
 }
 
 .hero-grid {

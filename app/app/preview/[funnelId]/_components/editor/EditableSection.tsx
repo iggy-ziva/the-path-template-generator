@@ -8,9 +8,6 @@ import { getAtPath } from "@/lib/content-path";
 import ImagePickerModal from "./ImagePickerModal";
 import {
   safeUrl,
-  brandHeroOverlay,
-  brandSectionOverlay,
-  brandLightSectionOverlay,
   brandImageBackground,
 } from "../funnel-types";
 import {
@@ -56,30 +53,94 @@ const OVERLAY_STRENGTHS: { value: OverlayStrength; label: string; opacity: numbe
   { value: "heavy",  label: "Heavy", opacity: 0.82 },
 ];
 
-type BgPosition = "top" | "center" | "bottom";
-const POSITION_OPTIONS: { value: BgPosition; label: string }[] = [
-  { value: "top",    label: "Top"    },
-  { value: "center", label: "Center" },
-  { value: "bottom", label: "Bottom" },
+// Quick presets map to focal-point X/Y percentages.
+const POSITION_PRESETS: { label: string; x: number; y: number }[] = [
+  { label: "Top",    x: 50, y: 0   },
+  { label: "Center", x: 50, y: 50  },
+  { label: "Bottom", x: 50, y: 100 },
 ];
+
+function legacyPresetToXY(preset: string | undefined): { x: number; y: number } {
+  if (preset === "top") return { x: 50, y: 0 };
+  if (preset === "bottom") return { x: 50, y: 100 };
+  return { x: 50, y: 50 };
+}
+
+// Map a preset strength to an approximate opacity %, used to seed the custom
+// opacity slider before the user has dragged it.
+function presetToOpacityPct(strength: string | undefined): number {
+  const opt = OVERLAY_STRENGTHS.find((o) => o.value === strength);
+  if (opt && opt.opacity !== null) return Math.round(opt.opacity * 100);
+  return 82; // "auto"/unset → section default scrim strength
+}
+
+// Overlay gradient direction. "right" (left→right) is the default — strongest
+// scrim on the left where headline/CTA text usually sits, fading across.
+type OverlayDirection = "right" | "left" | "bottom" | "top" | "even";
+const OVERLAY_DIRECTION_DEFAULT: OverlayDirection = "right";
+const OVERLAY_DIRECTIONS: { value: OverlayDirection; label: string; css: string | null }[] = [
+  { value: "right",  label: "→",    css: "to right"  },
+  { value: "left",   label: "←",    css: "to left"   },
+  { value: "bottom", label: "↓",    css: "to bottom" },
+  { value: "top",    label: "↑",    css: "to top"    },
+  { value: "even",   label: "Even", css: null        },
+];
+
+const OVERLAY_CENTER_DEFAULT = 50; // where the fade band is centered (% along axis)
+
+// Build a directional scrim that fades from the chosen opacity (strong end) to
+// near-transparent across the direction. `centerPct` positions the middle of the
+// fade band along the axis. "even" produces a flat uniform scrim.
+function directionalOverlay(
+  direction: OverlayDirection,
+  opacity: number,
+  theme: SectionTheme,
+  centerPct: number,
+): string {
+  const surface = theme === "light" ? "--surface-canvas" : "--surface-inverse";
+  const strong = Math.round(Math.min(1, Math.max(0, opacity)) * 100);
+  if (direction === "even") {
+    return `linear-gradient(color-mix(in srgb, var(${surface}) ${strong}%, transparent), color-mix(in srgb, var(${surface}) ${strong}%, transparent))`;
+  }
+  const css = OVERLAY_DIRECTIONS.find((d) => d.value === direction)?.css ?? "to right";
+  const weak = Math.round(strong * 0.12);
+  // A ~50%-wide fade band centered on centerPct: strong holds up to (c-25),
+  // fades through to weak by (c+25).
+  const c = Math.min(100, Math.max(0, centerPct));
+  const holdEnd = Math.max(0, c - 25);
+  const fadeEnd = Math.min(100, c + 25);
+  return (
+    `linear-gradient(${css}, ` +
+    `color-mix(in srgb, var(${surface}) ${strong}%, transparent) 0%, ` +
+    `color-mix(in srgb, var(${surface}) ${strong}%, transparent) ${holdEnd}%, ` +
+    `color-mix(in srgb, var(${surface}) ${weak}%, transparent) ${fadeEnd}%, ` +
+    `color-mix(in srgb, var(${surface}) ${weak}%, transparent) 100%)`
+  );
+}
 
 function buildOverlayGradient(
   strength: string | undefined,
   overlayKind: OverlayKind,
   base: "plain" | "hero" | "encourage" | "final-vp" | undefined,
   theme: SectionTheme,
+  customOpacityPct: number | undefined,
+  direction: OverlayDirection,
+  centerPct: number,
 ): string | null {
-  if (strength === "none") return null;
-  if (strength && strength !== "auto") {
-    const opt = OVERLAY_STRENGTHS.find(o => o.value === strength);
-    if (opt && opt.opacity !== null) {
-      return theme === "light"
-        ? brandLightSectionOverlay(opt.opacity)
-        : brandSectionOverlay(opt.opacity);
-    }
+  // Resolve the effective opacity from the custom slider or the preset.
+  let opacity: number | null = null;
+  if (typeof customOpacityPct === "number") {
+    if (customOpacityPct <= 0) return null;
+    opacity = customOpacityPct / 100;
+  } else if (strength === "none") {
+    return null;
+  } else if (strength && strength !== "auto") {
+    const opt = OVERLAY_STRENGTHS.find((o) => o.value === strength);
+    if (opt && opt.opacity !== null) opacity = opt.opacity;
   }
-  // "auto" or unset → use the section's default
-  return resolveOverlay(overlayKind, base, theme);
+  // "auto"/unset → the section's default scrim strength.
+  if (opacity === null) opacity = 0.82;
+  return directionalOverlay(direction, opacity, theme, centerPct);
 }
 
 interface Props {
@@ -124,18 +185,6 @@ function themeBackground(theme: SectionTheme): string {
   return "var(--surface-canvas)";
 }
 
-function resolveOverlay(kind: OverlayKind, base: Props["base"], theme: SectionTheme): string {
-  // A light section must always get a light scrim, otherwise a dark hero/section
-  // overlay would defeat the light theme even when an explicit overlay kind is set.
-  if (theme === "light") return brandLightSectionOverlay();
-  if (kind === "hero") return brandHeroOverlay();
-  if (kind === "section") return brandSectionOverlay();
-  if (kind === "light") return brandLightSectionOverlay();
-  // auto
-  if (base === "hero") return brandHeroOverlay();
-  return brandSectionOverlay();
-}
-
 export default function EditableSection({
   pageKey,
   sectionId,
@@ -172,7 +221,20 @@ export default function EditableSection({
   const bgUrl = bgNoImage ? null : (overrideUrl ?? safeUrl(backgroundFallbackUrl ?? null));
   const mobileBgUrl = safeUrl(getAtPath(pageContent, mobileBgPath) as string | null | undefined);
   const overlayStrength = getAtPath(pageContent, `sectionBgOverlayStrength.${sectionId}`) as string | undefined;
+  const overlayOpacityRaw = getAtPath(pageContent, `sectionBgOverlayOpacity.${sectionId}`);
+  const overlayOpacity = typeof overlayOpacityRaw === "number" ? overlayOpacityRaw : undefined;
+  const overlayDirection = (getAtPath(pageContent, `sectionBgOverlayDirection.${sectionId}`) as OverlayDirection | undefined) ?? OVERLAY_DIRECTION_DEFAULT;
+  const overlayCenterRaw = getAtPath(pageContent, `sectionBgOverlayCenter.${sectionId}`);
+  const overlayCenter = typeof overlayCenterRaw === "number" ? overlayCenterRaw : OVERLAY_CENTER_DEFAULT;
   const bgPosition = (getAtPath(pageContent, `sectionBgPosition.${sectionId}`) as string | undefined) ?? "center";
+  // Granular focal point (0–100%). Falls back to the legacy preset when unset so
+  // older funnels keep their chosen Top/Center/Bottom alignment.
+  const presetXY = legacyPresetToXY(bgPosition);
+  const posXRaw = getAtPath(pageContent, `sectionBgPosX.${sectionId}`);
+  const posYRaw = getAtPath(pageContent, `sectionBgPosY.${sectionId}`);
+  const posX = typeof posXRaw === "number" ? posXRaw : presetXY.x;
+  const posY = typeof posYRaw === "number" ? posYRaw : presetXY.y;
+  const bgPositionValue = `${posX}% ${posY}%`;
 
   // Per-section padding overrides (top/bottom, px). Unset = inherit CSS default.
   const padTopRaw = getAtPath(pageContent, `sectionPadding.${sectionId}.top`);
@@ -253,7 +315,7 @@ export default function EditableSection({
     ? `bgl-${pageKey}-${sectionId}`.replace(/[^a-zA-Z0-9_-]/g, "-")
     : "";
   const overlayGradient = showsBgImage
-    ? buildOverlayGradient(overlayStrength, backgroundOverlay, base, theme)
+    ? buildOverlayGradient(overlayStrength, backgroundOverlay, base, theme, overlayOpacity, overlayDirection, overlayCenter)
     : null;
   const desktopBgImage = showsBgImage
     ? (overlayGradient ? brandImageBackground(overlayGradient, bgUrl!) : `url(${bgUrl})`)
@@ -279,7 +341,7 @@ export default function EditableSection({
           zIndex: -1,
           backgroundImage: desktopBgImage,
           backgroundSize: "cover",
-          backgroundPosition: bgPosition,
+          backgroundPosition: bgPositionValue,
           pointerEvents: "none",
         }}
       />
@@ -313,7 +375,12 @@ export default function EditableSection({
           hasImage={Boolean(bgUrl) || bgNoImage}
           hasMobileImage={Boolean(mobileBgUrl)}
           overlayStrength={(overlayStrength as OverlayStrength | undefined) ?? "auto"}
-          bgPosition={(bgPosition as BgPosition) ?? "center"}
+          overlayOpacity={overlayOpacity ?? presetToOpacityPct(overlayStrength)}
+          hasCustomOpacity={overlayOpacity !== undefined}
+          overlayDirection={overlayDirection}
+          overlayCenter={overlayCenter}
+          posX={posX}
+          posY={posY}
           onOpen={() => setPickerOpen(true)}
           onRemove={() => {
             // Only set the flag — preserve URL so Restore can bring the image back.
@@ -321,8 +388,16 @@ export default function EditableSection({
           }}
           onOpenMobile={() => setMobilePickerOpen(true)}
           onRemoveMobile={() => editor.updateField(pageKey, mobileBgPath, null)}
-          onOverlayChange={(s) => editor.updateField(pageKey, `sectionBgOverlayStrength.${sectionId}`, s)}
-          onPositionChange={(p) => editor.updateField(pageKey, `sectionBgPosition.${sectionId}`, p)}
+          onOverlayChange={(s) => {
+            // Selecting a preset clears any custom opacity so presets behave predictably.
+            editor.updateField(pageKey, `sectionBgOverlayStrength.${sectionId}`, s);
+            editor.updateField(pageKey, `sectionBgOverlayOpacity.${sectionId}`, null);
+          }}
+          onOverlayOpacityChange={(o) => editor.updateField(pageKey, `sectionBgOverlayOpacity.${sectionId}`, o)}
+          onOverlayDirectionChange={(d) => editor.updateField(pageKey, `sectionBgOverlayDirection.${sectionId}`, d)}
+          onOverlayCenterChange={(v) => editor.updateField(pageKey, `sectionBgOverlayCenter.${sectionId}`, v)}
+          onPosXChange={(x) => editor.updateField(pageKey, `sectionBgPosX.${sectionId}`, x)}
+          onPosYChange={(y) => editor.updateField(pageKey, `sectionBgPosY.${sectionId}`, y)}
         />
       )}
       {deletable && <DeleteControl onRemove={toggleHidden} />}
@@ -625,28 +700,83 @@ function DeleteControl({ onRemove }: { onRemove: () => void }) {
   );
 }
 
+function PositionSlider({
+  label,
+  leftHint,
+  rightHint,
+  value,
+  onChange,
+}: {
+  label: string;
+  leftHint: string;
+  rightHint: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div style={{ marginBottom: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+        <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(232,228,221,0.6)" }}>
+          {label} ({leftHint} ↔ {rightHint})
+        </span>
+        <span style={{ fontSize: 9, fontWeight: 700, color: "#D4A878", minWidth: 28, textAlign: "right" }}>
+          {Math.round(value)}%
+        </span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: "100%", accentColor: "#D4A878", cursor: "pointer", display: "block" }}
+      />
+    </div>
+  );
+}
+
 function BackgroundControl({
   hasImage,
   hasMobileImage,
   overlayStrength,
-  bgPosition,
+  overlayOpacity,
+  hasCustomOpacity,
+  overlayDirection,
+  overlayCenter,
+  posX,
+  posY,
   onOpen,
   onRemove,
   onOpenMobile,
   onRemoveMobile,
   onOverlayChange,
-  onPositionChange,
+  onOverlayOpacityChange,
+  onOverlayDirectionChange,
+  onOverlayCenterChange,
+  onPosXChange,
+  onPosYChange,
 }: {
   hasImage: boolean;
   hasMobileImage: boolean;
   overlayStrength: OverlayStrength;
-  bgPosition: BgPosition;
+  overlayOpacity: number;
+  hasCustomOpacity: boolean;
+  overlayDirection: OverlayDirection;
+  overlayCenter: number;
+  posX: number;
+  posY: number;
   onOpen: () => void;
   onRemove: () => void;
   onOpenMobile: () => void;
   onRemoveMobile: () => void;
   onOverlayChange: (s: OverlayStrength) => void;
-  onPositionChange: (p: BgPosition) => void;
+  onOverlayOpacityChange: (o: number) => void;
+  onOverlayDirectionChange: (d: OverlayDirection) => void;
+  onOverlayCenterChange: (v: number) => void;
+  onPosXChange: (x: number) => void;
+  onPosYChange: (y: number) => void;
 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [panelPos, setPanelPos] = useState<{ top: number; right: number } | null>(null);
@@ -658,7 +788,11 @@ function BackgroundControl({
   const openSettings = useCallback(() => {
     if (dotsRef.current) {
       const rect = dotsRef.current.getBoundingClientRect();
-      setPanelPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+      // Clamp into the viewport so the panel is never positioned off-screen
+      // (e.g. when the section is scrolled so its controls sit above the fold).
+      const top = Math.min(Math.max(rect.bottom + 6, 8), window.innerHeight - 260);
+      const right = Math.min(Math.max(window.innerWidth - rect.right, 8), window.innerWidth - 300);
+      setPanelPos({ top, right });
     }
     setSettingsOpen(true);
   }, []);
@@ -731,38 +865,76 @@ function BackgroundControl({
   const panel = mounted && settingsOpen && hasImage && panelPos
     ? createPortal(
         <div ref={ref} style={settingsPanel} onClick={(e) => e.stopPropagation()}>
-          {/* Overlay strength */}
+          {/* Overlay strength — quick presets + granular opacity slider */}
           <div>
             <span style={rowLabel}>Overlay</span>
-            <div style={{ display: "flex", gap: 2 }}>
+            <div style={{ display: "flex", gap: 2, marginBottom: 8 }}>
               {OVERLAY_STRENGTHS.map(opt => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => onOverlayChange(opt.value)}
-                  style={optionBtn(overlayStrength === opt.value)}
+                  style={optionBtn(!hasCustomOpacity && overlayStrength === opt.value)}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
+            <PositionSlider
+              label="Opacity"
+              leftHint="Clear"
+              rightHint="Solid"
+              value={overlayOpacity}
+              onChange={onOverlayOpacityChange}
+            />
+            <div style={{ marginTop: 6 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(232,228,221,0.6)", display: "block", marginBottom: 3 }}>
+                Direction
+              </span>
+              <div style={{ display: "flex", gap: 2 }}>
+                {OVERLAY_DIRECTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => onOverlayDirectionChange(opt.value)}
+                    title={`Fade ${opt.value === "even" ? "evenly" : opt.css?.replace("to ", "toward the ")}`}
+                    style={optionBtn(overlayDirection === opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {overlayDirection !== "even" && (
+              <div style={{ marginTop: 6 }}>
+                <PositionSlider
+                  label="Center"
+                  leftHint="Start"
+                  rightHint="End"
+                  value={overlayCenter}
+                  onChange={onOverlayCenterChange}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Background position */}
+          {/* Background position — quick presets + granular X/Y focal point */}
           <div>
             <span style={rowLabel}>Position</span>
-            <div style={{ display: "flex", gap: 2 }}>
-              {POSITION_OPTIONS.map(opt => (
+            <div style={{ display: "flex", gap: 2, marginBottom: 8 }}>
+              {POSITION_PRESETS.map(opt => (
                 <button
-                  key={opt.value}
+                  key={opt.label}
                   type="button"
-                  onClick={() => onPositionChange(opt.value)}
-                  style={optionBtn(bgPosition === opt.value)}
+                  onClick={() => { onPosXChange(opt.x); onPosYChange(opt.y); }}
+                  style={optionBtn(posX === opt.x && posY === opt.y)}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
+            <PositionSlider label="Horizontal" leftHint="Left" rightHint="Right" value={posX} onChange={onPosXChange} />
+            <PositionSlider label="Vertical" leftHint="Top" rightHint="Bottom" value={posY} onChange={onPosYChange} />
           </div>
 
           {/* Mobile image */}
@@ -830,10 +1002,10 @@ function BackgroundControl({
                 ref={dotsRef}
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); settingsOpen ? setSettingsOpen(false) : openSettings(); }}
-                title="Image options — overlay, position, mobile"
+                title="Overlay, gradient, position & mobile image options"
                 style={{ ...btn, color: settingsOpen ? "#D4A878" : "#e8e4dd" }}
               >
-                ⋯
+                Overlay ⋯
               </button>
             </>
           )}

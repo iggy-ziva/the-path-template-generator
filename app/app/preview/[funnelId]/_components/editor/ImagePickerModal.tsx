@@ -32,6 +32,7 @@ const OVERLAY: CSSProperties = {
 
 const PANEL: CSSProperties = {
   width: "min(760px, 100%)",
+  height: "min(640px, 85vh)",
   maxHeight: "85vh",
   display: "flex",
   flexDirection: "column",
@@ -52,15 +53,20 @@ const HEADER: CSSProperties = {
   borderBottom: "1px solid rgba(255,255,255,0.08)",
 };
 
-const GRID: CSSProperties = {
-  flex: "1 1 0",
+// Dedicated scroll container — owns the vertical scrollbar so the grid inside
+// can size to its content and simply overflow.
+const SCROLL: CSSProperties = {
+  flex: "1 1 auto",
   minHeight: 0,
+  overflowY: "auto",
+};
+
+const GRID: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
   alignContent: "start",
   gap: 10,
   padding: 20,
-  overflowY: "auto",
 };
 
 const FOOTER: CSSProperties = {
@@ -76,6 +82,7 @@ export default function ImagePickerModal({ library, currentUrl, canRemove, onSel
   const editor = useEditorOptional();
   const [uploading, setUploading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [hoveredUrl, setHoveredUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -150,16 +157,20 @@ export default function ImagePickerModal({ library, currentUrl, canRemove, onSel
           </button>
         </div>
 
-        {/* ── Image grid ── */}
+        {/* ── Image grid (scrollable) ── */}
         {library.length > 0 ? (
+          <div style={SCROLL}>
           <div style={GRID}>
             {library.map((item) => {
               const active = item.url === currentUrl;
+              const showLabel = hoveredUrl === item.url || active;
               return (
                 <button
                   key={item.url}
                   type="button"
                   onClick={() => onSelect(item.url)}
+                  onMouseEnter={() => setHoveredUrl(item.url)}
+                  onMouseLeave={() => setHoveredUrl((u) => (u === item.url ? null : u))}
                   title={item.label}
                   style={{
                     position: "relative",
@@ -182,6 +193,8 @@ export default function ImagePickerModal({ library, currentUrl, canRemove, onSel
                     alt={item.label}
                     style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                   />
+                  {/* Label only appears on hover (or when selected) so it never
+                      obscures the image while browsing. */}
                   <span
                     style={{
                       position: "absolute",
@@ -194,6 +207,9 @@ export default function ImagePickerModal({ library, currentUrl, canRemove, onSel
                       color: "#fff",
                       background: "linear-gradient(transparent, rgba(0,0,0,0.72))",
                       textAlign: "left",
+                      opacity: showLabel ? 1 : 0,
+                      transition: "opacity 120ms ease",
+                      pointerEvents: "none",
                     }}
                   >
                     {item.label}
@@ -223,6 +239,7 @@ export default function ImagePickerModal({ library, currentUrl, canRemove, onSel
                 </button>
               );
             })}
+          </div>
           </div>
         ) : (
           <div style={{ padding: "36px 20px", textAlign: "center", color: "rgba(232,228,221,0.4)", fontSize: 13 }}>

@@ -53,10 +53,35 @@ export default function PreviewClient(props: Props) {
   );
 }
 
+// Minimum viewport width for the inline editor. Below this the controls
+// (hover popovers, sliders, drag handles) are unreliable on touch/small screens,
+// so editing is gated to laptop-sized screens and up.
+const MIN_EDIT_WIDTH = 1024;
+
 function PreviewClientInner({ funnelId, themeSlug, createdAt, updatedAt: serverUpdatedAt, wizardData }: Props) {
   const editor = useEditor();
   const [activePage, setActivePage] = useState<PageKey>("eventLanding");
   const [downloading, setDownloading] = useState(false);
+
+  // Track whether the viewport is large enough to edit. Default true so there's
+  // no flash of a disabled button before the first measurement on desktop.
+  const [canEdit, setCanEdit] = useState(true);
+  const [showDesktopOnly, setShowDesktopOnly] = useState(false);
+  useEffect(() => {
+    const check = () => setCanEdit(window.innerWidth >= MIN_EDIT_WIDTH);
+    check();
+    window.addEventListener("resize", check);
+    window.addEventListener("orientationchange", check);
+    return () => {
+      window.removeEventListener("resize", check);
+      window.removeEventListener("orientationchange", check);
+    };
+  }, []);
+
+  // If the window shrinks (or rotates) below the threshold while editing, exit.
+  useEffect(() => {
+    if (!canEdit && editor.isEditMode) editor.setEditMode(false);
+  }, [canEdit, editor]);
 
   const fc = editor.draftContent;
   const wizard = wizardData as WizardSnapshot;
@@ -247,7 +272,11 @@ body {
         </div>
 
         <button
-          onClick={() => editor.setEditMode(!editor.isEditMode)}
+          onClick={() => {
+            if (canEdit) editor.setEditMode(!editor.isEditMode);
+            else setShowDesktopOnly(true);
+          }}
+          title={canEdit ? undefined : "Editing is only available on laptop/desktop screens"}
           style={{
             padding: "6px 12px", background: editor.isEditMode ? "#D4A878" : "transparent",
             border: "1px solid #444", borderRadius: 6,
@@ -317,6 +346,49 @@ body {
           {pageComponent(activePage)}
         </div>
       </div>
+
+      {showDesktopOnly && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowDesktopOnly(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 2147483600,
+            background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(380px, 100%)", background: "#1c1c1a", color: "#e8e4dd",
+              borderRadius: 16, border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.7)", padding: "28px 24px",
+              textAlign: "center", fontFamily: "system-ui, -apple-system, sans-serif",
+            }}
+          >
+            <div style={{ fontSize: 32, marginBottom: 12 }}>🖥️</div>
+            <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>
+              Editing is desktop-only
+            </div>
+            <div style={{ fontSize: 13.5, lineHeight: 1.5, color: "rgba(232,228,221,0.65)", marginBottom: 20 }}>
+              The funnel editor needs a larger screen to work properly. Please open this
+              page on a laptop or desktop to make changes. You can still preview the
+              funnel here on your phone.
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowDesktopOnly(false)}
+              style={{
+                padding: "10px 22px", background: "#D4A878", color: "#141412",
+                border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer",
+              }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
