@@ -15,6 +15,28 @@ import ReplayPage from "./pages/ReplayPage";
 import ProgrammeLandingPage from "./pages/ProgrammeLandingPage";
 import ProgrammeCheckoutPage from "./pages/ProgrammeCheckoutPage";
 import ProgrammeThankYouPage from "./pages/ProgrammeThankYouPage";
+import MobilePreviewFrame from "./MobilePreviewFrame";
+
+// Preview-only CSS overrides shared by the desktop canvas and the mobile iframe
+// so both render identically. The editable-hover outline and the sticky-bar
+// toolbar offset are intentionally excluded here: the offset only applies to the
+// desktop canvas (to clear the 52px preview toolbar), whereas inside the iframe
+// the sticky bar must sit at its natural top:0 like a real device.
+const PREVIEW_OVERRIDE_CSS = `
+  section.credibility.inline { padding: 40px 0 !important; border: none !important; margin-bottom: 40px !important; }
+  section.credibility.inline .quote-glyph { font-size: 64px !important; line-height: 1 !important; margin-bottom: 16px !important; }
+`;
+
+// Device presets for the mobile preview. Widths are what drive the funnel's
+// responsive CSS (the 768px breakpoint); 768 sits on the mobile boundary.
+const DEVICE_PRESETS = [
+  { key: "smallPhone", label: "Small phone", width: 360, height: 740 },
+  { key: "largePhone", label: "Large phone", width: 414, height: 896 },
+  { key: "tablet",     label: "Tablet",      width: 768, height: 1024 },
+] as const;
+
+type DeviceKey = typeof DEVICE_PRESETS[number]["key"];
+type Viewport = "desktop" | "mobile";
 
 const PAGES = [
   { key: "eventLanding",       label: "Event Landing",     file: "index.html" },
@@ -62,6 +84,16 @@ function PreviewClientInner({ funnelId, themeSlug, createdAt, updatedAt: serverU
   const editor = useEditor();
   const [activePage, setActivePage] = useState<PageKey>("eventLanding");
   const [downloading, setDownloading] = useState(false);
+  const [viewport, setViewport] = useState<Viewport>("desktop");
+  const [device, setDevice] = useState<DeviceKey>("largePhone");
+  const activeDevice = DEVICE_PRESETS.find((d) => d.key === device) ?? DEVICE_PRESETS[1];
+
+  // Mobile preview is view-only — leaving edit mode keeps behavior consistent
+  // with the desktop-only editing gate.
+  const enterMobile = useCallback(() => {
+    if (editor.isEditMode) editor.setEditMode(false);
+    setViewport("mobile");
+  }, [editor]);
 
   // Track whether the viewport is large enough to edit. Default true so there's
   // no flash of a disabled button before the first measurement on desktop.
@@ -213,9 +245,8 @@ body {
       <link rel="stylesheet" href="/funnel-pages.css" />
       {fontImport && <style dangerouslySetInnerHTML={{ __html: fontImport }} />}
       <style dangerouslySetInnerHTML={{ __html: `
+        ${PREVIEW_OVERRIDE_CSS}
         #stickyBar.is-visible { top: 52px !important; }
-        section.credibility.inline { padding: 40px 0 !important; border: none !important; margin-bottom: 40px !important; }
-        section.credibility.inline .quote-glyph { font-size: 64px !important; line-height: 1 !important; margin-bottom: 16px !important; }
         .editable-field:not(.is-editing):hover { outline: 1px dashed var(--accent-secondary-on-dark) !important; outline-offset: 2px; }
       ` }} />
 
@@ -271,23 +302,61 @@ body {
           {themeSlug && <span>{themeSlug}</span>}
         </div>
 
-        <button
-          onClick={() => {
-            if (canEdit) editor.setEditMode(!editor.isEditMode);
-            else setShowDesktopOnly(true);
-          }}
-          title={canEdit ? undefined : "Editing is only available on laptop/desktop screens"}
-          style={{
-            padding: "6px 12px", background: editor.isEditMode ? "#D4A878" : "transparent",
-            border: "1px solid #444", borderRadius: 6,
-            color: editor.isEditMode ? "#141412" : "#ccc",
-            cursor: "pointer", fontSize: 11, fontWeight: 700, flexShrink: 0,
-          }}
-        >
-          {editor.isEditMode ? "Done editing" : "Edit"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0, border: "1px solid #444", borderRadius: 6, overflow: "hidden" }}>
+          {(["desktop", "mobile"] as Viewport[]).map((v) => (
+            <button
+              key={v}
+              onClick={() => (v === "mobile" ? enterMobile() : setViewport("desktop"))}
+              title={v === "desktop" ? "Desktop preview" : "Mobile preview"}
+              style={{
+                padding: "6px 10px", border: "none", cursor: "pointer",
+                background: viewport === v ? accentSecondaryOnDark : "transparent",
+                color: viewport === v ? textOnSecondary : "#9a9390",
+                fontSize: 11, fontWeight: 700,
+              }}
+            >
+              {v === "desktop" ? "🖥 Desktop" : "📱 Mobile"}
+            </button>
+          ))}
+        </div>
 
-        {editor.isEditMode && (
+        {viewport === "mobile" && (
+          <select
+            value={device}
+            onChange={(e) => setDevice(e.target.value as DeviceKey)}
+            style={{
+              padding: "6px 8px", background: "#1c1c1a", color: "#ccc",
+              border: "1px solid #444", borderRadius: 6, fontSize: 11, fontWeight: 600,
+              cursor: "pointer", flexShrink: 0,
+            }}
+          >
+            {DEVICE_PRESETS.map((d) => (
+              <option key={d.key} value={d.key}>
+                {d.label} ({d.width}×{d.height})
+              </option>
+            ))}
+          </select>
+        )}
+
+        {viewport === "desktop" && (
+          <button
+            onClick={() => {
+              if (canEdit) editor.setEditMode(!editor.isEditMode);
+              else setShowDesktopOnly(true);
+            }}
+            title={canEdit ? undefined : "Editing is only available on laptop/desktop screens"}
+            style={{
+              padding: "6px 12px", background: editor.isEditMode ? "#D4A878" : "transparent",
+              border: "1px solid #444", borderRadius: 6,
+              color: editor.isEditMode ? "#141412" : "#ccc",
+              cursor: "pointer", fontSize: 11, fontWeight: 700, flexShrink: 0,
+            }}
+          >
+            {editor.isEditMode ? "Done editing" : "Edit"}
+          </button>
+        )}
+
+        {viewport === "desktop" && editor.isEditMode && (
           <>
             <button
               onClick={() => editor.discard()}
@@ -332,20 +401,51 @@ body {
         </button>
       </div>
 
-      <div onClick={handlePreviewClick} style={{ paddingTop: 52, ...brandVars }}>
-        <div
-          key={activePage}
-          data-page={activePage}
-          style={{
-            background: activePage === "programmeCheckout" ? "var(--surface-inverse)" : "var(--surface-canvas)",
-            color: activePage === "programmeCheckout" ? "var(--text-inverse)" : "var(--text-primary)",
-            fontFamily: "var(--font-body)",
-            minHeight: "calc(100vh - 52px)",
-          }}
-        >
-          {pageComponent(activePage)}
+      {viewport === "mobile" ? (
+        <div style={{ paddingTop: 52, background: "#0c0c0b", minHeight: "100vh" }}>
+          <MobilePreviewFrame
+            key={device}
+            width={activeDevice.width}
+            height={activeDevice.height}
+            brandCSS={brandCSS}
+            fontImport={fontImport}
+            overrideCSS={PREVIEW_OVERRIDE_CSS}
+            brandVars={brandVars}
+            onInternalLink={(href) => {
+              const target = FUNNEL_LINKS[href];
+              if (target) switchPage(target);
+            }}
+          >
+            <div
+              key={activePage}
+              data-page={activePage}
+              style={{
+                background: activePage === "programmeCheckout" ? "var(--surface-inverse)" : "var(--surface-canvas)",
+                color: activePage === "programmeCheckout" ? "var(--text-inverse)" : "var(--text-primary)",
+                fontFamily: "var(--font-body)",
+                minHeight: "100%",
+              }}
+            >
+              {pageComponent(activePage)}
+            </div>
+          </MobilePreviewFrame>
         </div>
-      </div>
+      ) : (
+        <div onClick={handlePreviewClick} style={{ paddingTop: 52, ...brandVars }}>
+          <div
+            key={activePage}
+            data-page={activePage}
+            style={{
+              background: activePage === "programmeCheckout" ? "var(--surface-inverse)" : "var(--surface-canvas)",
+              color: activePage === "programmeCheckout" ? "var(--text-inverse)" : "var(--text-primary)",
+              fontFamily: "var(--font-body)",
+              minHeight: "calc(100vh - 52px)",
+            }}
+          >
+            {pageComponent(activePage)}
+          </div>
+        </div>
+      )}
 
       {showDesktopOnly && (
         <div
