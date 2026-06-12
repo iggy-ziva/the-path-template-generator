@@ -445,6 +445,14 @@ section {
   font-size: 18px;
   letter-spacing: 0.01em;
 }
+/* The logo <img> is rendered with an inline height:96px (sized for the hero) and
+   has no class, so we target the sticky-bar's image directly and cap it. Without
+   this the bar is ~3x too tall and the logo letterboxes inside the 96px box. */
+.sticky-bar img {
+  height: 44px !important;
+  width: auto !important;
+  object-fit: contain;
+}
 .sticky-bar .event-title {
   font-family: var(--font-display);
   font-size: 16px;
@@ -493,7 +501,7 @@ section {
 .sticky-bar.light-bg .countdown b { color: var(--accent-secondary-on-light); }
 @media (max-width: 768px) {
   .sticky-bar { transform: translateY(0); }
-  /* Two rows: [logo | CTA] on top, countdown centered below with breathing room. */
+  /* Two rows: [logo | CTA] on top, countdown centered below. Kept tight. */
   .sticky-bar .container {
     grid-template-columns: auto 1fr;
     grid-template-rows: auto auto;
@@ -501,16 +509,18 @@ section {
       "logo cta"
       "count count";
     column-gap: var(--s-3);
-    row-gap: var(--s-3);
-    padding-block: var(--s-3);
+    row-gap: var(--s-1);
+    padding-block: var(--s-1);
     align-items: center;
   }
   .sticky-bar .logo { grid-area: logo; display: block; font-size: 15px; }
+  /* Cap the logo image height on mobile (overrides the inline height:96px).
+     The img has no class, so target it directly and assign it the logo cell. */
+  .sticky-bar img { grid-area: logo; height: 30px !important; }
   .sticky-bar .event-title { display: none; }
-  .sticky-bar .countdown { grid-area: count; display: flex; gap: var(--s-3); justify-content: center; }
+  /* Countdown gets its own full-width row, so show all four units. */
+  .sticky-bar .countdown { grid-area: count; display: flex; gap: var(--s-2); justify-content: center; }
   .sticky-bar .countdown span { font-size: 11px; }
-  /* Show only Days + Hours on mobile — hide Mins and Secs */
-  .sticky-bar .countdown span:nth-child(n+3) { display: none; }
   .sticky-bar .btn { grid-area: cta; justify-self: end; align-self: center; }
 }
 
@@ -738,8 +748,8 @@ section {
 @media (max-width: 768px) {
   .mob-br { display: block; }
   /* Tighten hero vertical space so the CTA is above the fold.
-     Top padding clears the (now two-row) fixed sticky bar. */
-  .hero { padding-top: 96px; padding-bottom: var(--s-9); }
+     Top padding clears the compact two-row fixed sticky bar. */
+  .hero { padding-top: 78px; padding-bottom: var(--s-9); }
   .hero h1 { margin-top: var(--s-4); margin-bottom: var(--s-4); }
   /* A little breathing room before the price line now that the hero is full-height */
   .hero .subtitle { margin-bottom: var(--s-5); font-size: 17px; }

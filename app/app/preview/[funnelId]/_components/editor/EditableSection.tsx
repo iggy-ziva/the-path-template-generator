@@ -234,7 +234,21 @@ export default function EditableSection({
   const posYRaw = getAtPath(pageContent, `sectionBgPosY.${sectionId}`);
   const posX = typeof posXRaw === "number" ? posXRaw : presetXY.x;
   const posY = typeof posYRaw === "number" ? posYRaw : presetXY.y;
-  const bgPositionValue = `${posX}% ${posY}%`;
+
+  // Mobile overrides for overlay + focal point. Each falls back to the desktop
+  // value when unset, so a section reads identically on phones until the editor
+  // explicitly tunes the mobile view (these are stored under *Mobile keys).
+  const overlayStrengthMobileRaw = getAtPath(pageContent, `sectionBgOverlayStrengthMobile.${sectionId}`) as string | undefined;
+  const overlayStrengthMobile = overlayStrengthMobileRaw ?? overlayStrength;
+  const overlayOpacityMobileRaw = getAtPath(pageContent, `sectionBgOverlayOpacityMobile.${sectionId}`);
+  const overlayOpacityMobile = typeof overlayOpacityMobileRaw === "number" ? overlayOpacityMobileRaw : undefined;
+  const overlayDirectionMobile = (getAtPath(pageContent, `sectionBgOverlayDirectionMobile.${sectionId}`) as OverlayDirection | undefined) ?? overlayDirection;
+  const overlayCenterMobileRaw = getAtPath(pageContent, `sectionBgOverlayCenterMobile.${sectionId}`);
+  const overlayCenterMobile = typeof overlayCenterMobileRaw === "number" ? overlayCenterMobileRaw : overlayCenter;
+  const posXMobileRaw = getAtPath(pageContent, `sectionBgPosXMobile.${sectionId}`);
+  const posYMobileRaw = getAtPath(pageContent, `sectionBgPosYMobile.${sectionId}`);
+  const posXMobile = typeof posXMobileRaw === "number" ? posXMobileRaw : posX;
+  const posYMobile = typeof posYMobileRaw === "number" ? posYMobileRaw : posY;
 
   // Per-section padding overrides (top/bottom, px). Unset = inherit CSS default.
   const padTopRaw = getAtPath(pageContent, `sectionPadding.${sectionId}.top`);
@@ -310,38 +324,49 @@ export default function EditableSection({
     />
   ) : null;
 
-  // Build a CSS-class name used to swap desktop → mobile image via a <style> tag.
-  const bgLayerClass = showsBgImage && mobileBgUrl
+  // Background image layer. Desktop styles live on the base class; a mobile
+  // media query overrides the overlay gradient, image (portrait crop) and focal
+  // point independently, since framing/overlay that works on wide screens often
+  // doesn't translate to a tall phone viewport.
+  const bgLayerClass = showsBgImage
     ? `bgl-${pageKey}-${sectionId}`.replace(/[^a-zA-Z0-9_-]/g, "-")
     : "";
-  const overlayGradient = showsBgImage
+  const overlayGradientDesktop = showsBgImage
     ? buildOverlayGradient(overlayStrength, backgroundOverlay, base, theme, overlayOpacity, overlayDirection, overlayCenter)
     : null;
+  // Resolve the effective overlay opacity used for the mobile gradient. When the
+  // editor explicitly chose a mobile preset (strength set, opacity cleared) we
+  // let that preset drive; only when nothing mobile-specific is set do we mirror
+  // the desktop custom opacity, so the two views render identically by default.
+  const mobileHasOwnOverlay = overlayStrengthMobileRaw !== undefined || overlayOpacityMobile !== undefined;
+  const mobileOverlayCustom =
+    overlayOpacityMobile !== undefined ? overlayOpacityMobile
+    : overlayStrengthMobileRaw !== undefined ? undefined
+    : overlayOpacity;
+  const overlayGradientMobile = showsBgImage
+    ? buildOverlayGradient(overlayStrengthMobile, backgroundOverlay, base, theme, mobileOverlayCustom, overlayDirectionMobile, overlayCenterMobile)
+    : null;
+  const mobileImgUrl = mobileBgUrl ?? bgUrl;
   const desktopBgImage = showsBgImage
-    ? (overlayGradient ? brandImageBackground(overlayGradient, bgUrl!) : `url(${bgUrl})`)
+    ? (overlayGradientDesktop ? brandImageBackground(overlayGradientDesktop, bgUrl!) : `url(${bgUrl})`)
     : undefined;
-  const mobileBgImage = showsBgImage && mobileBgUrl
-    ? (overlayGradient ? brandImageBackground(overlayGradient, mobileBgUrl) : `url(${mobileBgUrl})`)
+  const mobileBgImage = showsBgImage
+    ? (overlayGradientMobile ? brandImageBackground(overlayGradientMobile, mobileImgUrl!) : `url(${mobileImgUrl})`)
     : undefined;
 
   const bgLayerEl = showsBgImage ? (
     <>
-      {bgLayerClass && (
-        <style dangerouslySetInnerHTML={{ __html:
-          `@media(max-width:768px){.${bgLayerClass}{background-image:${mobileBgImage}!important}}` +
-          `@media(min-width:769px){.${bgLayerClass}--mob{display:none!important}}`
-        }} />
-      )}
+      <style dangerouslySetInnerHTML={{ __html:
+        `.${bgLayerClass}{background-image:${desktopBgImage};background-size:cover;background-position:${posX}% ${posY}%}` +
+        `@media(max-width:768px){.${bgLayerClass}{background-image:${mobileBgImage};background-position:${posXMobile}% ${posYMobile}%}}`
+      }} />
       <div
         aria-hidden
-        className={bgLayerClass || undefined}
+        className={bgLayerClass}
         style={{
           position: "absolute",
           inset: 0,
           zIndex: -1,
-          backgroundImage: desktopBgImage,
-          backgroundSize: "cover",
-          backgroundPosition: bgPositionValue,
           pointerEvents: "none",
         }}
       />
@@ -374,13 +399,29 @@ export default function EditableSection({
         <BackgroundControl
           hasImage={Boolean(bgUrl) || bgNoImage}
           hasMobileImage={Boolean(mobileBgUrl)}
-          overlayStrength={(overlayStrength as OverlayStrength | undefined) ?? "auto"}
-          overlayOpacity={overlayOpacity ?? presetToOpacityPct(overlayStrength)}
-          hasCustomOpacity={overlayOpacity !== undefined}
-          overlayDirection={overlayDirection}
-          overlayCenter={overlayCenter}
-          posX={posX}
-          posY={posY}
+          desktop={{
+            overlayStrength: (overlayStrength as OverlayStrength | undefined) ?? "auto",
+            overlayOpacity: overlayOpacity ?? presetToOpacityPct(overlayStrength),
+            hasCustomOpacity: overlayOpacity !== undefined,
+            overlayDirection,
+            overlayCenter,
+            posX,
+            posY,
+          }}
+          mobile={{
+            overlayStrength: (overlayStrengthMobile as OverlayStrength | undefined) ?? "auto",
+            overlayOpacity:
+              overlayOpacityMobile !== undefined
+                ? overlayOpacityMobile
+                : mobileHasOwnOverlay
+                  ? presetToOpacityPct(overlayStrengthMobile)
+                  : (overlayOpacity ?? presetToOpacityPct(overlayStrength)),
+            hasCustomOpacity: mobileHasOwnOverlay ? overlayOpacityMobile !== undefined : overlayOpacity !== undefined,
+            overlayDirection: overlayDirectionMobile,
+            overlayCenter: overlayCenterMobile,
+            posX: posXMobile,
+            posY: posYMobile,
+          }}
           onOpen={() => setPickerOpen(true)}
           onRemove={() => {
             // Only set the flag — preserve URL so Restore can bring the image back.
@@ -388,16 +429,17 @@ export default function EditableSection({
           }}
           onOpenMobile={() => setMobilePickerOpen(true)}
           onRemoveMobile={() => editor.updateField(pageKey, mobileBgPath, null)}
-          onOverlayChange={(s) => {
+          onOverlayChange={(device, s) => {
             // Selecting a preset clears any custom opacity so presets behave predictably.
-            editor.updateField(pageKey, `sectionBgOverlayStrength.${sectionId}`, s);
-            editor.updateField(pageKey, `sectionBgOverlayOpacity.${sectionId}`, null);
+            const sfx = device === "mobile" ? "Mobile" : "";
+            editor.updateField(pageKey, `sectionBgOverlayStrength${sfx}.${sectionId}`, s);
+            editor.updateField(pageKey, `sectionBgOverlayOpacity${sfx}.${sectionId}`, null);
           }}
-          onOverlayOpacityChange={(o) => editor.updateField(pageKey, `sectionBgOverlayOpacity.${sectionId}`, o)}
-          onOverlayDirectionChange={(d) => editor.updateField(pageKey, `sectionBgOverlayDirection.${sectionId}`, d)}
-          onOverlayCenterChange={(v) => editor.updateField(pageKey, `sectionBgOverlayCenter.${sectionId}`, v)}
-          onPosXChange={(x) => editor.updateField(pageKey, `sectionBgPosX.${sectionId}`, x)}
-          onPosYChange={(y) => editor.updateField(pageKey, `sectionBgPosY.${sectionId}`, y)}
+          onOverlayOpacityChange={(device, o) => editor.updateField(pageKey, `sectionBgOverlayOpacity${device === "mobile" ? "Mobile" : ""}.${sectionId}`, o)}
+          onOverlayDirectionChange={(device, d) => editor.updateField(pageKey, `sectionBgOverlayDirection${device === "mobile" ? "Mobile" : ""}.${sectionId}`, d)}
+          onOverlayCenterChange={(device, v) => editor.updateField(pageKey, `sectionBgOverlayCenter${device === "mobile" ? "Mobile" : ""}.${sectionId}`, v)}
+          onPosXChange={(device, x) => editor.updateField(pageKey, `sectionBgPosX${device === "mobile" ? "Mobile" : ""}.${sectionId}`, x)}
+          onPosYChange={(device, y) => editor.updateField(pageKey, `sectionBgPosY${device === "mobile" ? "Mobile" : ""}.${sectionId}`, y)}
         />
       )}
       {deletable && <DeleteControl onRemove={toggleHidden} />}
@@ -737,16 +779,23 @@ function PositionSlider({
   );
 }
 
+type BgDevice = "desktop" | "mobile";
+
+type BgDeviceSettings = {
+  overlayStrength: OverlayStrength;
+  overlayOpacity: number;
+  hasCustomOpacity: boolean;
+  overlayDirection: OverlayDirection;
+  overlayCenter: number;
+  posX: number;
+  posY: number;
+};
+
 function BackgroundControl({
   hasImage,
   hasMobileImage,
-  overlayStrength,
-  overlayOpacity,
-  hasCustomOpacity,
-  overlayDirection,
-  overlayCenter,
-  posX,
-  posY,
+  desktop,
+  mobile,
   onOpen,
   onRemove,
   onOpenMobile,
@@ -760,24 +809,21 @@ function BackgroundControl({
 }: {
   hasImage: boolean;
   hasMobileImage: boolean;
-  overlayStrength: OverlayStrength;
-  overlayOpacity: number;
-  hasCustomOpacity: boolean;
-  overlayDirection: OverlayDirection;
-  overlayCenter: number;
-  posX: number;
-  posY: number;
+  desktop: BgDeviceSettings;
+  mobile: BgDeviceSettings;
   onOpen: () => void;
   onRemove: () => void;
   onOpenMobile: () => void;
   onRemoveMobile: () => void;
-  onOverlayChange: (s: OverlayStrength) => void;
-  onOverlayOpacityChange: (o: number) => void;
-  onOverlayDirectionChange: (d: OverlayDirection) => void;
-  onOverlayCenterChange: (v: number) => void;
-  onPosXChange: (x: number) => void;
-  onPosYChange: (y: number) => void;
+  onOverlayChange: (device: BgDevice, s: OverlayStrength) => void;
+  onOverlayOpacityChange: (device: BgDevice, o: number) => void;
+  onOverlayDirectionChange: (device: BgDevice, d: OverlayDirection) => void;
+  onOverlayCenterChange: (device: BgDevice, v: number) => void;
+  onPosXChange: (device: BgDevice, x: number) => void;
+  onPosYChange: (device: BgDevice, y: number) => void;
 }) {
+  const [device, setDevice] = useState<BgDevice>("desktop");
+  const s = device === "mobile" ? mobile : desktop;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [panelPos, setPanelPos] = useState<{ top: number; right: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -865,6 +911,25 @@ function BackgroundControl({
   const panel = mounted && settingsOpen && hasImage && panelPos
     ? createPortal(
         <div ref={ref} style={settingsPanel} onClick={(e) => e.stopPropagation()}>
+          {/* Device toggle — overlay & position are tuned independently per device */}
+          <div style={{ display: "flex", gap: 2, padding: 2, background: "rgba(255,255,255,0.05)", borderRadius: 7 }}>
+            {(["desktop", "mobile"] as BgDevice[]).map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setDevice(d)}
+                style={{ ...optionBtn(device === d), flex: 1, padding: "5px 8px", textTransform: "capitalize" }}
+              >
+                {d === "desktop" ? "Desktop" : "Mobile"}
+              </button>
+            ))}
+          </div>
+          <span style={{ fontSize: 9, color: "rgba(232,228,221,0.4)", lineHeight: 1.4, marginTop: -2 }}>
+            {device === "mobile"
+              ? "Overlay & position below apply to phones (≤768px). Inherits desktop until changed."
+              : "Overlay & position below apply to tablets & desktop."}
+          </span>
+
           {/* Overlay strength — quick presets + granular opacity slider */}
           <div>
             <span style={rowLabel}>Overlay</span>
@@ -873,8 +938,8 @@ function BackgroundControl({
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => onOverlayChange(opt.value)}
-                  style={optionBtn(!hasCustomOpacity && overlayStrength === opt.value)}
+                  onClick={() => onOverlayChange(device, opt.value)}
+                  style={optionBtn(!s.hasCustomOpacity && s.overlayStrength === opt.value)}
                 >
                   {opt.label}
                 </button>
@@ -884,8 +949,8 @@ function BackgroundControl({
               label="Opacity"
               leftHint="Clear"
               rightHint="Solid"
-              value={overlayOpacity}
-              onChange={onOverlayOpacityChange}
+              value={s.overlayOpacity}
+              onChange={(o) => onOverlayOpacityChange(device, o)}
             />
             <div style={{ marginTop: 6 }}>
               <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(232,228,221,0.6)", display: "block", marginBottom: 3 }}>
@@ -896,23 +961,23 @@ function BackgroundControl({
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => onOverlayDirectionChange(opt.value)}
+                    onClick={() => onOverlayDirectionChange(device, opt.value)}
                     title={`Fade ${opt.value === "even" ? "evenly" : opt.css?.replace("to ", "toward the ")}`}
-                    style={optionBtn(overlayDirection === opt.value)}
+                    style={optionBtn(s.overlayDirection === opt.value)}
                   >
                     {opt.label}
                   </button>
                 ))}
               </div>
             </div>
-            {overlayDirection !== "even" && (
+            {s.overlayDirection !== "even" && (
               <div style={{ marginTop: 6 }}>
                 <PositionSlider
                   label="Center"
                   leftHint="Start"
                   rightHint="End"
-                  value={overlayCenter}
-                  onChange={onOverlayCenterChange}
+                  value={s.overlayCenter}
+                  onChange={(v) => onOverlayCenterChange(device, v)}
                 />
               </div>
             )}
@@ -926,15 +991,15 @@ function BackgroundControl({
                 <button
                   key={opt.label}
                   type="button"
-                  onClick={() => { onPosXChange(opt.x); onPosYChange(opt.y); }}
-                  style={optionBtn(posX === opt.x && posY === opt.y)}
+                  onClick={() => { onPosXChange(device, opt.x); onPosYChange(device, opt.y); }}
+                  style={optionBtn(s.posX === opt.x && s.posY === opt.y)}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
-            <PositionSlider label="Horizontal" leftHint="Left" rightHint="Right" value={posX} onChange={onPosXChange} />
-            <PositionSlider label="Vertical" leftHint="Top" rightHint="Bottom" value={posY} onChange={onPosYChange} />
+            <PositionSlider label="Horizontal" leftHint="Left" rightHint="Right" value={s.posX} onChange={(x) => onPosXChange(device, x)} />
+            <PositionSlider label="Vertical" leftHint="Top" rightHint="Bottom" value={s.posY} onChange={(y) => onPosYChange(device, y)} />
           </div>
 
           {/* Mobile image */}
