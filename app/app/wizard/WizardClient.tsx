@@ -55,7 +55,54 @@ const IMMEDIATE_SAVE_FIELDS = new Set<string>([
   "hostSignatureUrl",
   "logoUrl",
   "styleGuide",
+  "generationMode",
+  "copyDoc",
 ]);
+
+// Steps whose copy is supplied by the uploaded document in copy-doc mode. Their
+// forms are collapsed behind a notice (revealable) so the wizard stays short.
+// Testimonials (Step 8) stays editable: testimonials are social proof/media the
+// user often manages here, and the doc only overrides them when it supplies a
+// Testimonials section.
+const COPY_DOC_HIDDEN_STEPS = new Set<number>([6]);
+
+function CopyFromDocNotice({ title, onReveal }: { title: string; onReveal: () => void }) {
+  return (
+    <div
+      style={{
+        background: "#0f2818",
+        border: "1px solid #2a5a38",
+        borderRadius: 14,
+        padding: "28px 26px",
+        textAlign: "center",
+      }}
+    >
+      <div style={{ fontSize: 30, marginBottom: 10 }}>📄</div>
+      <div style={{ fontFamily: 'var(--font-barlow), sans-serif', fontWeight: 700, fontSize: 16, color: "#4ade80", marginBottom: 8 }}>
+        {title} comes from your copy document
+      </div>
+      <p style={{ fontFamily: 'var(--font-barlow), sans-serif', fontSize: 13.5, color: "#bfe8cc", lineHeight: 1.6, maxWidth: 460, margin: "0 auto 16px" }}>
+        You uploaded a copy document, so we&apos;ll use those words verbatim for this section. There&apos;s nothing to fill in here.
+      </p>
+      <button
+        onClick={onReveal}
+        style={{
+          background: "transparent",
+          border: "1px solid #2a5a38",
+          borderRadius: 10,
+          padding: "9px 16px",
+          color: "#bfe8cc",
+          fontFamily: 'var(--font-barlow), sans-serif',
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: "pointer",
+        }}
+      >
+        Show fields anyway
+      </button>
+    </div>
+  );
+}
 
 export default function WizardClient({ userEmail }: Props) {
   const searchParams = useSearchParams();
@@ -70,6 +117,7 @@ export default function WizardClient({ userEmail }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [nameModalOpen, setNameModalOpen] = useState(false);
   const [funnels, setFunnels] = useState<FunnelSummary[]>([]);
+  const [revealedCopySteps, setRevealedCopySteps] = useState<Set<number>>(new Set());
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Mirror the latest data/submission/step in refs so a pending flush (funnel
@@ -726,7 +774,16 @@ export default function WizardClient({ userEmail }: Props) {
           {stepMeta.subtitle}
         </p>
 
-        <StepComponent data={data} onChange={updateData} onNext={goNext} submissionId={submissionId} />
+        {(data.generationMode ?? "ai_copy") === "copy_doc" &&
+        COPY_DOC_HIDDEN_STEPS.has(currentStep) &&
+        !revealedCopySteps.has(currentStep) ? (
+          <CopyFromDocNotice
+            title={stepMeta.title}
+            onReveal={() => setRevealedCopySteps((prev) => new Set(prev).add(currentStep))}
+          />
+        ) : (
+          <StepComponent data={data} onChange={updateData} onNext={goNext} submissionId={submissionId} />
+        )}
       </div>
 
       {/* ── Nav buttons ─────────────────────────────────────────────────── */}

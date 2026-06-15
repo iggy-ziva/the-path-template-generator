@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useEditorOptional } from "./EditorContext";
+import { useEditSurface } from "./EditSurfaceContext";
 import { usePageContent } from "./PageContentContext";
 import { getAtPath } from "@/lib/content-path";
 import type { FunnelPageKey } from "@/lib/funnel-export/config";
@@ -227,6 +228,7 @@ export default function EditableIcon({
   siblingPaths,
 }: Props) {
   const editor = useEditorOptional();
+  const surface = useEditSurface();
   const editMode = !exportMode && Boolean(editor?.isEditMode);
   const pageContent = usePageContent(pageKey);
   const [open, setOpen] = useState(false);
@@ -253,9 +255,9 @@ export default function EditableIcon({
         setOpen(false);
       }
     }
-    document.addEventListener("mousedown", onMouseDown);
-    return () => document.removeEventListener("mousedown", onMouseDown);
-  }, [open]);
+    surface.doc.addEventListener("mousedown", onMouseDown);
+    return () => surface.doc.removeEventListener("mousedown", onMouseDown);
+  }, [open, surface]);
 
   // Close on Escape
   useEffect(() => {
@@ -263,9 +265,9 @@ export default function EditableIcon({
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
+    surface.doc.addEventListener("keydown", onKey);
+    return () => surface.doc.removeEventListener("keydown", onKey);
+  }, [open, surface]);
 
   function buildOverride(patch: Partial<IconOverride>): IconOverride | null {
     const v = "v" in patch ? patch.v : override?.v;

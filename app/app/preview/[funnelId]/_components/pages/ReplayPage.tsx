@@ -5,7 +5,7 @@ import type { ReplayContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 import EditableText from "../editor/EditableText";
-import EditableBg from "../editor/EditableBg";
+import EditableSection from "../editor/EditableSection";
 import { PageLink, PageText } from "../editor/page-editable";
 
 interface Props {
@@ -78,12 +78,18 @@ export default function ReplayPage({ content: c, wizard: w, exportMode = false }
       </div>
 
       {/* 02 — Page Header */}
-      <EditableBg
+      <EditableSection
         as="header"
         pageKey="replay"
-        path="heroBackgroundImageUrl"
-        fallbackUrl={safeUrl(w.heroImageUrls?.[1] ?? w.heroImageUrls?.[0])}
-        overlayOpacity={0.92}
+        sectionId="replayHeader"
+        theme="dark"
+        themeable={false}
+        base="plain"
+        deletable={false}
+        exportMode={exportMode}
+        backgroundPath="heroBackgroundImageUrl"
+        backgroundFallbackUrl={safeUrl(w.heroImageUrls?.[1] ?? w.heroImageUrls?.[0])}
+        bgDimensionHint="Recommended: at least 2000×1200px (landscape), under 1MB for fast loading."
         className="replay-header"
         imageClassName="on-dark"
       >
@@ -111,7 +117,7 @@ export default function ReplayPage({ content: c, wizard: w, exportMode = false }
             <PageText pageKey="replay" path="metaAccess" as="span">{metaAccess}</PageText>
           </div>
         </div>
-      </EditableBg>
+      </EditableSection>
 
       {/* 03 — Resource Downloads */}
       {resources.length > 0 && (

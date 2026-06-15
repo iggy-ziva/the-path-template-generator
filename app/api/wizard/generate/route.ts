@@ -6,6 +6,7 @@ import { getOrCreateUserId } from "@/lib/getOrCreateUserId";
 import type { WizardData } from "@/lib/wizard-types";
 import { withWizardSnapshot } from "@/lib/funnel-snapshot";
 import { computeBrandProfile, buildBrandProfilePromptBlock } from "@/lib/brand-profile";
+import { guardFunnelThemes } from "@/lib/section-theme-guard";
 
 export const maxDuration = 300;
 
@@ -229,6 +230,13 @@ export async function POST(req: NextRequest) {
 
     const pageContent = { ...eventResult, ...programmeResult };
     assertFunnelContent(pageContent);
+    // Enforce that "accent" is only used on accent-safe band sections — card/grid
+    // sections render the accent surface unreadably (translucent cards + brand-
+    // coloured details that vanish on the band).
+    const themeFixes = guardFunnelThemes(pageContent as Record<string, unknown>);
+    if (themeFixes.length > 0) {
+      console.warn(`Accent guard downgraded ${themeFixes.length} section(s): ${themeFixes.join(", ")}`);
+    }
     // Freeze wizard brand/fonts/images with this generation so previews never pick up
     // live edits from another funnel entry or a later wizard session.
     const content = withWizardSnapshot(pageContent, wizardForGen as Record<string, unknown>);
@@ -583,6 +591,7 @@ SECTION THEME RULES (heroTheme, encourageNTheme, finalVpTheme, registerTheme, al
 - "accent" = mid slate/teal brand band — ideal for warm healing brands
 - "light" = peachy/cream canvas — default for luminous warm brands on content-heavy sections
 - Vary the rhythm: don't pick "dark" for every section — alternate per BRAND PROFILE section rhythm above
+- CRITICAL — "accent" is ONLY for simple text / CTA "moment" BANDS: heroes, encourage bands, register/final CTA, price-repeat, and pull-quote credibility sections. NEVER put "accent" on a card or grid section (includes, bonuses, outcomes, vision, session, audience, how-it-works, event-overview, pricing, testimonials, host/bio, faq). Those sections use card chrome that becomes unreadable on the accent band — use "light" or "dark" for them instead. (Card/grid sections set to "accent" are auto-corrected, so don't waste them.)
 - Warm luminous brands (bright coral/gold primary): heroTheme "accent", registerTheme "accent", finalVpTheme "dark", encourage bands mix accent + light
 - Dark literary brands (very dark primary): heroTheme "dark", registerTheme "dark", encourage bands alternate dark + light
 

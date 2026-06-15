@@ -198,3 +198,20 @@ export function EditorProvider({
 
   return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;
 }
+
+export type { EditorContextValue };
+
+/**
+ * Re-provide an existing editor value into a separate React tree (e.g. the
+ * mobile preview iframe's own root), so editor state stays a single source of
+ * truth across both roots.
+ */
+export function EditorValueProvider({
+  value,
+  children,
+}: {
+  value: EditorContextValue;
+  children: ReactNode;
+}) {
+  return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;
+}

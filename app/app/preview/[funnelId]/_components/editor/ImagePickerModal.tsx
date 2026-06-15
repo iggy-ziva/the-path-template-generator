@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import type { ImageLibraryItem } from "./wizard-image-library";
 import { useEditorOptional } from "./EditorContext";
+import { useEditSurface } from "./EditSurfaceContext";
 
 interface Props {
   library: ImageLibraryItem[];
@@ -80,6 +81,7 @@ const FOOTER: CSSProperties = {
 
 export default function ImagePickerModal({ library, currentUrl, canRemove, onSelect, onClose, dimensionHint }: Props) {
   const editor = useEditorOptional();
+  const surface = useEditSurface();
   const [uploading, setUploading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [hoveredUrl, setHoveredUrl] = useState<string | null>(null);
@@ -89,9 +91,9 @@ export default function ImagePickerModal({ library, currentUrl, canRemove, onSel
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+    surface.doc.addEventListener("keydown", onKey);
+    return () => surface.doc.removeEventListener("keydown", onKey);
+  }, [onClose, surface]);
 
   async function handleUpload(file: File) {
     setUploading(true);
@@ -316,6 +318,6 @@ export default function ImagePickerModal({ library, currentUrl, canRemove, onSel
         </div>
       </div>
     </div>,
-    document.body,
+    surface.doc.body,
   );
 }

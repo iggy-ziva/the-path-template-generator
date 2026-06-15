@@ -8,6 +8,7 @@ import EditableLogo from "../editor/EditableLogo";
 import EditableIcon, { IconContainer } from "../editor/icon-library";
 import EditableText from "../editor/EditableText";
 import { useEditorOptional } from "../editor/EditorContext";
+import { useEditSurface } from "../editor/EditSurfaceContext";
 import { PageText, useEditMode } from "../editor/page-editable";
 import EditablePressLogos from "../editor/EditablePressLogos";
 import EditableSection from "../editor/EditableSection";
@@ -1427,12 +1428,13 @@ function TestimonialEditDialog({
   onAddNew: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const surface = useEditSurface();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+    surface.doc.addEventListener("keydown", onKey);
+    return () => surface.doc.removeEventListener("keydown", onKey);
+  }, [onClose, surface]);
 
   if (typeof document === "undefined") return null;
 
@@ -1585,6 +1587,6 @@ function TestimonialEditDialog({
         </div>
       </div>
     </>,
-    document.body,
+    surface.doc.body,
   );
 }

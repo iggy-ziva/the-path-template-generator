@@ -88,12 +88,11 @@ function PreviewClientInner({ funnelId, themeSlug, createdAt, updatedAt: serverU
   const [device, setDevice] = useState<DeviceKey>("largePhone");
   const activeDevice = DEVICE_PRESETS.find((d) => d.key === device) ?? DEVICE_PRESETS[1];
 
-  // Mobile preview is view-only — leaving edit mode keeps behavior consistent
-  // with the desktop-only editing gate.
+  // Mobile view is a true editing surface too — keep the current edit-mode state
+  // when switching so mobile-specific tweaks can be made live.
   const enterMobile = useCallback(() => {
-    if (editor.isEditMode) editor.setEditMode(false);
     setViewport("mobile");
-  }, [editor]);
+  }, []);
 
   // Track whether the viewport is large enough to edit. Default true so there's
   // no flash of a disabled button before the first measurement on desktop.
@@ -338,25 +337,23 @@ body {
           </select>
         )}
 
-        {viewport === "desktop" && (
-          <button
-            onClick={() => {
-              if (canEdit) editor.setEditMode(!editor.isEditMode);
-              else setShowDesktopOnly(true);
-            }}
-            title={canEdit ? undefined : "Editing is only available on laptop/desktop screens"}
-            style={{
-              padding: "6px 12px", background: editor.isEditMode ? "#D4A878" : "transparent",
-              border: "1px solid #444", borderRadius: 6,
-              color: editor.isEditMode ? "#141412" : "#ccc",
-              cursor: "pointer", fontSize: 11, fontWeight: 700, flexShrink: 0,
-            }}
-          >
-            {editor.isEditMode ? "Done editing" : "Edit"}
-          </button>
-        )}
+        <button
+          onClick={() => {
+            if (canEdit) editor.setEditMode(!editor.isEditMode);
+            else setShowDesktopOnly(true);
+          }}
+          title={canEdit ? undefined : "Editing is only available on laptop/desktop screens"}
+          style={{
+            padding: "6px 12px", background: editor.isEditMode ? "#D4A878" : "transparent",
+            border: "1px solid #444", borderRadius: 6,
+            color: editor.isEditMode ? "#141412" : "#ccc",
+            cursor: "pointer", fontSize: 11, fontWeight: 700, flexShrink: 0,
+          }}
+        >
+          {editor.isEditMode ? "Done editing" : "Edit"}
+        </button>
 
-        {viewport === "desktop" && editor.isEditMode && (
+        {editor.isEditMode && (
           <>
             <button
               onClick={() => editor.discard()}
@@ -411,6 +408,8 @@ body {
             fontImport={fontImport}
             overrideCSS={PREVIEW_OVERRIDE_CSS}
             brandVars={brandVars}
+            editable={editor.isEditMode}
+            editorValue={editor}
             onInternalLink={(href) => {
               const target = FUNNEL_LINKS[href];
               if (target) switchPage(target);

@@ -3,6 +3,7 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useEditorOptional } from "./EditorContext";
+import { useEditSurface } from "./EditSurfaceContext";
 import { usePageContent } from "./PageContentContext";
 import { getAtPath } from "@/lib/content-path";
 import type { FunnelPageKey } from "@/lib/funnel-export/config";
@@ -51,6 +52,7 @@ export default function EditableText({
   html = false,
 }: Props) {
   const editor = useEditorOptional();
+  const surface = useEditSurface();
   const editId = useId();
   const [editing, setEditing] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -70,16 +72,16 @@ export default function EditableText({
 
   useEffect(() => {
     if (!editing) return;
-    const el = document.getElementById(editId);
+    const el = surface.doc.getElementById(editId);
     if (!el) return;
     el.focus();
-    const range = document.createRange();
+    const range = surface.doc.createRange();
     range.selectNodeContents(el);
     range.collapse(false);
-    const sel = window.getSelection();
+    const sel = surface.win.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(range);
-  }, [editing, editId]);
+  }, [editing, editId, surface]);
 
   // Non-editable render (view mode + export). Overrides still apply here.
   if (!isEditMode || !editor) {
@@ -187,6 +189,7 @@ function StyleButtonPortal({
   onOpen: () => void;
   onHoverChange: (v: boolean) => void;
 }) {
+  const surface = useEditSurface();
   if (!el) return null;
   const rect = el.getBoundingClientRect();
   return createPortal(
@@ -221,7 +224,7 @@ function StyleButtonPortal({
     >
       Aa
     </button>,
-    document.body,
+    surface.doc.body,
   );
 }
 
@@ -244,6 +247,7 @@ function TextStylePopover({
 }) {
   // Prefer the user's actual wizard brand colours; fall back to themed tokens.
   const swatches = colors.length > 0 ? colors : COLOR_OPTIONS;
+  const surface = useEditSurface();
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -252,16 +256,16 @@ function TextStylePopover({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
+    surface.doc.addEventListener("mousedown", onDown);
+    surface.doc.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
+      surface.doc.removeEventListener("mousedown", onDown);
+      surface.doc.removeEventListener("keydown", onKey);
     };
-  }, [onClose]);
+  }, [onClose, surface]);
 
-  const top = Math.min(anchor.top + 6, window.innerHeight - 320);
-  const left = Math.min(anchor.left, window.innerWidth - 250);
+  const top = Math.min(anchor.top + 6, surface.win.innerHeight - 320);
+  const left = Math.min(anchor.left, surface.win.innerWidth - 250);
 
   return createPortal(
     <div
@@ -395,6 +399,6 @@ function TextStylePopover({
         </button>
       </div>
     </div>,
-    document.body,
+    surface.doc.body,
   );
 }

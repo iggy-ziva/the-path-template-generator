@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useEditorOptional } from "./EditorContext";
+import { useEditSurface } from "./EditSurfaceContext";
 import { usePageContent } from "./PageContentContext";
 import { getAtPath } from "@/lib/content-path";
 import ImagePickerModal from "./ImagePickerModal";
@@ -171,7 +172,18 @@ interface Props {
   deletable?: boolean;
   /** When true, skip the edit-mode `position: relative` inline override (use for fixed/sticky elements whose CSS position must not be overridden). */
   noPositionOverride?: boolean;
-  as?: "section" | "div";
+  /**
+   * When false, the section keeps its own bespoke background CSS: no theme
+   * utility classes (dark-bg/accent-bg/light-bg) are added, no themed inline
+   * background is applied, and the Dark/Accent/Light toggle is hidden. The rich
+   * background-image controls (swap/remove/overlay/position/mobile) and padding
+   * handles still work. Used by page headers / thank-you heroes that have their
+   * own decorative backgrounds (.ty-hero, .replay-header). Defaults to true.
+   */
+  themeable?: boolean;
+  /** Class appended only when a background image is actually shown (e.g. "on-dark"). */
+  imageClassName?: string;
+  as?: keyof React.JSX.IntrinsicElements;
   id?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -199,6 +211,8 @@ export default function EditableSection({
   controlsTopOffset = 8,
   deletable = true,
   noPositionOverride = false,
+  themeable = true,
+  imageClassName,
   as = "section",
   id,
   className = "",
@@ -274,10 +288,14 @@ export default function EditableSection({
   const showsBgImage = Boolean(bgUrl) && !styleHasOwnBg;
 
   const isStructural = base !== "plain";
-  const composed = (
-    (isStructural
+  const baseClasses = !themeable
+    ? className
+    : isStructural
       ? `${structuralSectionClass(base as "hero" | "final-vp" | "encourage", theme)} ${className}`
-      : `${sectionThemeClass(theme)} ${className}`)
+      : `${sectionThemeClass(theme)} ${className}`;
+  const composed = (
+    baseClasses
+      + (showsBgImage && imageClassName ? ` ${imageClassName}` : "")
       + (showsBgImage ? " has-bg-image" : "")
       + (padClass ? ` ${padClass}` : "")
   ).trim();
@@ -293,9 +311,10 @@ export default function EditableSection({
   if (showsBgImage) {
     resolvedStyle.position = resolvedStyle.position ?? "relative";
     resolvedStyle.isolation = "isolate";
-  } else if (!isStructural && !styleHasOwnBg && !bgViaClass) {
+  } else if (!isStructural && !styleHasOwnBg && !bgViaClass && themeable) {
     // Plain section, no image → force the themed background inline so it always
-    // wins over page-specific CSS background rules.
+    // wins over page-specific CSS background rules. Skipped for bespoke
+    // (themeable=false) sections that paint their own background in CSS.
     resolvedStyle.background = themeBackground(theme);
   }
   // Ensure the absolutely-positioned edit controls/handles anchor to this section.
@@ -391,10 +410,12 @@ export default function EditableSection({
       }}
       onClick={(e) => e.stopPropagation()}
     >
-      <SectionThemeControl
-        current={theme}
-        onSelect={(t) => editor.updateField(pageKey, `sectionThemes.${sectionId}`, t)}
-      />
+      {themeable && (
+        <SectionThemeControl
+          current={theme}
+          onSelect={(t) => editor.updateField(pageKey, `sectionThemes.${sectionId}`, t)}
+        />
+      )}
       {showBgControl && (
         <BackgroundControl
           hasImage={Boolean(bgUrl) || bgNoImage}
@@ -822,6 +843,7 @@ function BackgroundControl({
   onPosXChange: (device: BgDevice, x: number) => void;
   onPosYChange: (device: BgDevice, y: number) => void;
 }) {
+  const surface = useEditSurface();
   const [device, setDevice] = useState<BgDevice>("desktop");
   const s = device === "mobile" ? mobile : desktop;
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -836,12 +858,12 @@ function BackgroundControl({
       const rect = dotsRef.current.getBoundingClientRect();
       // Clamp into the viewport so the panel is never positioned off-screen
       // (e.g. when the section is scrolled so its controls sit above the fold).
-      const top = Math.min(Math.max(rect.bottom + 6, 8), window.innerHeight - 260);
-      const right = Math.min(Math.max(window.innerWidth - rect.right, 8), window.innerWidth - 300);
+      const top = Math.min(Math.max(rect.bottom + 6, 8), surface.win.innerHeight - 260);
+      const right = Math.min(Math.max(surface.win.innerWidth - rect.right, 8), surface.win.innerWidth - 300);
       setPanelPos({ top, right });
     }
     setSettingsOpen(true);
-  }, []);
+  }, [surface]);
 
   useEffect(() => {
     if (!settingsOpen) return;
@@ -851,9 +873,9 @@ function BackgroundControl({
         dotsRef.current && !dotsRef.current.contains(e.target as Node)
       ) setSettingsOpen(false);
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [settingsOpen]);
+    surface.doc.addEventListener("mousedown", handler);
+    return () => surface.doc.removeEventListener("mousedown", handler);
+  }, [settingsOpen, surface]);
 
   const btn: React.CSSProperties = {
     padding: "3px 9px",
@@ -1037,7 +1059,7 @@ function BackgroundControl({
             </div>
           </div>
         </div>,
-        document.body,
+        surface.doc.body,
       )
     : null;
 

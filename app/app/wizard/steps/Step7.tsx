@@ -1,12 +1,17 @@
 "use client";
 import type { WizardData } from "@/lib/wizard-types";
 import { Field, Textarea, Section, MultipleFileUpload, UrlListInput } from "../WizardField";
+import CopyDocPanel from "./CopyDocPanel";
+import { isCopyDocEngineEnabledClient } from "@/lib/feature-flags";
 
-interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; }
+interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; onNext: () => void; submissionId?: string | null; }
 
-export default function Step7({ data, onChange }: Props) {
+export default function Step7({ data, onChange, submissionId }: Props) {
+  const copyDocEnabled = isCopyDocEngineEnabledClient();
   return (
     <div>
+      {copyDocEnabled && <CopyDocPanel data={data} onChange={onChange} submissionId={submissionId} />}
+
       <div style={{ background: "#1a1917", border: "1px solid #D4A87840", borderRadius: "12px", padding: "20px", marginBottom: "32px" }}>
         <p style={{ fontSize: "14px", lineHeight: 1.65, color: "#aaa", margin: 0 }}>
           <strong style={{ color: "#D4A878" }}>How the AI uses this material:</strong> Claude will scrape any URLs you provide, read any files you upload, and combine them with your answers in earlier steps to extract your authentic voice, identify the language your audience responds to, and write all eight funnel pages in a tone that sounds genuinely like you — not a generic template.

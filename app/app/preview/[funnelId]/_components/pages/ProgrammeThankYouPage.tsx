@@ -4,7 +4,7 @@ import type { ProgrammeThankYouContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 import EditableText from "../editor/EditableText";
-import EditableBg from "../editor/EditableBg";
+import EditableSection from "../editor/EditableSection";
 import { PageText } from "../editor/page-editable";
 
 interface Props {
@@ -22,11 +22,17 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w, exportMod
   return (
     <>
       {/* ── 01 CONFIRMATION HERO ── */}
-      <EditableBg
+      <EditableSection
         pageKey="programmeThankYou"
-        path="backgroundImageUrl"
-        fallbackUrl={safeUrl(w.heroImageUrls?.[0])}
-        overlayOpacity={0.88}
+        sectionId="progTyHero"
+        theme="dark"
+        themeable={false}
+        base="plain"
+        deletable={false}
+        exportMode={exportMode}
+        backgroundPath="backgroundImageUrl"
+        backgroundFallbackUrl={safeUrl(w.heroImageUrls?.[0])}
+        bgDimensionHint="Recommended: at least 2000×1200px (landscape), under 1MB for fast loading."
         className="ty-hero on-dark"
       >
         <div className="inner">
@@ -105,7 +111,7 @@ export default function ProgrammeThankYouPage({ content: c, wizard: w, exportMod
           )}
 
         </div>
-      </EditableBg>
+      </EditableSection>
 
       {/* ── 02 WHAT HAPPENS NEXT ── */}
       {((c.steps ?? []).length > 0 || c.nextHeadline) && (

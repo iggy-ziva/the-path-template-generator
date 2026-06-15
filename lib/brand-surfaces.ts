@@ -31,6 +31,48 @@ export function hexLuminance(hex: string): number {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
+/** WCAG relative luminance (gamma-corrected). */
+function relativeLuminance(hex: string): number {
+  const clean = hex.replace("#", "");
+  if (clean.length !== 6) return 0.5;
+  const ch = [0, 2, 4].map((i) => {
+    const c = parseInt(clean.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+}
+
+/** WCAG contrast ratio between two hex colors (1–21). */
+export function contrastRatio(a: string, b: string): number {
+  const la = relativeLuminance(a);
+  const lb = relativeLuminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+/**
+ * Darken `base` (starting from `startRatio`) until it has at least `target`
+ * contrast against `against`. Used so themed surfaces that carry a fixed light
+ * text color stay legible even for light/warm brand colors. Returns the original
+ * darkened color when it already passes, so dark brands are unchanged.
+ */
+function darkenForContrast(
+  base: string,
+  against: string,
+  target: number,
+  startRatio: number,
+): string {
+  let ratio = startRatio;
+  let out = darkenHex(base, ratio);
+  while (contrastRatio(out, against) < target && ratio < 0.92) {
+    ratio += 0.04;
+    out = darkenHex(base, ratio);
+  }
+  return out;
+}
+
+/** The fixed light text color used on dark/accent surfaces (matches funnel-style.css). */
+const ON_DARK_TEXT = "#F5F1EA";
+
 export function hexHue(hex: string): number {
   const clean = hex.replace("#", "");
   if (clean.length !== 6) return 0;
@@ -103,7 +145,12 @@ export function computeBrandSurfaces(input: BrandSurfaceInput): BrandSurfaces {
     surfaceSunken:  warmBrand ? lightenHex(primary, 0.87) : lightenHex(secondary, 0.89),
     surfaceRaised:  warmBrand ? lightenHex(primary, 0.97) : lightenHex(secondary, 0.98),
     surfaceInverse: darkenHex(secondary, inverseDarkenRatio(primary)),
-    surfaceAccent:  darkenHex(secondary, 0.28),
+    // Accent band carries the fixed light text color, so guarantee it is deep
+    // enough for that text to stay legible (≥4.5:1). Warm/light secondaries
+    // (e.g. gold) would otherwise yield a mid-tone band where the quote text and
+    // dimmed attribution wash out. Dark secondaries already pass and are
+    // unchanged, preserving the existing look.
+    surfaceAccent:  darkenForContrast(secondary, ON_DARK_TEXT, 4.5, 0.28),
     textPrimary:    darkenHex(secondary, 0.80),
     textSecondary:  darkenHex(secondary, 0.60),
     textTertiary:   darkenHex(secondary, 0.42),

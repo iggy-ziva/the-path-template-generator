@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import type { WizardData } from "@/lib/wizard-types";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { computeBrandProfile } from "@/lib/brand-profile";
+import { missingRequiredForMode } from "@/lib/wizard-completeness";
 import { THEME_LIST_FOR_WIZARD } from "../wizard-constants";
 
 interface ThemeSuggestion {
@@ -26,38 +27,47 @@ const Z = {
   text: "#f5f1ea",
 };
 
-/** Returns a UI-visible accent colour for a swatch.
- *  Very dark swatches (#000–#333 range) would be invisible on the dark
- *  wizard UI, so we lighten them to a recognisable tint instead. */
+/** Returns a UI-visible accent colour for a swatch used as TEXT/border on the
+ *  near-black wizard surface. Dark swatches are lightened toward white until
+ *  they're legible (fixes low-contrast labels like the Sacred theme's deep
+ *  purple). The actual swatch dot still renders the true colour. */
 function visibleSwatch(hex: string): string {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return hex;
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  if (luminance < 0.15) {
-    // Mix with white at ~60% to produce a readable tint
-    const mix = (c: number) => Math.round(c + (255 - c) * 0.6);
+  if (luminance < 0.45) {
+    // Lighten more aggressively the darker the colour is, so the label keeps a
+    // comfortable contrast ratio against the ~#0f0e0c background.
+    const amount = luminance < 0.2 ? 0.7 : luminance < 0.32 ? 0.6 : 0.5;
+    const mix = (c: number) => Math.round(c + (255 - c) * amount);
     const toHex = (n: number) => n.toString(16).padStart(2, "0");
     return `#${toHex(mix(r))}${toHex(mix(g))}${toHex(mix(b))}`;
   }
   return hex;
 }
 
-function BrandProfileCard({ profile }: { profile: BrandProfile }) {
-  const colors = [
-    profile.brandColors.primary,
-    profile.brandColors.secondary,
-    profile.brandColors.tertiary,
-  ].filter(Boolean) as string[];
+/** Labels for the full brand palette, in display order. */
+const BRAND_COLOR_DEFS: { key: string; label: string }[] = [
+  { key: "primary", label: "Primary" },
+  { key: "secondary", label: "Secondary" },
+  { key: "tertiary", label: "Tertiary" },
+  { key: "accent", label: "Accent" },
+  { key: "textDark", label: "Text dark" },
+  { key: "textLight", label: "Text light" },
+];
 
+function BrandProfileCard({ profile, colors }: { profile: BrandProfile; colors: { label: string; value: string }[] }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {colors.length > 0 && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
           {colors.map((c) => (
-            <div key={c} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 22, height: 22, borderRadius: 6, background: c, border: `1px solid ${Z.border}`, flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: Z.muted, fontFamily: "monospace" }}>{c}</span>
+            <div key={c.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              <span style={{ width: 28, height: 28, borderRadius: 6, background: c.value, border: `1px solid ${Z.border}`, flexShrink: 0 }} />
+              <span style={{ fontSize: 10, fontWeight: 600, color: Z.text }}>{c.label}</span>
+              <span style={{ fontSize: 9, color: Z.muted, fontFamily: "monospace" }}>{c.value}</span>
             </div>
           ))}
         </div>
@@ -174,18 +184,6 @@ function ReviewRow({ label, value, missing }: { label: string; value?: string | 
   );
 }
 
-const REQUIRED_FIELDS: Array<{ key: keyof WizardData; label: string }> = [
-  { key: "hostName", label: "Your name" },
-  { key: "hostBio", label: "Your bio" },
-  { key: "contactEmail", label: "Contact email" },
-  { key: "eventName", label: "Event name" },
-  { key: "eventDate", label: "Event date" },
-  { key: "eventTime", label: "Event time" },
-  { key: "eventTimezone", label: "Timezone" },
-  { key: "programName", label: "Programme name" },
-  { key: "transformationPromise", label: "Transformation promise" },
-];
-
 // Generation steps shown during the animated progress bar
 const GEN_STEPS = [
   { label: "Reading your wizard inputs…",                 weight: 4  },
@@ -224,6 +222,8 @@ export default function Step11({ data, onChange, submissionId }: Props) {
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [themeLoading, setThemeLoading]       = useState(false);
   const [showOverride, setShowOverride]       = useState(false);
+  const [previousFunnelId, setPreviousFunnelId] = useState<string | null>(null);
+  const [preserveEdits, setPreserveEdits]     = useState(true);
   const progressRef = useRef(0);
   const startRef    = useRef(0);
   const rafRef      = useRef<number | null>(null);
@@ -232,10 +232,23 @@ export default function Step11({ data, onChange, submissionId }: Props) {
   const localProfile = useMemo(() => computeBrandProfile(data), [data]);
   const displayProfile = brandProfile ?? data.brandProfile ?? localProfile;
 
-  const missing = REQUIRED_FIELDS.filter((f) => {
-    const v = data[f.key];
-    return v === undefined || v === null || v === "";
-  });
+  // Full brand palette (up to 6) — prefer the detected style guide, fall back
+  // to the 3 colours carried on the brand profile.
+  const brandColorSwatches = useMemo(() => {
+    const sg = data.styleGuide?.brandColors as Record<string, string | undefined> | undefined;
+    const fallback: Record<string, string | undefined> = {
+      primary: displayProfile.brandColors.primary,
+      secondary: displayProfile.brandColors.secondary,
+      tertiary: displayProfile.brandColors.tertiary,
+    };
+    const src = sg ?? fallback;
+    return BRAND_COLOR_DEFS
+      .map((c) => ({ label: c.label, value: src[c.key] }))
+      .filter((c): c is { label: string; value: string } => !!c.value);
+  }, [data.styleGuide, displayProfile]);
+
+  const copyDocMode = (data.generationMode ?? "ai_copy") === "copy_doc";
+  const missing = missingRequiredForMode(data);
 
   const activeTheme = THEME_LIST_FOR_WIZARD.find((t) => t.slug === data.referenceTheme) ?? themeSuggestion;
 
@@ -300,6 +313,20 @@ export default function Step11({ data, onChange, submissionId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // In copy-doc mode, find any prior generation so we can offer to preserve
+  // its layout/theme/image edits when regenerating.
+  useEffect(() => {
+    if (!copyDocMode || !submissionId) return;
+    fetch("/api/wizard/funnels")
+      .then((r) => r.json())
+      .then(({ funnels }) => {
+        const match = Array.isArray(funnels) ? funnels.find((f: { id: string }) => f.id === submissionId) : null;
+        if (match?.generated_funnel_id) setPreviousFunnelId(match.generated_funnel_id);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [copyDocMode, submissionId]);
+
   // Animate progress up to ~95% while waiting for the real API response
   useEffect(() => {
     if (!generating) return;
@@ -339,11 +366,22 @@ export default function Step11({ data, onChange, submissionId }: Props) {
     setTimeLeft(ESTIMATED_SECONDS);
     setError("");
     try {
-      const res = await fetch("/api/wizard/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wizardData: data, submissionId }),
-      });
+      const res = copyDocMode
+        ? await fetch("/api/wizard/generate-from-doc", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              wizardData: data,
+              submissionId,
+              copyDocumentId: data.copyDoc?.documentId,
+              previousFunnelId: preserveEdits ? previousFunnelId ?? undefined : undefined,
+            }),
+          })
+        : await fetch("/api/wizard/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ wizardData: data, submissionId }),
+          });
       if (!res.ok) {
         let message = "Generation failed — please try again";
         try {
@@ -475,7 +513,7 @@ export default function Step11({ data, onChange, submissionId }: Props) {
           </div>
         ) : (
           <>
-            <BrandProfileCard profile={displayProfile} />
+            <BrandProfileCard profile={displayProfile} colors={brandColorSwatches} />
 
             {activeTheme && (
               <div style={{ marginTop: 20, paddingTop: 20, borderTop: `1px solid ${Z.border}` }}>
@@ -497,13 +535,34 @@ export default function Step11({ data, onChange, submissionId }: Props) {
         )}
       </div>
 
+      {copyDocMode && (
+        <div style={{ background: "#0f2818", border: "1px solid #2a5a38", borderRadius: "12px", padding: "16px 20px", marginBottom: "24px", fontSize: 13, color: "#bfe8cc", lineHeight: 1.6 }}>
+          <strong style={{ color: "#4ade80" }}>Copy-document mode.</strong> Your landing-page copy will be placed verbatim from{" "}
+          <strong>{data.copyDoc?.fileName ?? "your uploaded document"}</strong>. The AI only handles layout, theme, image placement, and design — it will not rewrite your words.
+          {previousFunnelId && (
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 12, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={preserveEdits}
+                onChange={(e) => setPreserveEdits(e.target.checked)}
+                style={{ marginTop: 2 }}
+              />
+              <span style={{ fontSize: 12.5, color: "#bfe8cc", lineHeight: 1.5 }}>
+                Keep my previous layout edits (section themes, images, logo & icons). Copy is always replaced by the document.
+                {!preserveEdits && <strong style={{ color: "#f59e0b", display: "block", marginTop: 2 }}>Rebuilding fresh will discard those layout edits.</strong>}
+              </span>
+            </label>
+          )}
+        </div>
+      )}
+
       {/* WHAT CLAUDE WILL WRITE */}
       <div style={{ background: "#1a1917", borderRadius: "12px", padding: "24px", marginBottom: "32px" }}>
         <h3 style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#D4A878", marginBottom: "16px" }}>
-          Claude will generate
+          {copyDocMode ? "We will build" : "Claude will generate"}
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px" }}>
-          {[
+          {(copyDocMode ? ["Event landing page"] : [
             "Event landing page",
             "Event checkout",
             "Post-checkout upsell",
@@ -512,7 +571,7 @@ export default function Step11({ data, onChange, submissionId }: Props) {
             "Programme landing page",
             "Programme checkout",
             "Programme thank-you",
-          ].map((page, i) => (
+          ]).map((page, i) => (
             <div key={page} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: "#0f0e0c", borderRadius: "8px" }}>
               <span style={{ color: "#D4A878", fontWeight: 700, fontSize: "12px", flexShrink: 0 }}>0{i + 1}</span>
               <span style={{ fontSize: "13px", color: "#c8c0b4" }}>{page}</span>
@@ -615,7 +674,7 @@ export default function Step11({ data, onChange, submissionId }: Props) {
             transition: "all 0.2s",
           }}
         >
-          ✨&nbsp;&nbsp;Generate my complete funnel →
+          ✨&nbsp;&nbsp;{copyDocMode ? "Build my funnel from the document →" : "Generate my complete funnel →"}
         </button>
       )}
 

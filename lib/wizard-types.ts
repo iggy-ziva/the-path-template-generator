@@ -1,4 +1,16 @@
 import type { BrandProfile } from "@/lib/brand-profile";
+import type { CoverageReport } from "@/lib/copydoc/validate";
+
+/** How a funnel's page copy is produced. */
+export type GenerationMode = "ai_copy" | "copy_doc";
+
+/** Client-side reference to an uploaded + parsed copy document. */
+export interface CopyDocRef {
+  documentId: string;
+  fileName?: string;
+  version: number;
+  report: CoverageReport;
+}
 
 export interface WizardData {
   // Step 1 — About You
@@ -123,6 +135,11 @@ export interface WizardData {
     customFonts: { detected: string; isLikelyPaid: boolean; googleAlternatives: string[] }[];
     uploadedFontUrls?: string[];
   };
+
+  // Generation mode — "ai_copy" (default) writes copy with Claude; "copy_doc"
+  // uses an uploaded, parsed copy document as the source of truth for page copy.
+  generationMode?: GenerationMode;
+  copyDoc?: CopyDocRef;
 
   // Meta
   completedSteps?: number[];

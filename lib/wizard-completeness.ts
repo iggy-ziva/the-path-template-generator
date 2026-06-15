@@ -122,6 +122,57 @@ export const CHECKS: CompletenessCheck[] = [
 
 const TOTAL_WEIGHT = CHECKS.reduce((sum, c) => sum + c.weight, 0);
 
+// ─────────────────────────────────────────────────────────────────────────
+// Copy-document mode
+//
+// In `copy_doc` mode the landing-page copy comes from an uploaded document, so
+// the copy-authoring steps (6 Curriculum, 8 Testimonials, 10 Tone) no longer
+// gate generation. Instead we require the core facts the layout engine still
+// needs (host, contact, event date/time) plus a successfully parsed document
+// whose required sections are all present.
+// ─────────────────────────────────────────────────────────────────────────
+
+const COPY_AUTHORING_STEPS = new Set([6, 8, 10]);
+
+/** Required wizard facts that the copy-doc layout engine cannot derive. */
+const COPY_DOC_REQUIRED_CHECK_IDS = new Set([
+  "hostName",
+  "contactEmail",
+  "eventName",
+  "eventDate",
+  "eventTime",
+  "eventTimezone",
+]);
+
+function isCopyDocMode(d: WizardData): boolean {
+  return (d.generationMode ?? "ai_copy") === "copy_doc";
+}
+
+function copyDocReady(d: WizardData): boolean {
+  return !!d.copyDoc?.report?.ok;
+}
+
+function copyDocCoverageFraction(d: WizardData): number {
+  const counts = d.copyDoc?.report?.counts;
+  if (!counts || !counts.fieldsTotal) return 0;
+  return counts.fieldsDetected / counts.fieldsTotal;
+}
+
+/** Required facts (non-copy) missing in copy-doc mode. */
+function copyDocMissingFacts(d: WizardData): CompletenessCheck[] {
+  return CHECKS.filter((c) => COPY_DOC_REQUIRED_CHECK_IDS.has(c.id) && !c.test(d));
+}
+
+/** Overall completeness for copy-doc mode: facts blended with doc coverage. */
+function copyDocCompleteness(d: WizardData): number {
+  const factChecks = CHECKS.filter((c) => !COPY_AUTHORING_STEPS.has(c.step));
+  const factTotal = factChecks.reduce((s, c) => s + c.weight, 0);
+  const factEarned = factChecks.reduce((s, c) => s + (c.test(d) ? c.weight : 0), 0);
+  const factPct = factTotal === 0 ? 100 : (factEarned / factTotal) * 100;
+  const docPct = copyDocReady(d) ? 100 : copyDocCoverageFraction(d) * 100;
+  return Math.round(factPct * 0.5 + docPct * 0.5);
+}
+
 /**
  * Steps that are always excluded from the completeness denominator and
  * required-field checks. Steps 4 (Upsell) and 5 (Programme) are optional
@@ -140,6 +191,7 @@ function skippedStepIds(d: WizardData): Set<number> {
 
 /** Overall wizard completeness 0–100 (rounded). Skipped sections are excluded from the denominator. */
 export function overallCompleteness(d: WizardData): number {
+  if (isCopyDocMode(d)) return copyDocCompleteness(d);
   const skipped = skippedStepIds(d);
   const applicable = CHECKS.filter(c => !skipped.has(c.step));
   const total  = applicable.reduce((sum, c) => sum + c.weight, 0);
@@ -169,7 +221,23 @@ export function missingAll(d: WizardData): CompletenessCheck[] {
   return CHECKS.filter(c => !skipped.has(c.step) && !c.test(d));
 }
 
-/** True when generation is permitted: overall ≥ threshold AND every required field filled. */
+/** True when generation is permitted. */
 export function canGenerate(d: WizardData): boolean {
+  if (isCopyDocMode(d)) {
+    return copyDocReady(d) && copyDocMissingFacts(d).length === 0;
+  }
   return overallCompleteness(d) >= GENERATE_THRESHOLD && missingRequired(d).length === 0;
+}
+
+/** Mode-aware required-missing list used by the Review step. */
+export function missingRequiredForMode(d: WizardData): { label: string }[] {
+  if (isCopyDocMode(d)) {
+    const facts = copyDocMissingFacts(d).map((c) => ({ label: c.label }));
+    if (!d.copyDoc) facts.push({ label: "A parsed copy document" });
+    else if (!copyDocReady(d)) {
+      for (const m of d.copyDoc.report.requiredMissing) facts.push({ label: `Copy doc: ${m}` });
+    }
+    return facts;
+  }
+  return missingRequired(d);
 }
