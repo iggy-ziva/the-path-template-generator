@@ -775,32 +775,69 @@ export function MultipleFileUpload({
     <div>
       {currentUrls.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 10, marginBottom: 14 }}>
-          {currentUrls.map((url) => (
-            <div
-              key={url}
-              style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: `1.5px solid ${Z.creamDeep}`, background: Z.creamMid }}
-            >
-              <img
-                src={url}
-                alt=""
-                style={{ width: "100%", aspectRatio: "1", objectFit: "cover", display: "block" }}
-              />
-              <button
-                onClick={() => remove(url)}
-                title="Remove image"
-                style={{
-                  position: "absolute", top: 4, right: 4,
-                  background: "rgba(0,0,0,0.55)", color: "#fff",
-                  border: "none", borderRadius: "50%",
-                  width: 22, height: 22, fontSize: 14, lineHeight: "22px",
-                  textAlign: "center", cursor: "pointer", padding: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
+          {currentUrls.map((url) => {
+            // Files here can be images OR documents (PDF/Word/text). Only render
+            // an <img> for actual images — everything else gets a document tile,
+            // otherwise the browser shows a broken-image icon for, e.g., a PDF.
+            const ext = (url.split(/[?#]/)[0].split(".").pop() ?? "").toLowerCase();
+            const isImage = ["jpg", "jpeg", "png", "webp", "gif", "svg", "avif"].includes(ext);
+            return (
+              <div
+                key={url}
+                style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: `1.5px solid ${Z.creamDeep}`, background: Z.creamMid }}
               >
-                ×
-              </button>
-            </div>
-          ))}
+                {isImage ? (
+                  <img
+                    src={url}
+                    alt=""
+                    style={{ width: "100%", aspectRatio: "1", objectFit: "cover", display: "block" }}
+                  />
+                ) : (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Open file"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      width: "100%",
+                      aspectRatio: "1",
+                      textDecoration: "none",
+                      color: Z.muted,
+                      padding: 8,
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", color: Z.charcoal, textTransform: "uppercase" }}>
+                      {ext || "file"}
+                    </span>
+                  </a>
+                )}
+                <button
+                  onClick={() => remove(url)}
+                  title="Remove file"
+                  style={{
+                    position: "absolute", top: 4, right: 4,
+                    background: "rgba(0,0,0,0.55)", color: "#fff",
+                    border: "none", borderRadius: "50%",
+                    width: 22, height: 22, fontSize: 14, lineHeight: "22px",
+                    textAlign: "center", cursor: "pointer", padding: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
       <label

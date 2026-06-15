@@ -123,7 +123,16 @@ export async function POST(req: NextRequest) {
         .eq("user_id", userId);
     }
 
-    return NextResponse.json({ copyDocumentId: doc.id, version: doc.version, report: parsed.report });
+    return NextResponse.json({
+      copyDocumentId: doc.id,
+      version: doc.version,
+      report: parsed.report,
+      // Mapped page copy — lets the wizard pre-fill its own input fields so the
+      // user reviews/edits rather than retypes. Copy is never used to overwrite
+      // values the user already entered (the client guards that).
+      content: parsed.content,
+      pageKey,
+    });
   } catch (err) {
     console.error("copy-doc error:", err);
     return NextResponse.json({ error: "Failed to process document" }, { status: 500 });

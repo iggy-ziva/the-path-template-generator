@@ -90,7 +90,7 @@ export interface WizardData {
   curriculumWeeks?: { week: string; title: string; description: string }[];
   bonuses?: { title: string; description: string; value: string }[];
 
-  // Step 6 — Your Story
+  // Step 1 — Your Story (merged into the About You tab)
   existingMaterialUrls?: string[];
   existingFileUrls?: string[];
   methodologyDescription?: string;
@@ -151,17 +151,16 @@ export interface WizardData {
 }
 
 export const WIZARD_STEPS = [
-  { id: 1,  title: "About You",           subtitle: "Tell us about the host/facilitator" },
+  { id: 1,  title: "About You",           subtitle: "Choose how we write your copy, then tell us about the host" },
   { id: 2,  title: "Your Brand",           subtitle: "Business name, logo and contact details" },
   { id: 3,  title: "Live Event",           subtitle: "Date, time, pricing and platform" },
   { id: 4,  title: "Upsell Offer",         subtitle: "The one-time product offered to event registrants" },
   { id: 5,  title: "Programme",            subtitle: "Your high-ticket upsell offer" },
   { id: 6,  title: "Curriculum & Content", subtitle: "What's included and the transformation" },
-  { id: 7,  title: "Your Story",           subtitle: "Existing materials for AI to analyse" },
-  { id: 8,  title: "Testimonials",         subtitle: "Social proof for all funnel pages" },
-  { id: 9,  title: "Images",               subtitle: "Hero photos and lifestyle imagery" },
-  { id: 10, title: "Tone & Voice",         subtitle: "How you want your copy to sound" },
-  { id: 11, title: "Review & Generate",    subtitle: "Confirm everything and launch AI generation" },
+  { id: 7,  title: "Testimonials",         subtitle: "Social proof for all funnel pages" },
+  { id: 8,  title: "Images",               subtitle: "Hero photos and lifestyle imagery" },
+  { id: 9,  title: "Tone & Voice",         subtitle: "How you want your copy to sound" },
+  { id: 10, title: "Review & Generate",    subtitle: "Confirm everything and launch AI generation" },
 ] as const;
 
 export type WizardStep = typeof WIZARD_STEPS[number]["id"];

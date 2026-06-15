@@ -2,6 +2,20 @@
 import { useState } from "react";
 import type { WizardData, GenerationMode } from "@/lib/wizard-types";
 import type { CoverageReport } from "@/lib/copydoc/validate";
+import type { CopyDocPageKey } from "@/lib/copydoc/copydoc-schema";
+import { deriveWizardFieldsFromContent, pickEmptyWizardFields } from "@/lib/copydoc/derive-wizard";
+
+/** Human labels for fields we may pre-fill, for the "pre-filled" confirmation. */
+const PREFILL_LABELS: Partial<Record<keyof WizardData, string>> = {
+  hostBio: "Bio",
+  hostTagline: "Tagline",
+  hostName: "Host name",
+  testimonials: "Testimonials",
+  audienceDescription: "Target audience",
+  transformationPromise: "Transformation promise",
+  methodologyDescription: "Transformation in your own words",
+  uniqueApproach: "Unique approach",
+};
 
 interface Props {
   data: WizardData;
@@ -148,6 +162,7 @@ export default function CopyDocPanel({ data, onChange, submissionId }: Props) {
   const mode: GenerationMode = data.generationMode ?? "ai_copy";
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [prefilled, setPrefilled] = useState<string[]>([]);
 
   function setMode(next: GenerationMode) {
     onChange({ generationMode: next });
@@ -181,7 +196,17 @@ export default function CopyDocPanel({ data, onChange, submissionId }: Props) {
       const parseJson = await parseRes.json();
       if (!parseRes.ok) throw new Error(parseJson.error ?? "Could not parse the document");
 
+      // Pre-fill wizard input fields from the parsed copy, without overwriting
+      // anything the user has already entered.
+      const pageKey: CopyDocPageKey = parseJson.pageKey === "programmeLanding" ? "programmeLanding" : "eventLanding";
+      const derived = deriveWizardFieldsFromContent(parseJson.content, pageKey);
+      const toFill = pickEmptyWizardFields(derived, data);
+      const filledLabels = Object.keys(toFill)
+        .map((k) => PREFILL_LABELS[k as keyof WizardData])
+        .filter((l): l is string => Boolean(l));
+
       onChange({
+        ...toFill,
         generationMode: "copy_doc",
         copyDoc: {
           documentId: parseJson.copyDocumentId,
@@ -190,6 +215,7 @@ export default function CopyDocPanel({ data, onChange, submissionId }: Props) {
           report: parseJson.report as CoverageReport,
         },
       });
+      setPrefilled(filledLabels);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -279,6 +305,24 @@ export default function CopyDocPanel({ data, onChange, submissionId }: Props) {
           </label>
 
           {error && <p style={{ color: Z.red, fontSize: 12.5, marginTop: 10 }}>{error}</p>}
+
+          {prefilled.length > 0 && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: "11px 14px",
+                borderRadius: 10,
+                background: "#0f2818",
+                border: "1px solid #2a5a38",
+                color: "#bfe8cc",
+                fontSize: 12.5,
+                lineHeight: 1.55,
+              }}
+            >
+              <strong style={{ color: Z.green }}>Pre-filled {prefilled.length} field{prefilled.length !== 1 ? "s" : ""} from your document:</strong>{" "}
+              {prefilled.join(", ")}. Review and edit these in the steps that follow — your uploaded copy still drives the final pages verbatim.
+            </div>
+          )}
 
           {data.copyDoc?.report && <CoverageReportView report={data.copyDoc.report} />}
         </div>

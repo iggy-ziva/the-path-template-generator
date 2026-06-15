@@ -12,13 +12,12 @@ import {
 import { WIZARD_STEPS } from "./wizard-constants";
 import FunnelSidebar, { type FunnelSummary } from "@/components/FunnelSidebar";
 import FunnelNameModal from "@/components/FunnelNameModal";
-import WizardStep1  from "./steps/Step1";
-import WizardStep2  from "./steps/Step2";
-import WizardStep3  from "./steps/Step3";
+import WizardStep1  from "./steps/Step1";   // About You + Your Story (+ copy-doc selector)
+import WizardStep2  from "./steps/Step2";   // Your Brand
+import WizardStep3  from "./steps/Step3";   // Live Event
 import WizardStep4  from "./steps/Step4";   // Upsell Offer
 import WizardStep5  from "./steps/Step5";   // Programme
 import WizardStep6  from "./steps/Step6";   // Curriculum & Content
-import WizardStep7  from "./steps/Step7";   // Your Story
 import WizardStep8  from "./steps/Step8";   // Testimonials
 import WizardStep9  from "./steps/Step9";   // Images
 import WizardStep10 from "./steps/Step10";  // Tone & Voice
@@ -38,10 +37,17 @@ const Z = {
 
 interface Props { userEmail: string; }
 
+// Step 1 now hosts the copy-doc selector + the former "Your Story" step, so the
+// wizard runs in 10 steps. Order must mirror WIZARD_STEPS.
 const STEP_COMPONENTS = [
   WizardStep1, WizardStep2, WizardStep3, WizardStep4, WizardStep5,
-  WizardStep6, WizardStep7, WizardStep8, WizardStep9, WizardStep10, WizardStep11,
+  WizardStep6, WizardStep8, WizardStep9, WizardStep10, WizardStep11,
 ];
+
+// Total steps and the (final) review step, derived so step-count changes only
+// need to touch WIZARD_STEPS.
+const TOTAL_STEPS = WIZARD_STEPS.length;
+const REVIEW_STEP = TOTAL_STEPS;
 
 // Fields populated by file/image uploads. Changes to these must persist
 // immediately (not via the debounce) so an uploaded file's URL is never lost
@@ -155,10 +161,11 @@ export default function WizardClient({ userEmail }: Props) {
           setSubmissionId(submission.id);
           const loadedData = submission.step_data ?? {};
           setData(loadedData);
-          // If the saved current_step is 11 but the wizard is no longer at the
-          // generation threshold, fall back to step 10 so the user can fix the gap.
-          const savedStep = submission.current_step ?? 1;
-          setCurrentStep(savedStep === 11 && !canGenerate(loadedData) ? 10 : savedStep);
+          // If the saved current_step is the review step but the wizard is no
+          // longer at the generation threshold, fall back one step so the user
+          // can fix the gap. Clamp legacy 11-step values into the new range.
+          const savedStep = Math.min(submission.current_step ?? 1, TOTAL_STEPS);
+          setCurrentStep(savedStep === REVIEW_STEP && !canGenerate(loadedData) ? REVIEW_STEP - 1 : savedStep);
           const name = submission.name ?? "Untitled Funnel";
           setFunnelName(name);
           if (name === "Untitled Funnel") setNameModalOpen(true);
@@ -358,9 +365,9 @@ export default function WizardClient({ userEmail }: Props) {
   }
 
   function goNext() {
-    // Compute the next step, but skip past Step 11 unless generation is unlocked.
-    let nextStep = Math.min(currentStep + 1, 11);
-    if (nextStep === 11 && !canGenerate(data)) {
+    // Compute the next step, but skip into the review step only when generation is unlocked.
+    let nextStep = Math.min(currentStep + 1, REVIEW_STEP);
+    if (nextStep === REVIEW_STEP && !canGenerate(data)) {
       // Stay on the current step; the gated UI already explains why.
       return;
     }
@@ -380,7 +387,7 @@ export default function WizardClient({ userEmail }: Props) {
   const StepComponent = STEP_COMPONENTS[currentStep - 1];
   const stepMeta = WIZARD_STEPS[currentStep - 1];
 
-  // Completeness drives the progress bar and the Step 11 gate.
+  // Completeness drives the progress bar and the Review/Generate gate.
   // Re-computed only when `data` changes — keeps the derived values stable.
   const completionPct = useMemo(() => overallCompleteness(data), [data]);
   const generateReady = useMemo(() => canGenerate(data),         [data]);
@@ -640,7 +647,7 @@ export default function WizardClient({ userEmail }: Props) {
             • 100% complete  → green tick + filled cream background
             • partial        → ring around the pill scaled to step %
             • current step   → pink/coral gradient
-            • Step 11 (Review/Generate) is gated until generateReady = true */}
+            • Review/Generate (final step) is gated until generateReady = true */}
         <div
           style={{
             display: "flex",
@@ -651,7 +658,7 @@ export default function WizardClient({ userEmail }: Props) {
         >
           {WIZARD_STEPS.map((s) => {
             const isCurrent  = s.id === currentStep;
-            const isReview   = s.id === 11;
+            const isReview   = s.id === REVIEW_STEP;
             const pct        = isReview ? (generateReady ? 100 : completionPct) : (stepPctMap[s.id] ?? 0);
             const isComplete = !isReview && pct >= 100;
             const isDisabled = isReview && !generateReady;
@@ -787,9 +794,10 @@ export default function WizardClient({ userEmail }: Props) {
       </div>
 
       {/* ── Nav buttons ─────────────────────────────────────────────────── */}
-      {currentStep < 11 && (() => {
-        // On Step 10 we're attempting to advance INTO Step 11 — gate by completeness.
-        const goingToReview = currentStep === 10;
+      {currentStep < REVIEW_STEP && (() => {
+        // On the step before review we're attempting to advance INTO the review
+        // step — gate by completeness.
+        const goingToReview = currentStep === REVIEW_STEP - 1;
         const continueDisabled = goingToReview && !generateReady;
         const continueLabel = continueDisabled
           ? `Reach ${GENERATE_THRESHOLD}% to continue`

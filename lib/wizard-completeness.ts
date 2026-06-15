@@ -6,7 +6,7 @@ import type { WizardData } from "@/lib/wizard-types";
 // A single source of truth for "how filled in is this wizard?". The progress
 // bar, step pills, and Review/Generate gate all derive from this module.
 //
-// Each check belongs to a step (1–10) and has a weight (importance toward the
+// Each check belongs to a step (1–9) and has a weight (importance toward the
 // overall percentage). Some checks are also flagged `required` — meaning they
 // are non-negotiable for the AI to produce a usable funnel.
 //
@@ -19,7 +19,7 @@ export const GENERATE_THRESHOLD = 70;
 export interface CompletenessCheck {
   /** Stable id used as React key */
   id: string;
-  /** Wizard step the field lives in (1–10). Step 11 is Review/Generate. */
+  /** Wizard step the field lives in (1–9). The final step is Review/Generate. */
   step: number;
   /** Human-readable label shown in the missing-fields list */
   label: string;
@@ -48,12 +48,15 @@ function nonNegativeNumber(v: unknown): boolean {
 // field actually drives the quality of the generated funnel.
 // ─────────────────────────────────────────────────────────────────────────
 export const CHECKS: CompletenessCheck[] = [
-  // ── Step 1: About You ──
+  // ── Step 1: About You (now also hosts the former "Your Story" fields) ──
   { id: "hostName",         step: 1, label: "Host name",                 weight: 3, required: true,  test: d => nonEmptyString(d.hostName) },
   { id: "hostTitle",        step: 1, label: "Host title",                weight: 1, required: false, test: d => nonEmptyString(d.hostTitle) },
   { id: "hostTagline",      step: 1, label: "Host tagline",              weight: 1, required: false, test: d => nonEmptyString(d.hostTagline) },
   { id: "hostBio",          step: 1, label: "Host bio",                  weight: 3, required: true,  test: d => nonEmptyString(d.hostBio) },
   { id: "hostHeadshotUrl",  step: 1, label: "Headshot",                  weight: 2, required: false, test: d => nonEmptyString(d.hostHeadshotUrl) },
+  { id: "methodologyDescription", step: 1, label: "Methodology",         weight: 2, required: false, test: d => nonEmptyString(d.methodologyDescription) },
+  { id: "uniqueApproach",         step: 1, label: "Unique approach",     weight: 2, required: false, test: d => nonEmptyString(d.uniqueApproach) },
+  { id: "existingMaterials",      step: 1, label: "Existing materials",  weight: 1, required: false, test: d => nonEmptyArray(d.existingMaterialUrls) || nonEmptyArray(d.existingFileUrls) },
 
   // ── Step 2: Your Brand ──
   { id: "businessName",     step: 2, label: "Business name",             weight: 2, required: false, test: d => nonEmptyString(d.businessName) },
@@ -101,23 +104,18 @@ export const CHECKS: CompletenessCheck[] = [
   { id: "curriculumWeeks",        step: 6, label: "Curriculum weeks",         weight: 2, required: false, test: d => nonEmptyArray(d.curriculumWeeks) },
   { id: "bonuses",                step: 6, label: "Bonuses",                  weight: 1, required: false, test: d => nonEmptyArray(d.bonuses) },
 
-  // ── Step 7: Your Story ──
-  { id: "methodologyDescription", step: 7, label: "Methodology",              weight: 2, required: false, test: d => nonEmptyString(d.methodologyDescription) },
-  { id: "uniqueApproach",         step: 7, label: "Unique approach",          weight: 2, required: false, test: d => nonEmptyString(d.uniqueApproach) },
-  { id: "existingMaterials",      step: 7, label: "Existing materials",       weight: 1, required: false, test: d => nonEmptyArray(d.existingMaterialUrls) || nonEmptyArray(d.existingFileUrls) },
+  // ── Step 7: Testimonials ──
+  { id: "testimonials",           step: 7, label: "Testimonials (≥1)",        weight: 3, required: false, test: d => nonEmptyArray(d.testimonials) },
+  { id: "pressLogos",             step: 7, label: "Press logos",              weight: 1, required: false, test: d => nonEmptyArray(d.pressLogos) },
 
-  // ── Step 8: Testimonials ──
-  { id: "testimonials",           step: 8, label: "Testimonials (≥1)",        weight: 3, required: false, test: d => nonEmptyArray(d.testimonials) },
-  { id: "pressLogos",             step: 8, label: "Press logos",              weight: 1, required: false, test: d => nonEmptyArray(d.pressLogos) },
+  // ── Step 8: Images ──
+  { id: "heroImageUrls",          step: 8, label: "Hero images (≥1)",         weight: 2, required: false, test: d => nonEmptyArray(d.heroImageUrls) },
+  { id: "lifestyleImageUrls",     step: 8, label: "Lifestyle images",         weight: 1, required: false, test: d => nonEmptyArray(d.lifestyleImageUrls) },
+  { id: "additionalImageUrls",    step: 8, label: "Additional images",        weight: 1, required: false, test: d => nonEmptyArray(d.additionalImageUrls) },
 
-  // ── Step 9: Images ──
-  { id: "heroImageUrls",          step: 9, label: "Hero images (≥1)",         weight: 2, required: false, test: d => nonEmptyArray(d.heroImageUrls) },
-  { id: "lifestyleImageUrls",     step: 9, label: "Lifestyle images",         weight: 1, required: false, test: d => nonEmptyArray(d.lifestyleImageUrls) },
-  { id: "additionalImageUrls",    step: 9, label: "Additional images",        weight: 1, required: false, test: d => nonEmptyArray(d.additionalImageUrls) },
-
-  // ── Step 10: Tone & Voice ──
-  { id: "toneDescriptors",        step: 10, label: "Tone descriptors (3)",    weight: 2, required: false, test: d => nonEmptyArray(d.toneDescriptors, 1) },
-  { id: "referenceTheme",         step: 10, label: "Reference theme",         weight: 1, required: false, test: d => nonEmptyString(d.referenceTheme) },
+  // ── Step 9: Tone & Voice ──
+  { id: "toneDescriptors",        step: 9, label: "Tone descriptors (3)",     weight: 2, required: false, test: d => nonEmptyArray(d.toneDescriptors, 1) },
+  { id: "referenceTheme",         step: 9, label: "Reference theme",          weight: 1, required: false, test: d => nonEmptyString(d.referenceTheme) },
 ];
 
 const TOTAL_WEIGHT = CHECKS.reduce((sum, c) => sum + c.weight, 0);
@@ -126,13 +124,13 @@ const TOTAL_WEIGHT = CHECKS.reduce((sum, c) => sum + c.weight, 0);
 // Copy-document mode
 //
 // In `copy_doc` mode the landing-page copy comes from an uploaded document, so
-// the copy-authoring steps (6 Curriculum, 8 Testimonials, 10 Tone) no longer
+// the copy-authoring steps (6 Curriculum, 7 Testimonials, 9 Tone) no longer
 // gate generation. Instead we require the core facts the layout engine still
 // needs (host, contact, event date/time) plus a successfully parsed document
 // whose required sections are all present.
 // ─────────────────────────────────────────────────────────────────────────
 
-const COPY_AUTHORING_STEPS = new Set([6, 8, 10]);
+const COPY_AUTHORING_STEPS = new Set([6, 7, 9]);
 
 /** Required wizard facts that the copy-doc layout engine cannot derive. */
 const COPY_DOC_REQUIRED_CHECK_IDS = new Set([

@@ -177,7 +177,7 @@ export default function FunnelSidebar({
               const isRenaming = renamingId === funnel.id;
               // Use the server-computed completeness if present; fall back to
               // a step-derived approximation for any older API responses.
-              const TOTAL_STEPS = 11;
+              const TOTAL_STEPS = 10;
               const pct = Math.min(
                 100,
                 typeof funnel.completion_pct === "number"

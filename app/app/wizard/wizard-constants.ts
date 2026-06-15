@@ -1,15 +1,14 @@
 export const WIZARD_STEPS = [
-  { id: 1,  title: "About You",           subtitle: "Tell us about the host or facilitator" },
+  { id: 1,  title: "About You",           subtitle: "Choose how we write your copy, then tell us about the host" },
   { id: 2,  title: "Your Brand",           subtitle: "Business name, logo and contact details" },
   { id: 3,  title: "Live Event",           subtitle: "Date, time, pricing and platform" },
   { id: 4,  title: "Upsell Offer",         subtitle: "The one-time product offered to event registrants" },
   { id: 5,  title: "Programme",            subtitle: "Your high-ticket upsell offer" },
   { id: 6,  title: "Curriculum & Content", subtitle: "What's included and the transformation you deliver" },
-  { id: 7,  title: "Your Story",           subtitle: "Upload existing materials for AI to analyse" },
-  { id: 8,  title: "Testimonials",         subtitle: "Social proof for every funnel page" },
-  { id: 9,  title: "Images",               subtitle: "Hero photos, lifestyle imagery and brand assets" },
-  { id: 10, title: "Tone & Voice",         subtitle: "How you want your copy to sound" },
-  { id: 11, title: "Review & Generate",    subtitle: "Confirm your inputs and launch the AI" },
+  { id: 7,  title: "Testimonials",         subtitle: "Social proof for every funnel page" },
+  { id: 8,  title: "Images",               subtitle: "Hero photos, lifestyle imagery and brand assets" },
+  { id: 9,  title: "Tone & Voice",         subtitle: "How you want your copy to sound" },
+  { id: 10, title: "Review & Generate",    subtitle: "Confirm your inputs and launch the AI" },
 ] as const;
 
 export const TONE_DESCRIPTORS = [
