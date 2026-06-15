@@ -201,4 +201,27 @@
     if (isOpen && !wrap.contains(e.target)) close();
   });
 
+  /* ---- Sticky CTA bar reveal -------------------------------------------- */
+  /* The #stickyBar sits at the bottom of the hero and pins to the bottom of the
+     viewport once the hero scrolls past. Mirrors the editor preview behaviour. */
+  (function () {
+    var bar = document.getElementById('stickyBar');
+    var hero = document.getElementById('hero');
+    if (!bar || !hero) return;
+    var ticking = false;
+    function apply() {
+      ticking = false;
+      var pastHero = hero.getBoundingClientRect().bottom < window.innerHeight;
+      bar.classList.toggle('is-visible', pastHero);
+    }
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(apply);
+    }
+    apply();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+  })();
+
 })();

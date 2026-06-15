@@ -423,13 +423,15 @@ section {
    ===================================================================== */
 .sticky-bar {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  bottom: 0; left: 0; right: 0;
   z-index: 100;
   background: color-mix(in srgb, var(--surface-inverse) 92%, transparent);
   backdrop-filter: saturate(140%) blur(8px);
   color: var(--text-inverse);
-  border-bottom: 1px solid rgba(245,241,234,0.08);
-  transform: translateY(-100%);
+  border-top: 1px solid rgba(245,241,234,0.08);
+  /* Hidden below the fold until the hero scrolls past, then slides up and stays
+     pinned to the bottom of the viewport (toggled via .is-visible). */
+  transform: translateY(100%);
   transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 .sticky-bar.is-visible { transform: translateY(0); }
@@ -500,7 +502,8 @@ section {
 .sticky-bar.light-bg .countdown { color: var(--text-tertiary); }
 .sticky-bar.light-bg .countdown b { color: var(--accent-secondary-on-light); }
 @media (max-width: 768px) {
-  .sticky-bar { transform: translateY(0); }
+  /* Same reveal behaviour as desktop: hidden until the hero scrolls past, then
+     pinned to the bottom of the viewport. (.is-visible drives the transform.) */
   /* Two rows: [logo | CTA] on top, countdown centered below. Kept tight. */
   .sticky-bar .container {
     grid-template-columns: auto 1fr;

@@ -18,10 +18,8 @@ import ProgrammeThankYouPage from "./pages/ProgrammeThankYouPage";
 import MobilePreviewFrame from "./MobilePreviewFrame";
 
 // Preview-only CSS overrides shared by the desktop canvas and the mobile iframe
-// so both render identically. The editable-hover outline and the sticky-bar
-// toolbar offset are intentionally excluded here: the offset only applies to the
-// desktop canvas (to clear the 52px preview toolbar), whereas inside the iframe
-// the sticky bar must sit at its natural top:0 like a real device.
+// so both render identically. The sticky bar is bottom-anchored and revealed on
+// scroll (see EventLandingPage), so no top-offset hack is needed here.
 const PREVIEW_OVERRIDE_CSS = `
   section.credibility.inline { padding: 40px 0 !important; border: none !important; margin-bottom: 40px !important; }
   section.credibility.inline .quote-glyph { font-size: 64px !important; line-height: 1 !important; margin-bottom: 16px !important; }
@@ -245,7 +243,6 @@ body {
       {fontImport && <style dangerouslySetInnerHTML={{ __html: fontImport }} />}
       <style dangerouslySetInnerHTML={{ __html: `
         ${PREVIEW_OVERRIDE_CSS}
-        #stickyBar.is-visible { top: 52px !important; }
         .editable-field:not(.is-editing):hover { outline: 1px dashed var(--accent-secondary-on-dark) !important; outline-offset: 2px; }
       ` }} />
 

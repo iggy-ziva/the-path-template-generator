@@ -129,7 +129,12 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
   const outcomes1Url  = safeUrl(c.outcomesImageUrl         ?? w.lifestyleImageUrls?.[1]);
   const bioImageUrl   = safeUrl((c as Record<string, unknown>).bioImageUrl as string | undefined ?? w.hostHeadshotUrl);
   const brandName = w.businessName ?? w.hostName ?? "Your Brand";
-  const ctaText = c.ctaText ?? c.heroCtaText ?? "Register Now";
+  // CTA buttons hold a short label. Guard against a sentence/testimonial that a
+  // copy-doc import may have misfiled into a CTA field — a button rendering a
+  // wall of text is always wrong, so fall back to the default instead.
+  const shortCta = (v?: string) =>
+    v && v.trim().length > 0 && v.length <= 48 && !/["“”].*[—–-]\s*\w/.test(v) ? v : undefined;
+  const ctaText = shortCta(c.ctaText) ?? shortCta(c.heroCtaText) ?? "Register Now";
   // Prefer Claude-generated price copy; fall back to wizard fields.
   // Fix: wizard saves "pay-what-you-want" (not "pay_what_you_can").
   const priceLabel = c.heroPriceLabel ?? (w.eventPricingModel === "pay-what-you-want" ? "Choose your price" : null);
@@ -176,8 +181,50 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
     </a>
   );
 
+  // The sticky CTA bar lives at the bottom of the hero and pins to the bottom of
+  // the viewport once the hero scrolls past. Reveal is driven here so it works in
+  // both the desktop canvas and the mobile-preview iframe (via ownerDocument).
+  // In edit mode we keep it visible so it stays clickable for editing. Exported
+  // builds get the same scroll behaviour from public/funnel-nav.js.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const editorIsEditing = Boolean(editor?.isEditMode);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const doc = root.ownerDocument;
+    const win = doc.defaultView;
+    const bar = doc.getElementById("stickyBar");
+    const hero = doc.getElementById("hero");
+    if (!win || !bar || !hero) return;
+
+    if (editorIsEditing) {
+      bar.classList.add("is-visible");
+      return;
+    }
+
+    let ticking = false;
+    const apply = () => {
+      ticking = false;
+      // Reveal once the hero's bottom edge has entered the viewport (i.e. the
+      // user has scrolled to the bottom of the hero) and keep it pinned after.
+      bar.classList.toggle("is-visible", hero.getBoundingClientRect().bottom < win.innerHeight);
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      win.requestAnimationFrame(apply);
+    };
+    apply();
+    win.addEventListener("scroll", onScroll, { passive: true });
+    win.addEventListener("resize", onScroll);
+    return () => {
+      win.removeEventListener("scroll", onScroll);
+      win.removeEventListener("resize", onScroll);
+    };
+  }, [editorIsEditing]);
+
   return (
-    <div>
+    <div ref={rootRef}>
       {/* ── 01 Sticky Bar ── */}
       <EditableSection
         pageKey="eventLanding"
@@ -189,7 +236,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
         noPositionOverride
         as="div"
         id="stickyBar"
-        className="sticky-bar is-visible"
+        className="sticky-bar"
         exportMode={exportMode}
       >
         <div className="container">
@@ -1137,7 +1184,7 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
           </p>
           <a href="/checkout" className="btn btn-primary btn-xl">
             <EditableText pageKey="eventLanding" path="finalCtaText" as="span">
-              {c.finalCtaText ?? ctaText}
+              {shortCta(c.finalCtaText) ?? ctaText}
             </EditableText>
           </a>
         </div>

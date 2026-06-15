@@ -47,6 +47,16 @@ interface MissingField {
   kind: string;
 }
 
+// Button/label fields hold a few words at most. AI classification is fuzzy, so
+// without a length cap it can file a whole testimonial or paragraph into a CTA
+// (every CTA on the page then shows that wall of text). A misfiled short field
+// is far worse than an empty one, which falls back to a sensible default.
+const SHORT_FIELD_MAX_CHARS = 80;
+function isShortLabelField(field: { target?: string; key: string; label: string }): boolean {
+  const probe = `${field.target ?? ""} ${field.key} ${field.label}`.toLowerCase();
+  return /\b(cta|eyebrow|microcopy|signature|attribution|urgency|deadline|tag|line)\b|cta/.test(probe);
+}
+
 function collectMissingFields(doc: CopyDoc, spec: CopyPageSpec): MissingField[] {
   const byId = new Map(doc.sections.map((s) => [s.id, s]));
   const missing: MissingField[] = [];
@@ -146,6 +156,17 @@ Rules:
     const value = assembleValue(f, chosen);
     if (value === undefined || !isVerbatim(value, pool)) {
       warnings.push(`AI fallback rejected a non-verbatim assignment for ${sec.heading} › ${f.label}.`);
+      continue;
+    }
+
+    // Sanity guard: never let a long block land in a short button/label field.
+    if (
+      f.kind === "text" &&
+      typeof value === "string" &&
+      value.length > SHORT_FIELD_MAX_CHARS &&
+      isShortLabelField(f)
+    ) {
+      warnings.push(`AI fallback skipped an implausibly long value for ${sec.heading} › ${f.label}.`);
       continue;
     }
 
