@@ -20,6 +20,14 @@ export interface Facilitator {
   headshotUrl?: string;
 }
 
+/** A single scheduled sitting of a live event. Multi-session events list several. */
+export interface EventSession {
+  date?: string;
+  time?: string;
+  timezone?: string;
+  duration?: string;
+}
+
 export interface WizardData {
   // Step 1 — About You
   hostName?: string;
@@ -59,10 +67,16 @@ export interface WizardData {
   // Step 3 — Live Event
   eventName?: string;
   eventTagline?: string;
+  /**
+   * The first / primary session — mirrors eventSessions[0]. Kept as flat fields
+   * for backward compatibility with everything that reads a single date.
+   */
   eventDate?: string;
   eventTime?: string;
   eventTimezone?: string;
   eventDuration?: string;
+  /** All scheduled sessions (date + time + timezone + duration each). */
+  eventSessions?: EventSession[];
   eventPlatform?: string;
   eventPricingModel?: "pay-what-you-want" | "fixed";
   eventPriceMin?: number;

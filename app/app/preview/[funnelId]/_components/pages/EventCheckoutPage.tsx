@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { EventCheckoutContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
+import { getEventSessions, formatSession } from "@/lib/event-sessions";
 import BrandLogo from "../BrandLogo";
 import EditableText from "../editor/EditableText";
 import { EditableImage } from "../editor/EditableList";
@@ -63,6 +64,7 @@ export default function EventCheckoutPage({ content: c, wizard: w, exportMode = 
   const eventDate    = w.eventDate ?? "";
   const eventTime    = w.eventTime ?? "";
   const eventTz      = w.eventTimezone ?? "";
+  const extraSessions = getEventSessions(w).slice(1).filter((s) => s.date || s.time);
   const eventPlatform = w.eventPlatform ?? "Zoom";
   const benefits     = c.benefits ?? [];
   const ctaText      = c.ctaText ?? `Register Now — $${price}.00`;
@@ -440,6 +442,12 @@ export default function EventCheckoutPage({ content: c, wizard: w, exportMode = 
                   </span>
                 </div>
               )}
+              {extraSessions.map((s, i) => (
+                <div className="sales-detail-row" key={i}>
+                  <span className="sales-detail-label">{i === 0 ? "Also on" : ""}</span>
+                  <span className="sales-detail-value">{formatSession(s)}</span>
+                </div>
+              ))}
               <div className="sales-detail-row">
                 <span className="sales-detail-label">Format</span>
                 <span className="sales-detail-value">

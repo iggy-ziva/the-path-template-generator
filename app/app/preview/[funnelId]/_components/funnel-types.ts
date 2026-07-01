@@ -35,6 +35,14 @@ export interface FacilitatorContent {
   headshotUrl?: string;
 }
 
+/** A single scheduled event session (date + time + timezone + duration). */
+export interface SessionContent {
+  date?: string;
+  time?: string;
+  timezone?: string;
+  duration?: string;
+}
+
 /**
  * Editor icon override stored at paths like `audienceItemIcons.0`.
  * Legacy plain strings (icon name only) are handled by `parseIconOverride` in
@@ -111,6 +119,8 @@ export interface WizardSnapshot {
   eventTime?: string;
   eventTimezone?: string;
   eventDuration?: string;
+  /** All scheduled sessions; eventDate/Time/… mirror the first one. */
+  eventSessions?: SessionContent[];
   eventPlatform?: string;
   eventPricingModel?: string;
   eventPriceMin?: number;

@@ -4,6 +4,7 @@ import type { Message, MessageParam, ContentBlockParam, ImageBlockParam, TextBlo
 import { getSession } from "@/lib/session";
 import { getOrCreateUserId } from "@/lib/getOrCreateUserId";
 import type { WizardData } from "@/lib/wizard-types";
+import { getEventSessions, formatSession } from "@/lib/event-sessions";
 import { withWizardSnapshot } from "@/lib/funnel-snapshot";
 import { computeBrandProfile, buildBrandProfilePromptBlock } from "@/lib/brand-profile";
 import { guardFunnelThemes } from "@/lib/section-theme-guard";
@@ -598,8 +599,15 @@ ${buildColorProfile(d)}
 === LIVE EVENT ===
 Name: ${d.eventName ?? "NOT PROVIDED"}
 Tagline (sub-headline source material): ${d.eventTagline ?? "NOT PROVIDED — derive from transformation promise"}
-Date: ${d.eventDate ?? "NOT PROVIDED"} at ${d.eventTime ?? "NOT PROVIDED"} ${d.eventTimezone ?? ""}
-Duration: ${d.eventDuration ?? "Not provided — say '3 hours' as a sensible default"}
+${(() => {
+  const sessions = getEventSessions(d);
+  if (sessions.length > 1) {
+    return `Sessions (MULTI-DATE event — this event runs across several sittings; reference ALL of them where a schedule, overview, or "save the date" is relevant, and treat the first as the primary date):
+${sessions.map((s, i) => `  Session ${i + 1}${i === 0 ? " (primary)" : ""}: ${formatSession(s)}`).join("\n")}`;
+  }
+  return `Date: ${d.eventDate ?? "NOT PROVIDED"} at ${d.eventTime ?? "NOT PROVIDED"} ${d.eventTimezone ?? ""}
+Duration: ${d.eventDuration ?? "Not provided — say '3 hours' as a sensible default"}`;
+})()}
 Platform: ${d.eventPlatform ?? "Online / Zoom"}
 Pricing: ${formatPricing(d)}
 Recording policy: ${d.eventRecordingPolicy ?? "Assume recording included for 30 days"}

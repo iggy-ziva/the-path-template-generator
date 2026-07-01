@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import type { EventLandingContent, WizardSnapshot, TestimonialItem } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
 import { isSameName } from "@/lib/name-match";
+import { getEventSessions, formatSession } from "@/lib/event-sessions";
 import EditableLogo from "../editor/EditableLogo";
 import EditableIcon, { IconContainer } from "../editor/icon-library";
 import EditableText from "../editor/EditableText";
@@ -157,7 +158,17 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
   const pressLogos = c.pressLogos ?? w.pressLogos ?? [];
   const asSeenOnEyebrow = c.asSeenOnEyebrow ?? "As featured in";
 
-  const eventTarget = parseEventDate(heroEventDate, heroEventTime, heroEventTimezone);
+  // All sessions (from the wizard — dates are user-entered, not AI-authored).
+  // The countdown targets the next upcoming session; extras render in overview.
+  const sessions = getEventSessions(w);
+  const sessionTargets = sessions
+    .map((s) => parseEventDate(s.date, s.time, s.timezone))
+    .filter((d): d is Date => d != null)
+    .sort((a, b) => a.getTime() - b.getTime());
+  const primaryTarget = parseEventDate(heroEventDate, heroEventTime, heroEventTimezone);
+  const nextUpcoming = sessionTargets.find((d) => d.getTime() > Date.now());
+  const eventTarget = nextUpcoming ?? sessionTargets[0] ?? primaryTarget;
+  const additionalSessions = sessions.slice(1).filter((s) => s.date || s.time || s.duration);
   const countdown = useCountdown(eventTarget, exportMode);
 
   const brandPrimary = w.styleGuide?.brandColors?.primary;
@@ -854,12 +865,18 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
                   </span>
                 </div>
               )}
-              {w.eventDuration && (
+              {(sessions[0]?.duration || w.eventDuration) && (
                 <div className="overview-row">
                   <span className="label">Duration</span>
-                  <span className="value">{w.eventDuration}</span>
+                  <span className="value">{sessions[0]?.duration || w.eventDuration}</span>
                 </div>
               )}
+              {additionalSessions.map((s, i) => (
+                <div className="overview-row" key={i}>
+                  <span className="label">{i === 0 ? "Also on" : ""}</span>
+                  <span className="value">{formatSession(s)}</span>
+                </div>
+              ))}
               <p className="recording-note">
                 <em>
                   <PageText pageKey="eventLanding" path="recordingNote" as="span">

@@ -5,6 +5,7 @@ import type { WizardData } from "@/lib/wizard-types";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { computeBrandProfile } from "@/lib/brand-profile";
 import { missingRequiredForMode } from "@/lib/wizard-completeness";
+import { getEventSessions } from "@/lib/event-sessions";
 import { THEME_LIST_FOR_WIZARD } from "../wizard-constants";
 
 interface ThemeSuggestion {
@@ -517,7 +518,7 @@ export default function Step11({ data, onChange, submissionId }: Props) {
         <div style={{ marginBottom: "24px" }}>
           <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#D4A878", marginBottom: "8px" }}>Live Event</div>
           <ReviewRow label="Event name" value={data.eventName} missing={!data.eventName} />
-          <ReviewRow label="Date & time" value={data.eventDate && data.eventTime ? `${data.eventDate} · ${data.eventTime} ${data.eventTimezone}` : undefined} missing={!data.eventDate} />
+          <ReviewRow label="Date & time" value={data.eventDate && data.eventTime ? `${data.eventDate} · ${data.eventTime} ${data.eventTimezone}${getEventSessions(data).length > 1 ? ` (+${getEventSessions(data).length - 1} more session${getEventSessions(data).length - 1 > 1 ? "s" : ""})` : ""}` : undefined} missing={!data.eventDate} />
           <ReviewRow label="Pricing" value={data.eventPricingModel === "fixed" ? `$${data.eventPriceFixed}` : data.eventPriceMin !== undefined ? `$${data.eventPriceMin}–$${data.eventPriceMax}` : undefined} />
         </div>
 

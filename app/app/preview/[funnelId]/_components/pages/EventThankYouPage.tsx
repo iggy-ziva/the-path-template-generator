@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { EventThankYouContent, WizardSnapshot } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
+import { getEventSessions, formatSession } from "@/lib/event-sessions";
 import BrandLogo from "../BrandLogo";
 
 import EditableText from "../editor/EditableText";
@@ -24,6 +25,7 @@ export default function EventThankYouPage({ content: c, wizard: w, exportMode = 
   const eventDate    = w.eventDate ?? "";
   const eventTime    = w.eventTime ?? "";
   const eventTz      = w.eventTimezone ?? "";
+  const extraSessions = getEventSessions(w).slice(1).filter((s) => s.date || s.time);
   const eventPlatform = w.eventPlatform ?? "Zoom";
   const contactEmail = w.contactEmail ?? "";
   const shareUrl     = c.shareUrl ?? (exportMode ? "#" : (typeof window !== "undefined" ? window.location.origin : "#"));
@@ -178,6 +180,9 @@ export default function EventThankYouPage({ content: c, wizard: w, exportMode = 
                     {eventDate}{eventTime ? ` \u00b7 ${eventTime}` : ""}{eventTz ? ` ${eventTz}` : ""}
                   </strong>
                 )}
+                {extraSessions.map((s, i) => (
+                  <span key={i} style={{ display: "block" }}>{formatSession(s)}</span>
+                ))}
                 {c.timezoneNote && (
                   <>{eventDate ? <br /> : null}{c.timezoneNote}</>
                 )}
