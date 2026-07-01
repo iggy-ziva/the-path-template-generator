@@ -7,10 +7,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 const AUTHORIZE_URL = "https://www.figma.com/oauth";
 const TOKEN_URL = "https://api.figma.com/v1/oauth/token";
 const REFRESH_URL = "https://api.figma.com/v1/oauth/refresh";
-// Figma's legacy single scope that grants file read access on every OAuth app
-// without needing granular scopes enabled. Override with FIGMA_OAUTH_SCOPE if
-// you've opted your app into granular scopes (e.g. "files:read").
-const DEFAULT_SCOPE = "file_read";
+// Figma removed the old files:read / file_read scopes — apps must use granular
+// scopes. Reading a file's layers/colours/fonts needs file_content:read, which
+// must ALSO be enabled on the app's OAuth scopes page in the Figma dashboard.
+const DEFAULT_SCOPE = "file_content:read";
 
 // Refresh a little before the real expiry to avoid edge-of-expiry failures.
 const EXPIRY_SKEW_MS = 60_000;
