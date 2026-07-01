@@ -1,5 +1,5 @@
 "use client";
-import type { WizardData } from "@/lib/wizard-types";
+import type { WizardData, Facilitator } from "@/lib/wizard-types";
 import { Field, TextInput, Textarea, FileUpload, Grid, Section, MultipleFileUpload, UrlListInput } from "../WizardField";
 import CopyDocPanel from "./CopyDocPanel";
 import { isCopyDocEngineEnabledClient } from "@/lib/feature-flags";
@@ -8,6 +8,19 @@ interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => vo
 
 export default function Step1({ data, onChange, submissionId }: Props) {
   const copyDocEnabled = isCopyDocEngineEnabledClient();
+
+  const facilitators = data.facilitators ?? [];
+  function updateFacilitator(index: number, patch: Partial<Facilitator>) {
+    const next = facilitators.map((f, i) => (i === index ? { ...f, ...patch } : f));
+    onChange({ facilitators: next });
+  }
+  function addFacilitator() {
+    onChange({ facilitators: [...facilitators, {}] });
+  }
+  function removeFacilitator(index: number) {
+    onChange({ facilitators: facilitators.filter((_, i) => i !== index) });
+  }
+
   return (
     <div>
       {/* How should we write the copy? — first decision in the wizard. */}
@@ -31,17 +44,74 @@ export default function Step1({ data, onChange, submissionId }: Props) {
         <Field label="Bio" required hint="2–4 paragraphs about your background, credentials, and approach. The AI will rewrite this in your chosen tone — paste your existing bio or write something fresh." >
           <Textarea value={data.hostBio ?? ""} onChange={(v) => onChange({ hostBio: v })} placeholder="I've been working with..." rows={8} />
         </Field>
+        <Field label="Your headshot" hint="Used throughout the funnel — hero, bio section, programme LP">
+          <FileUpload
+            label="Upload headshot"
+            accept="image/jpeg,image/png,image/webp"
+            currentUrl={data.hostHeadshotUrl ?? data.hostHeadshotUrls?.[0]}
+            onUpload={(url) => onChange({ hostHeadshotUrl: url })}
+          />
+        </Field>
       </Section>
 
-      <Section title="Photos">
-        <Grid>
-          <Field label="Headshot" hint="Used throughout the funnel — hero, bio section, programme LP">
-            <FileUpload label="Upload headshot" accept="image/jpeg,image/png,image/webp" currentUrl={data.hostHeadshotUrl} onUpload={(url) => onChange({ hostHeadshotUrl: url })} />
-          </Field>
-          <Field label="Signature (optional)" hint="A handwritten signature image for personal notes — PNG with transparent background works best">
-            <FileUpload label="Upload signature" accept="image/jpeg,image/png,image/webp" currentUrl={data.hostSignatureUrl} onUpload={(url) => onChange({ hostSignatureUrl: url })} />
-          </Field>
-        </Grid>
+      <Section title="Facilitators">
+        <p style={{ fontSize: 13, color: "#888", marginBottom: 16, marginTop: -8, lineHeight: 1.6 }}>
+          Add any co-facilitators or additional presenters featured alongside you. Each appears in a
+          dedicated “facilitators” section on your landing pages. Leave empty if it&apos;s just you — or let
+          the AI fill this in from an uploaded copy document.
+        </p>
+
+        {facilitators.map((f, i) => (
+          <div
+            key={i}
+            style={{ background: "#1a1917", border: "1px solid #33312d", borderRadius: 12, padding: 18, marginBottom: 16 }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#D4A878" }}>
+                Facilitator {i + 1}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeFacilitator(i)}
+                style={{ background: "none", border: "none", color: "#c96", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}
+              >
+                Remove
+              </button>
+            </div>
+            <Grid>
+              <Field label="Full name">
+                <TextInput value={f.name ?? ""} onChange={(v) => updateFacilitator(i, { name: v })} placeholder="e.g. Jordan Lee" />
+              </Field>
+              <Field label="Professional title">
+                <TextInput value={f.title ?? ""} onChange={(v) => updateFacilitator(i, { title: v })} placeholder="e.g. Breathwork Facilitator" />
+              </Field>
+            </Grid>
+            <Field label="Bio" hint="A short bio — the AI will rewrite this in your chosen tone.">
+              <Textarea value={f.bio ?? ""} onChange={(v) => updateFacilitator(i, { bio: v })} rows={4} placeholder="Jordan brings..." />
+            </Field>
+            <Field label="Headshot">
+              <FileUpload
+                label="Upload headshot"
+                accept="image/jpeg,image/png,image/webp"
+                currentUrl={f.headshotUrl}
+                onUpload={(url) => updateFacilitator(i, { headshotUrl: url })}
+              />
+            </Field>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={addFacilitator}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            padding: "11px 18px", borderRadius: 10,
+            background: "transparent", border: "1.5px dashed #55524c",
+            color: "#D4A878", fontSize: 13, fontWeight: 700, cursor: "pointer",
+          }}
+        >
+          + Add facilitator
+        </button>
       </Section>
 
       {/* ── Your Story (merged in from the former standalone step) ─────────── */}

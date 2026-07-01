@@ -5,7 +5,8 @@ import { safeUrl } from "../funnel-types";
 import BrandLogo from "../BrandLogo";
 import EditableText from "../editor/EditableText";
 import { EditableImage } from "../editor/EditableList";
-import { PageText } from "../editor/page-editable";
+import { PageText, useEditMode } from "../editor/page-editable";
+import { isSameName } from "@/lib/name-match";
 import { useEditorOptional } from "../editor/EditorContext";
 import EditableSection from "../editor/EditableSection";
 import { resolveSectionTheme, PROGRAMME_LANDING_LEGACY_FIELD } from "../editor/section-theme";
@@ -34,6 +35,11 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
   const [openWeek, setOpenWeek] = useState<number | null>(0);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const editor = useEditorOptional();
+  const editMode = useEditMode();
+  // Facilitators: prefer AI/copy-doc content; fall back to the raw wizard list.
+  // The host has a dedicated section, so never duplicate them as a facilitator.
+  const facilitatorList = ((c.facilitators && c.facilitators.length ? c.facilitators : w.facilitators) ?? [])
+    .filter((f) => !isSameName(f.name, w.hostName) && !isSameName(f.name, c.bioName));
 
   // Per-section theme resolution: manual override > legacy AI field > default.
   const themeFor = (id: string, fallback: SectionTheme): SectionTheme => {
@@ -690,6 +696,52 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
         </EditableSection>
       )}
 
+      {/* ── 14b Facilitators ── */}
+      {(facilitatorList.length > 0 || editMode) && (
+        <EditableSection pageKey="programmeLanding" sectionId="facilitators" theme={themeFor("facilitators", "light")} exportMode={exportMode}>
+          <div className="container">
+            <h2 className="display-section" style={{ textAlign: "center", marginBottom: 48 }}>
+              <PageText pageKey="programmeLanding" path="facilitatorsHeading" as="span">
+                {c.facilitatorsHeading ?? "Your facilitators"}
+              </PageText>
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 40, maxWidth: 960, margin: "0 auto" }}>
+              {facilitatorList.map((f, i) => {
+                const photo = safeUrl(f.headshotUrl ?? w.facilitators?.[i]?.headshotUrl);
+                return (
+                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 12 }}>
+                    <EditableImage
+                      pageKey="programmeLanding"
+                      path={`facilitators[${i}].headshotUrl`}
+                      url={photo}
+                      alt={f.name ?? "Facilitator"}
+                      imgStyle={{ width: 140, height: 140, objectFit: "cover", borderRadius: "50%" }}
+                    >
+                      <div className="host-photo-inner" style={{ width: 140, height: 140, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <p className="host-photo-label">Photo</p>
+                      </div>
+                    </EditableImage>
+                    <div>
+                      <h3 className="host-name" style={{ margin: 0 }}>
+                        <PageText pageKey="programmeLanding" path={`facilitators[${i}].name`} as="span">{f.name ?? ""}</PageText>
+                      </h3>
+                      {(f.title || editMode) && (
+                        <p className="host-eyebrow" style={{ margin: "4px 0 0" }}>
+                          <PageText pageKey="programmeLanding" path={`facilitators[${i}].title`} as="span">{f.title ?? ""}</PageText>
+                        </p>
+                      )}
+                    </div>
+                    {(f.bio || editMode) && (
+                      <PageText pageKey="programmeLanding" path={`facilitators[${i}].bio`} as="p" className="host-bio">{f.bio ?? ""}</PageText>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </EditableSection>
+      )}
+
       {/* ── 15 FAQ ── */}
       {(c.faqItems ?? []).length > 0 && (
         <EditableSection pageKey="programmeLanding" sectionId="faq" theme={themeFor("faq", "light")} className="faq" exportMode={exportMode}>
@@ -772,7 +824,10 @@ export default function ProgrammeLandingPage({ content: c, wizard: w, exportMode
           <div className="ty-footer-left">
             <BrandLogo
               logoUrl={w.logoUrl}
+              logoLightUrl={w.logoLightUrl}
+              logoDarkUrl={w.logoDarkUrl}
               logoTransparent={w.logoTransparent}
+              background="dark"
               name={hostName}
               className="ty-footer-brand"
               imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}

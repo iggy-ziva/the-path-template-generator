@@ -11,7 +11,8 @@
 // caller decides whether to apply them (never overwriting existing input).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { WizardData } from "@/lib/wizard-types";
+import type { WizardData, Facilitator } from "@/lib/wizard-types";
+import { isSameName } from "@/lib/name-match";
 import type { CopyDocPageKey } from "./copydoc-schema";
 
 type Content = Record<string, unknown>;
@@ -42,7 +43,26 @@ function paragraphs(v: unknown): string | undefined {
   return arr ? arr.join("\n\n") : asString(v);
 }
 
-function deriveEventLanding(c: Content): Partial<WizardData> {
+/**
+ * Map parsed facilitator items ({ name, title, bio }) onto wizard facilitators,
+ * excluding the primary host — they already have a dedicated bio section, so a
+ * "meet the team" list that also names the host should not duplicate them.
+ */
+function deriveFacilitators(c: Content, hostName?: string): Facilitator[] | undefined {
+  const items = asItems(c.facilitators);
+  if (!items) return undefined;
+  const people = items
+    .map((p): Facilitator => ({
+      name: asString(p.name),
+      title: asString(p.title),
+      bio: asString(p.bio),
+    }))
+    .filter((p) => p.name || p.bio)
+    .filter((p) => !isSameName(p.name, hostName));
+  return people.length ? people : undefined;
+}
+
+function deriveEventLanding(c: Content, hostName?: string): Partial<WizardData> {
   const out: Partial<WizardData> = {};
 
   // Bio — the bio section paragraphs are the host's story in their own words.
@@ -94,10 +114,13 @@ function deriveEventLanding(c: Content): Partial<WizardData> {
   const unique = paragraphs(c.extraVpParagraphs) ?? asString(c.vpPullQuote) ?? paragraphs(c.personalMessageParagraphs);
   if (unique) out.uniqueApproach = unique;
 
+  const facilitators = deriveFacilitators(c, hostName);
+  if (facilitators) out.facilitators = facilitators;
+
   return out;
 }
 
-function deriveProgrammeLanding(c: Content): Partial<WizardData> {
+function deriveProgrammeLanding(c: Content, hostName?: string): Partial<WizardData> {
   const out: Partial<WizardData> = {};
   const bio = paragraphs(c.bioParagraphs);
   if (bio) out.hostBio = bio;
@@ -105,6 +128,12 @@ function deriveProgrammeLanding(c: Content): Partial<WizardData> {
   if (name) out.hostName = name;
   const promise = paragraphs(c.promiseBody) ?? asString(c.promiseHeading);
   if (promise) out.transformationPromise = promise;
+
+  // The programme's own Host section names the host (bioName); never list them
+  // again as a facilitator.
+  const facilitators = deriveFacilitators(c, hostName ?? asString(c.bioName));
+  if (facilitators) out.facilitators = facilitators;
+
   return out;
 }
 
@@ -116,9 +145,12 @@ function deriveProgrammeLanding(c: Content): Partial<WizardData> {
 export function deriveWizardFieldsFromContent(
   content: Content | null | undefined,
   pageKey: CopyDocPageKey,
+  opts?: { hostName?: string },
 ): Partial<WizardData> {
   if (!content || typeof content !== "object") return {};
-  return pageKey === "programmeLanding" ? deriveProgrammeLanding(content) : deriveEventLanding(content);
+  return pageKey === "programmeLanding"
+    ? deriveProgrammeLanding(content, opts?.hostName)
+    : deriveEventLanding(content, opts?.hostName);
 }
 
 /**

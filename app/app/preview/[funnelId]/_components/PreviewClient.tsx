@@ -16,6 +16,7 @@ import ProgrammeLandingPage from "./pages/ProgrammeLandingPage";
 import ProgrammeCheckoutPage from "./pages/ProgrammeCheckoutPage";
 import ProgrammeThankYouPage from "./pages/ProgrammeThankYouPage";
 import MobilePreviewFrame from "./MobilePreviewFrame";
+import ExportPageRenderer from "./ExportPageRenderer";
 
 // Preview-only CSS overrides shared by the desktop canvas and the mobile iframe
 // so both render identically. The sticky bar is bottom-anchored and revealed on
@@ -206,7 +207,28 @@ body {
     }
     setDownloading(true);
     try {
-      const res = await fetch(`/api/wizard/export/${funnelId}`);
+      // Render the funnel pages here on the client. The page components are
+      // interactive Client Components and cannot be invoked from the export
+      // route's server module under the App Router RSC boundary, so we produce
+      // the static HTML in the browser and POST it for the server to zip.
+      const { renderToStaticMarkup } = await import("react-dom/server");
+      const { buildFunnelPageHtml, getFunnelPageTitles } = await import(
+        "@/lib/funnel-export/page-elements"
+      );
+      const titles = getFunnelPageTitles(wizard);
+      const files: Record<string, string> = {};
+      for (const { key, file } of PAGES) {
+        const bodyMarkup = renderToStaticMarkup(
+          <ExportPageRenderer pageKey={key} content={fc} wizard={wizard} />,
+        );
+        files[file] = buildFunnelPageHtml(key, fc, wizard, titles[key], bodyMarkup);
+      }
+
+      const res = await fetch(`/api/wizard/export/${funnelId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files }),
+      });
       if (!res.ok) throw new Error("Export failed");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);

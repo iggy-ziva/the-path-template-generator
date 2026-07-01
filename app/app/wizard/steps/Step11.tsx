@@ -27,6 +27,56 @@ const Z = {
   text: "#f5f1ea",
 };
 
+/** A clickable generation-mode option shown on the Review step. */
+function GenModeOption({
+  active,
+  disabled,
+  title,
+  body,
+  onClick,
+}: {
+  active: boolean;
+  disabled: boolean;
+  title: string;
+  body: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      style={{
+        flex: 1,
+        minWidth: 200,
+        textAlign: "left",
+        padding: "14px 16px",
+        borderRadius: 12,
+        border: active ? `2px solid ${Z.gold}` : `1px solid ${Z.border}`,
+        background: active ? `${Z.gold}14` : Z.darker,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.45 : 1,
+        transition: "all 0.15s",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <span
+          style={{
+            width: 15,
+            height: 15,
+            borderRadius: "50%",
+            border: `2px solid ${active ? Z.gold : Z.muted}`,
+            background: active ? Z.gold : "transparent",
+            flexShrink: 0,
+          }}
+        />
+        <span style={{ fontWeight: 700, fontSize: 13.5, color: active ? Z.gold : Z.text }}>{title}</span>
+      </div>
+      <div style={{ fontSize: 12, color: Z.muted, lineHeight: 1.5 }}>{body}</div>
+    </button>
+  );
+}
+
 /** Returns a UI-visible accent colour for a swatch used as TEXT/border on the
  *  near-black wizard surface. Dark swatches are lightened toward white until
  *  they're legible (fixes low-contrast labels like the Sacred theme's deep
@@ -222,8 +272,6 @@ export default function Step11({ data, onChange, submissionId }: Props) {
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [themeLoading, setThemeLoading]       = useState(false);
   const [showOverride, setShowOverride]       = useState(false);
-  const [previousFunnelId, setPreviousFunnelId] = useState<string | null>(null);
-  const [preserveEdits, setPreserveEdits]     = useState(true);
   const progressRef = useRef(0);
   const startRef    = useRef(0);
   const rafRef      = useRef<number | null>(null);
@@ -247,7 +295,12 @@ export default function Step11({ data, onChange, submissionId }: Props) {
       .filter((c): c is { label: string; value: string } => !!c.value);
   }, [data.styleGuide, displayProfile]);
 
-  const copyDocMode = (data.generationMode ?? "ai_copy") === "copy_doc";
+  const generationMode = data.generationMode ?? "ai_copy";
+  const hasCopyDoc = !!data.copyDoc;
+  // A document is always run through the full AI pipeline (verbatim copy + AI
+  // gap-filling + all 8 pages + fresh image reprocessing). The only opt-out is
+  // explicitly choosing "Let AI write the copy" to ignore the document.
+  const useDocPlusAi = hasCopyDoc && generationMode !== "ai_copy";
   const missing = missingRequiredForMode(data);
 
   const activeTheme = THEME_LIST_FOR_WIZARD.find((t) => t.slug === data.referenceTheme) ?? themeSuggestion;
@@ -313,20 +366,6 @@ export default function Step11({ data, onChange, submissionId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // In copy-doc mode, find any prior generation so we can offer to preserve
-  // its layout/theme/image edits when regenerating.
-  useEffect(() => {
-    if (!copyDocMode || !submissionId) return;
-    fetch("/api/wizard/funnels")
-      .then((r) => r.json())
-      .then(({ funnels }) => {
-        const match = Array.isArray(funnels) ? funnels.find((f: { id: string }) => f.id === submissionId) : null;
-        if (match?.generated_funnel_id) setPreviousFunnelId(match.generated_funnel_id);
-      })
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [copyDocMode, submissionId]);
-
   // Animate progress up to ~95% while waiting for the real API response
   useEffect(() => {
     if (!generating) return;
@@ -366,22 +405,20 @@ export default function Step11({ data, onChange, submissionId }: Props) {
     setTimeLeft(ESTIMATED_SECONDS);
     setError("");
     try {
-      const res = copyDocMode
-        ? await fetch("/api/wizard/generate-from-doc", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              wizardData: data,
-              submissionId,
-              copyDocumentId: data.copyDoc?.documentId,
-              previousFunnelId: preserveEdits ? previousFunnelId ?? undefined : undefined,
-            }),
-          })
-        : await fetch("/api/wizard/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ wizardData: data, submissionId }),
-          });
+      // Always run the full AI pipeline so every generation reprocesses all
+      // wizard data (images included). When a document is in play, the server
+      // overlays its copy verbatim and AI fills any gaps.
+      const res = await fetch("/api/wizard/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wizardData: data,
+          submissionId,
+          ...(useDocPlusAi
+            ? { generationMode: "hybrid", copyDocumentId: data.copyDoc?.documentId }
+            : {}),
+        }),
+      });
       if (!res.ok) {
         let message = "Generation failed — please try again";
         try {
@@ -431,6 +468,36 @@ export default function Step11({ data, onChange, submissionId }: Props) {
         </div>
       </div>
 
+      {/* GENERATION MODE — choose right here so a regen never silently uses the
+          wrong path. Always visible; the doc-based options are disabled until a
+          copy document has been uploaded on Step 1. */}
+      <div style={{ background: Z.dark, border: `1px solid ${Z.border}`, borderRadius: "16px", padding: "24px", marginBottom: "32px" }}>
+        <h3 style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: Z.gold, margin: "0 0 6px" }}>
+          How to generate
+        </h3>
+        <p style={{ fontSize: 12, color: Z.muted, margin: "0 0 16px", lineHeight: 1.5 }}>
+          {hasCopyDoc
+            ? "You uploaded a copy document. Choose how it's used."
+            : "Upload a copy document on Step 1 to unlock the document-based options."}
+        </p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <GenModeOption
+            active={useDocPlusAi}
+            disabled={!hasCopyDoc}
+            title="Use my copy document + AI"
+            body="Your document is the source of truth — its copy is placed verbatim. AI fills any gaps, assigns your latest images, and writes all 8 pages. Reprocesses everything each run. ~1–5 min."
+            onClick={() => onChange({ generationMode: "hybrid" })}
+          />
+          <GenModeOption
+            active={!useDocPlusAi}
+            disabled={false}
+            title="Let AI write the copy"
+            body="Ignore the document — Claude writes all 8 pages from your wizard inputs. ~1–5 min."
+            onClick={() => onChange({ generationMode: "ai_copy" })}
+          />
+        </div>
+      </div>
+
       {/* SUMMARY */}
       <div style={{ background: "#1a1917", borderRadius: "16px", padding: "28px", marginBottom: "32px" }}>
         <h3 style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#D4A878", marginBottom: "20px" }}>
@@ -442,8 +509,9 @@ export default function Step11({ data, onChange, submissionId }: Props) {
           <ReviewRow label="Name" value={data.hostName} missing={!data.hostName} />
           <ReviewRow label="Title" value={data.hostTitle} />
           <ReviewRow label="Business" value={data.businessName} />
-          <ReviewRow label="Headshot" value={data.hostHeadshotUrl ? "Uploaded" : undefined} />
-          <ReviewRow label="Logo" value={data.logoUrl ? "Uploaded" : undefined} />
+          <ReviewRow label="Headshot" value={data.hostHeadshotUrl || (data.hostHeadshotUrls?.length ?? 0) > 0 ? "Uploaded" : undefined} />
+          <ReviewRow label="Facilitators" value={(data.facilitators?.filter(f => f.name || f.bio || f.headshotUrl).length ?? 0) > 0 ? `${data.facilitators!.filter(f => f.name || f.bio || f.headshotUrl).length} added` : undefined} />
+          <ReviewRow label="Logo" value={data.logoLightUrl || data.logoDarkUrl || data.logoUrl ? "Uploaded" : undefined} />
         </div>
 
         <div style={{ marginBottom: "24px" }}>
@@ -535,34 +603,20 @@ export default function Step11({ data, onChange, submissionId }: Props) {
         )}
       </div>
 
-      {copyDocMode && (
+      {useDocPlusAi && (
         <div style={{ background: "#0f2818", border: "1px solid #2a5a38", borderRadius: "12px", padding: "16px 20px", marginBottom: "24px", fontSize: 13, color: "#bfe8cc", lineHeight: 1.6 }}>
-          <strong style={{ color: "#4ade80" }}>Copy-document mode.</strong> Your landing-page copy will be placed verbatim from{" "}
-          <strong>{data.copyDoc?.fileName ?? "your uploaded document"}</strong>. The AI only handles layout, theme, image placement, and design — it will not rewrite your words.
-          {previousFunnelId && (
-            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 12, cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={preserveEdits}
-                onChange={(e) => setPreserveEdits(e.target.checked)}
-                style={{ marginTop: 2 }}
-              />
-              <span style={{ fontSize: 12.5, color: "#bfe8cc", lineHeight: 1.5 }}>
-                Keep my previous layout edits (section themes, images, logo & icons). Copy is always replaced by the document.
-                {!preserveEdits && <strong style={{ color: "#f59e0b", display: "block", marginTop: 2 }}>Rebuilding fresh will discard those layout edits.</strong>}
-              </span>
-            </label>
-          )}
+          <strong style={{ color: "#4ade80" }}>Document + AI.</strong> Your copy stays verbatim from{" "}
+          <strong>{data.copyDoc?.fileName ?? "your uploaded document"}</strong>. Every run reprocesses all your wizard data — AI assigns your latest images, fills any copy gaps the document didn&apos;t cover, and writes all 8 funnel pages. Expect ~1–5 minutes.
         </div>
       )}
 
       {/* WHAT CLAUDE WILL WRITE */}
       <div style={{ background: "#1a1917", borderRadius: "12px", padding: "24px", marginBottom: "32px" }}>
         <h3 style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#D4A878", marginBottom: "16px" }}>
-          {copyDocMode ? "We will build" : "Claude will generate"}
+          Claude will generate
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px" }}>
-          {(copyDocMode ? ["Event landing page"] : [
+          {[
             "Event landing page",
             "Event checkout",
             "Post-checkout upsell",
@@ -571,7 +625,7 @@ export default function Step11({ data, onChange, submissionId }: Props) {
             "Programme landing page",
             "Programme checkout",
             "Programme thank-you",
-          ]).map((page, i) => (
+          ].map((page, i) => (
             <div key={page} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: "#0f0e0c", borderRadius: "8px" }}>
               <span style={{ color: "#D4A878", fontWeight: 700, fontSize: "12px", flexShrink: 0 }}>0{i + 1}</span>
               <span style={{ fontSize: "13px", color: "#c8c0b4" }}>{page}</span>
@@ -674,7 +728,7 @@ export default function Step11({ data, onChange, submissionId }: Props) {
             transition: "all 0.2s",
           }}
         >
-          ✨&nbsp;&nbsp;{copyDocMode ? "Build my funnel from the document →" : "Generate my complete funnel →"}
+          ✨&nbsp;&nbsp;{useDocPlusAi ? "Build my funnel from the document + AI →" : "Generate my complete funnel →"}
         </button>
       )}
 

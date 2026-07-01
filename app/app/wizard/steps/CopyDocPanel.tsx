@@ -15,6 +15,7 @@ const PREFILL_LABELS: Partial<Record<keyof WizardData, string>> = {
   transformationPromise: "Transformation promise",
   methodologyDescription: "Transformation in your own words",
   uniqueApproach: "Unique approach",
+  facilitators: "Facilitators",
 };
 
 interface Props {
@@ -161,11 +162,46 @@ function CoverageReportView({ report }: { report: CoverageReport }) {
 export default function CopyDocPanel({ data, onChange, submissionId }: Props) {
   const mode: GenerationMode = data.generationMode ?? "ai_copy";
   const [uploading, setUploading] = useState(false);
+  const [reprocessing, setReprocessing] = useState(false);
   const [error, setError] = useState("");
   const [prefilled, setPrefilled] = useState<string[]>([]);
 
   function setMode(next: GenerationMode) {
     onChange({ generationMode: next });
+  }
+
+  /** Apply a parse response: pre-fill empty wizard fields + record the copy-doc. */
+  function applyParseResult(parseJson: {
+    pageKey?: string;
+    content?: unknown;
+    copyDocumentId: string;
+    version: number;
+    report: CoverageReport;
+  }, fileName: string) {
+    const pageKey: CopyDocPageKey = parseJson.pageKey === "programmeLanding" ? "programmeLanding" : "eventLanding";
+    const derived = deriveWizardFieldsFromContent(
+      parseJson.content as Parameters<typeof deriveWizardFieldsFromContent>[0],
+      pageKey,
+      { hostName: data.hostName },
+    );
+    const toFill = pickEmptyWizardFields(derived, data);
+    const filledLabels = Object.keys(toFill)
+      .map((k) => PREFILL_LABELS[k as keyof WizardData])
+      .filter((l): l is string => Boolean(l));
+
+    onChange({
+      ...toFill,
+      // A document always runs through the full AI pipeline (verbatim copy +
+      // AI gap-filling + all 8 pages + fresh image reprocessing).
+      generationMode: "hybrid",
+      copyDoc: {
+        documentId: parseJson.copyDocumentId,
+        fileName,
+        version: parseJson.version,
+        report: parseJson.report,
+      },
+    });
+    setPrefilled(filledLabels);
   }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -196,31 +232,34 @@ export default function CopyDocPanel({ data, onChange, submissionId }: Props) {
       const parseJson = await parseRes.json();
       if (!parseRes.ok) throw new Error(parseJson.error ?? "Could not parse the document");
 
-      // Pre-fill wizard input fields from the parsed copy, without overwriting
-      // anything the user has already entered.
-      const pageKey: CopyDocPageKey = parseJson.pageKey === "programmeLanding" ? "programmeLanding" : "eventLanding";
-      const derived = deriveWizardFieldsFromContent(parseJson.content, pageKey);
-      const toFill = pickEmptyWizardFields(derived, data);
-      const filledLabels = Object.keys(toFill)
-        .map((k) => PREFILL_LABELS[k as keyof WizardData])
-        .filter((l): l is string => Boolean(l));
-
-      onChange({
-        ...toFill,
-        generationMode: "copy_doc",
-        copyDoc: {
-          documentId: parseJson.copyDocumentId,
-          fileName: file.name,
-          version: parseJson.version,
-          report: parseJson.report as CoverageReport,
-        },
-      });
-      setPrefilled(filledLabels);
+      applyParseResult(parseJson, file.name);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
       e.target.value = "";
+    }
+  }
+
+  /** Re-parse the file already stored for the current document (no re-select). */
+  async function handleReprocess() {
+    if (!data.copyDoc?.documentId || reprocessing || uploading) return;
+    setReprocessing(true);
+    setError("");
+    try {
+      const parseRes = await fetch("/api/wizard/copy-doc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reprocessDocumentId: data.copyDoc.documentId, submissionId }),
+      });
+      const parseJson = await parseRes.json();
+      if (!parseRes.ok) throw new Error(parseJson.error ?? "Could not reprocess the document");
+
+      applyParseResult(parseJson, data.copyDoc.fileName ?? "document.docx");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Reprocess failed");
+    } finally {
+      setReprocessing(false);
     }
   }
 
@@ -238,14 +277,14 @@ export default function CopyDocPanel({ data, onChange, submissionId }: Props) {
           onClick={() => setMode("ai_copy")}
         />
         <ModeCard
-          active={mode === "copy_doc"}
-          title="Start from a copy document"
-          body="Upload a finished landing-page copy document. We place your words verbatim and handle layout, theme, and design."
-          onClick={() => setMode("copy_doc")}
+          active={mode === "hybrid" || mode === "copy_doc"}
+          title="Use my copy document + AI"
+          body="Your document is the source of truth — its words stay verbatim. AI fills any gaps, assigns your images, and writes all 8 funnel pages."
+          onClick={() => setMode("hybrid")}
         />
       </div>
 
-      {mode === "copy_doc" && (
+      {(mode === "copy_doc" || mode === "hybrid") && (
         <div style={{ marginTop: 18 }}>
           <div
             style={{
@@ -278,31 +317,63 @@ export default function CopyDocPanel({ data, onChange, submissionId }: Props) {
             </a>
           </div>
 
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-              padding: "16px 18px",
-              background: Z.darker,
-              border: `1.5px dashed ${uploading ? Z.amber : "#3a3834"}`,
-              borderRadius: 12,
-              cursor: uploading ? "not-allowed" : "pointer",
-            }}
-          >
-            <span style={{ fontSize: 22, opacity: 0.6 }}>↑</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 14, color: Z.text }}>
-                {uploading ? "Parsing your document…" : data.copyDoc ? "Replace copy document" : "Upload copy document (.docx)"}
+          <div style={{ display: "flex", alignItems: "stretch", gap: 10 }}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                flex: 1,
+                padding: "16px 18px",
+                background: Z.darker,
+                border: `1.5px dashed ${uploading ? Z.amber : "#3a3834"}`,
+                borderRadius: 12,
+                cursor: uploading || reprocessing ? "not-allowed" : "pointer",
+                opacity: reprocessing ? 0.6 : 1,
+              }}
+            >
+              <span style={{ fontSize: 22, opacity: 0.6 }}>↑</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: Z.text }}>
+                  {uploading ? "Parsing your document…" : data.copyDoc ? "Replace copy document" : "Upload copy document (.docx)"}
+                </div>
+                <div style={{ fontSize: 12, color: Z.muted, marginTop: 2 }}>
+                  {data.copyDoc?.fileName
+                    ? `Current: ${data.copyDoc.fileName} (v${data.copyDoc.version})`
+                    : "Click to browse — .docx only"}
+                </div>
               </div>
-              <div style={{ fontSize: 12, color: Z.muted, marginTop: 2 }}>
-                {data.copyDoc?.fileName
-                  ? `Current: ${data.copyDoc.fileName} (v${data.copyDoc.version})`
-                  : "Click to browse — .docx only"}
-              </div>
-            </div>
-            <input type="file" accept=".docx" onChange={handleFile} style={{ display: "none" }} disabled={uploading} />
-          </label>
+              <input type="file" accept=".docx" onChange={handleFile} style={{ display: "none" }} disabled={uploading || reprocessing} />
+            </label>
+
+            {data.copyDoc && (
+              <button
+                type="button"
+                onClick={handleReprocess}
+                disabled={uploading || reprocessing}
+                title="Re-parse the current document — picks up template/section changes without re-uploading."
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4,
+                  minWidth: 120,
+                  padding: "12px 16px",
+                  background: Z.darker,
+                  border: `1.5px solid ${reprocessing ? Z.amber : `${Z.gold}55`}`,
+                  borderRadius: 12,
+                  color: reprocessing ? Z.amber : Z.gold,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: uploading || reprocessing ? "not-allowed" : "pointer",
+                }}
+              >
+                <span style={{ fontSize: 18, lineHeight: 1 }}>↻</span>
+                {reprocessing ? "Reprocessing…" : "Reprocess"}
+              </button>
+            )}
+          </div>
 
           {error && <p style={{ color: Z.red, fontSize: 12.5, marginTop: 10 }}>{error}</p>}
 

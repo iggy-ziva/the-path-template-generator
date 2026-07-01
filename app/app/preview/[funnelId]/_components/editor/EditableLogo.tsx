@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, type CSSProperties } from "react";
+import type { SectionTheme } from "@/lib/brand-surfaces";
 import { useEditorOptional } from "./EditorContext";
 import { usePageContent } from "./PageContentContext";
 import { getAtPath } from "@/lib/content-path";
@@ -15,7 +16,13 @@ interface Props {
   path?: string;
   /** Wizard logo URL used when no override is set. */
   fallbackUrl?: string | null;
+  /** Light-coloured logo variant — used on dark/accent backgrounds. */
+  logoLightUrl?: string | null;
+  /** Dark-coloured logo variant — used on light backgrounds. */
+  logoDarkUrl?: string | null;
   logoTransparent?: boolean;
+  /** Background this logo sits on — drives light-vs-dark variant selection. */
+  background?: SectionTheme;
   /** Business name — text fallback when there is no logo image. */
   name: string;
   className?: string;
@@ -27,12 +34,17 @@ interface Props {
 /**
  * Logo with editor swap/remove. Reads `c.<path> ?? fallbackUrl`; an explicit
  * null override removes the image so BrandLogo shows the business-name text.
+ * When there is no manual override, light/dark variants are selected based on
+ * the section background.
  */
 export default function EditableLogo({
   pageKey,
   path = "logoUrl",
   fallbackUrl,
+  logoLightUrl,
+  logoDarkUrl,
   logoTransparent,
+  background,
   name,
   className,
   style,
@@ -45,6 +57,9 @@ export default function EditableLogo({
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const raw = getAtPath(pageContent, path);
+  // An explicit editor override (string) or removal (null) wins and disables
+  // automatic variant selection; only the wizard fallback uses light/dark logic.
+  const hasOverride = raw === null || typeof raw === "string";
   const effectiveUrl =
     raw === null
       ? null
@@ -55,7 +70,10 @@ export default function EditableLogo({
   const logo = (
     <BrandLogo
       logoUrl={effectiveUrl}
+      logoLightUrl={hasOverride ? undefined : logoLightUrl}
+      logoDarkUrl={hasOverride ? undefined : logoDarkUrl}
       logoTransparent={logoTransparent}
+      background={background}
       name={name}
       className={className}
       style={style}

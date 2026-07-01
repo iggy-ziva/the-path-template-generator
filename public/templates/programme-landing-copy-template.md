@@ -182,6 +182,15 @@ Lena Hartwell
 - Author of The Quiet Path
 - Facilitator of Inner Stillness
 
+## Facilitators
+
+### Heading
+Meet your facilitators
+
+### People
+- **Jordan Lee — Breathwork Facilitator** Jordan guides the somatic and breath practices, drawing on a decade of trauma-informed bodywork.
+- **Sam Rivera — Community Host** Sam holds the group container between sessions and makes sure no one moves through the work alone.
+
 ## FAQ
 
 ### Items

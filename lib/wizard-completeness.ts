@@ -53,14 +53,14 @@ export const CHECKS: CompletenessCheck[] = [
   { id: "hostTitle",        step: 1, label: "Host title",                weight: 1, required: false, test: d => nonEmptyString(d.hostTitle) },
   { id: "hostTagline",      step: 1, label: "Host tagline",              weight: 1, required: false, test: d => nonEmptyString(d.hostTagline) },
   { id: "hostBio",          step: 1, label: "Host bio",                  weight: 3, required: true,  test: d => nonEmptyString(d.hostBio) },
-  { id: "hostHeadshotUrl",  step: 1, label: "Headshot",                  weight: 2, required: false, test: d => nonEmptyString(d.hostHeadshotUrl) },
+  { id: "hostHeadshotUrl",  step: 1, label: "Headshot",                  weight: 2, required: false, test: d => nonEmptyArray(d.hostHeadshotUrls) || nonEmptyString(d.hostHeadshotUrl) },
   { id: "methodologyDescription", step: 1, label: "Methodology",         weight: 2, required: false, test: d => nonEmptyString(d.methodologyDescription) },
   { id: "uniqueApproach",         step: 1, label: "Unique approach",     weight: 2, required: false, test: d => nonEmptyString(d.uniqueApproach) },
   { id: "existingMaterials",      step: 1, label: "Existing materials",  weight: 1, required: false, test: d => nonEmptyArray(d.existingMaterialUrls) || nonEmptyArray(d.existingFileUrls) },
 
   // ── Step 2: Your Brand ──
   { id: "businessName",     step: 2, label: "Business name",             weight: 2, required: false, test: d => nonEmptyString(d.businessName) },
-  { id: "logoUrl",          step: 2, label: "Brand logo",                weight: 2, required: false, test: d => nonEmptyString(d.logoUrl) },
+  { id: "logoUrl",          step: 2, label: "Brand logo",                weight: 2, required: false, test: d => nonEmptyString(d.logoUrl) || nonEmptyString(d.logoLightUrl) || nonEmptyString(d.logoDarkUrl) },
   { id: "contactEmail",     step: 2, label: "Support / contact email",   weight: 2, required: true,  test: d => nonEmptyString(d.contactEmail) },
   { id: "websiteUrl",       step: 2, label: "Website URL",               weight: 1, required: false, test: d => nonEmptyString(d.websiteUrl) },
   { id: "privacyPolicyUrl", step: 2, label: "Privacy policy URL",        weight: 1, required: false, test: d => nonEmptyString(d.privacyPolicyUrl) },
@@ -146,6 +146,15 @@ function isCopyDocMode(d: WizardData): boolean {
   return (d.generationMode ?? "ai_copy") === "copy_doc";
 }
 
+/**
+ * Hybrid mode: the document supplies the landing-page copy verbatim, but AI still
+ * writes the other pages, assigns images, and fills gaps. So it's gated like the
+ * full AI path (wizard must be reasonably complete) AND requires a parsed doc.
+ */
+function isHybridMode(d: WizardData): boolean {
+  return (d.generationMode ?? "ai_copy") === "hybrid";
+}
+
 function copyDocReady(d: WizardData): boolean {
   return !!d.copyDoc?.report?.ok;
 }
@@ -224,7 +233,11 @@ export function canGenerate(d: WizardData): boolean {
   if (isCopyDocMode(d)) {
     return copyDocReady(d) && copyDocMissingFacts(d).length === 0;
   }
-  return overallCompleteness(d) >= GENERATE_THRESHOLD && missingRequired(d).length === 0;
+  const aiReady = overallCompleteness(d) >= GENERATE_THRESHOLD && missingRequired(d).length === 0;
+  // Hybrid also needs a parsed copy document (AI fills any gaps the doc misses,
+  // so the doc's own coverage report does not have to be fully `ok`).
+  if (isHybridMode(d)) return aiReady && !!d.copyDoc;
+  return aiReady;
 }
 
 /** Mode-aware required-missing list used by the Review step. */
@@ -237,5 +250,7 @@ export function missingRequiredForMode(d: WizardData): { label: string }[] {
     }
     return facts;
   }
-  return missingRequired(d);
+  const required = missingRequired(d).map((c) => ({ label: c.label }));
+  if (isHybridMode(d) && !d.copyDoc) required.push({ label: "A parsed copy document" });
+  return required;
 }

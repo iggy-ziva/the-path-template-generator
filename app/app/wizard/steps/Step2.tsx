@@ -70,11 +70,19 @@ function ColorSwatch({ value, onChange }: { value: string; onChange: (v: string)
   );
 }
 
-function AnalysisProgress({ mode }: { mode: "url" | "file" }) {
+function AnalysisProgress({ mode }: { mode: "url" | "file" | "figma" }) {
   const messages = mode === "url"
     ? [
         "Fetching your website…",
         "Scanning the page styles…",
+        "Detecting your colour palette…",
+        "Identifying your fonts…",
+        "Putting it all together…",
+      ]
+    : mode === "figma"
+    ? [
+        "Opening your Figma file…",
+        "Reading colour styles and fills…",
         "Detecting your colour palette…",
         "Identifying your fonts…",
         "Putting it all together…",
@@ -181,6 +189,77 @@ export default function Step2({ data, onChange }: Props) {
   const [uploadAnalysing, setUploadAnalysing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ── Figma connection state ──────────────────────────────────────────────
+  const [figmaConfigured, setFigmaConfigured] = useState(true);
+  const [figmaConnected, setFigmaConnected] = useState(false);
+  const [figmaHandle, setFigmaHandle] = useState<string | null>(null);
+  const [figmaUrl, setFigmaUrl] = useState(data.styleGuide?.figmaFileUrl ?? "");
+  const [figmaAnalysing, setFigmaAnalysing] = useState(false);
+  const [figmaNotice, setFigmaNotice] = useState("");
+
+  async function refreshFigmaStatus() {
+    try {
+      const res = await fetch("/api/figma/status");
+      const json = await res.json();
+      setFigmaConfigured(Boolean(json.configured));
+      setFigmaConnected(Boolean(json.connected));
+      setFigmaHandle(json.figmaHandle ?? null);
+    } catch {
+      /* ignore — treat as not connected */
+    }
+  }
+
+  useEffect(() => {
+    refreshFigmaStatus();
+    // Surface the OAuth round-trip result, then clean the URL.
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const figma = params.get("figma");
+      if (figma === "connected") setFigmaNotice("Figma connected — paste a file link below to analyse it.");
+      else if (figma === "error") setFigmaNotice("Couldn't connect Figma. Please try again.");
+      else if (figma === "unconfigured") setFigmaNotice("Figma integration isn't configured on this environment.");
+      if (figma) {
+        params.delete("figma");
+        const qs = params.toString();
+        window.history.replaceState({}, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+      }
+    }
+  }, []);
+
+  async function handleAnalyseFigma() {
+    const url = figmaUrl.trim();
+    if (!url) return;
+    setFigmaAnalysing(true);
+    setAnalyseError("");
+    try {
+      const res = await fetch("/api/wizard/analyze-figma", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl: url }),
+      });
+      const json = await res.json();
+      if (res.status === 428) {
+        setFigmaConnected(false);
+        throw new Error(json.message ?? "Connect your Figma account first.");
+      }
+      if (!res.ok) throw new Error(json.error ?? "Figma analysis failed");
+      onChange({ styleGuide: { googleFonts: [], customFonts: [], ...data.styleGuide, ...json, figmaFileUrl: url } });
+    } catch (err) {
+      setAnalyseError(err instanceof Error ? err.message : "Figma analysis failed");
+    } finally {
+      setFigmaAnalysing(false);
+    }
+  }
+
+  async function handleDisconnectFigma() {
+    try {
+      await fetch("/api/figma/status", { method: "DELETE" });
+    } finally {
+      setFigmaConnected(false);
+      setFigmaHandle(null);
+    }
+  }
+
   async function handleAnalyseBrand() {
     const url = brandUrl.trim() || data.websiteUrl;
     if (!url) return;
@@ -272,15 +351,32 @@ export default function Step2({ data, onChange }: Props) {
       </Section>
 
       <Section title="Logo">
-        <Field label="Logo file" hint="PNG, SVG, or WebP with a transparent background required. JPEG and opaque images are rejected. Crop tightly to visible pixels — used in headers and footers throughout the funnel.">
-          <FileUpload
-            label="Upload logo"
-            accept="image/png,image/webp,image/svg+xml"
-            requireTransparency
-            currentUrl={data.logoUrl}
-            onUpload={(url) => onChange({ logoUrl: url, logoTransparent: true })}
-          />
-        </Field>
+        <p style={{ fontSize: 13, color: "#888", marginBottom: 16, marginTop: -8, lineHeight: 1.6 }}>
+          Upload a <strong>light</strong> and a <strong>dark</strong> version of your logo. The builder
+          automatically uses the light version on dark sections (headers, footers) and the dark version on
+          light sections — so your logo always stays legible. If you only have one version, upload it as the
+          light logo and it will be used everywhere.
+        </p>
+        <Grid>
+          <Field label="Light logo — for dark backgrounds" hint="A light/white logo that reads on dark headers and footers. PNG, SVG, or WebP with a transparent background required.">
+            <FileUpload
+              label="Upload light logo"
+              accept="image/png,image/webp,image/svg+xml"
+              requireTransparency
+              currentUrl={data.logoLightUrl}
+              onUpload={(url) => onChange({ logoLightUrl: url, logoTransparent: true, logoUrl: url })}
+            />
+          </Field>
+          <Field label="Dark logo — for light backgrounds" hint="A dark logo that reads on light/cream sections. PNG, SVG, or WebP with a transparent background required.">
+            <FileUpload
+              label="Upload dark logo"
+              accept="image/png,image/webp,image/svg+xml"
+              requireTransparency
+              currentUrl={data.logoDarkUrl}
+              onUpload={(url) => onChange({ logoDarkUrl: url, logoTransparent: true, logoUrl: data.logoUrl ?? url })}
+            />
+          </Field>
+        </Grid>
       </Section>
 
       <Section title="Legal pages">
@@ -415,9 +511,91 @@ export default function Step2({ data, onChange }: Props) {
           </button>
         </div>
 
+        {/* ── Divider ─────────────────────────────────────────────────────── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0" }}>
+          <div style={{ flex: 1, height: 1, background: Z.creamDeep }} />
+          <span style={{ fontFamily: Z.font, fontSize: 11, color: Z.faint, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>or</span>
+          <div style={{ flex: 1, height: 1, background: Z.creamDeep }} />
+        </div>
+
+        {/* ── Analyse a Figma file ────────────────────────────────────────── */}
+        <div>
+          <p style={{ fontFamily: Z.font, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: Z.muted, marginBottom: 6 }}>Analyse a Figma file</p>
+          <p style={{ fontFamily: Z.font, fontSize: 12, color: Z.muted, marginBottom: 10, lineHeight: 1.5 }}>
+            Connect your Figma account, then paste a link to a file or frame — we&apos;ll read your colour styles and fonts directly from the design.
+          </p>
+
+          {!figmaConfigured ? (
+            <p style={{ fontFamily: Z.font, fontSize: 12, color: Z.faint, margin: 0 }}>
+              Figma isn&apos;t available on this environment yet.
+            </p>
+          ) : !figmaConnected ? (
+            <a
+              href="/api/figma/oauth/start"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "11px 20px", borderRadius: 10,
+                background: Z.charcoal, border: `1.5px solid ${Z.charcoal}`,
+                color: Z.white, fontFamily: Z.font, fontSize: 13, fontWeight: 700,
+                textDecoration: "none", cursor: "pointer",
+              }}
+            >
+              <span style={{ fontSize: 15 }}>✦</span> Connect Figma
+            </a>
+          ) : (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: Z.font, fontSize: 12, fontWeight: 600, color: "#2D6A35", background: "#E6F4EA", border: "1px solid #A8D5B0", borderRadius: 100, padding: "4px 12px" }}>
+                  ✓ Figma connected{figmaHandle ? ` · ${figmaHandle}` : ""}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleDisconnectFigma}
+                  style={{ background: "none", border: "none", color: Z.faint, fontFamily: Z.font, fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}
+                >
+                  Disconnect
+                </button>
+              </div>
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+                <div style={{ flex: 1 }}>
+                  <input
+                    type="url"
+                    value={figmaUrl}
+                    onChange={(e) => setFigmaUrl(e.target.value)}
+                    placeholder="https://www.figma.com/design/…"
+                    style={{ width: "100%", padding: "12px 16px", background: Z.white, border: `1.5px solid ${Z.creamDeep}`, borderRadius: 10, color: Z.charcoal, fontSize: 14, fontFamily: Z.font, outline: "none", boxSizing: "border-box" }}
+                    onFocus={(e) => { e.target.style.borderColor = Z.pink; }}
+                    onBlur={(e) => { e.target.style.borderColor = Z.creamDeep; }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAnalyseFigma}
+                  disabled={figmaAnalysing || !figmaUrl.trim()}
+                  style={{
+                    flexShrink: 0, padding: "12px 22px", borderRadius: 10,
+                    background: `linear-gradient(135deg, ${Z.pink}, ${Z.coral})`,
+                    border: "none", color: Z.white, fontFamily: Z.font, fontSize: 13, fontWeight: 700,
+                    cursor: figmaAnalysing || !figmaUrl.trim() ? "not-allowed" : "pointer",
+                    opacity: figmaAnalysing || !figmaUrl.trim() ? 0.7 : 1,
+                    boxShadow: "0 2px 12px rgba(255,0,126,0.2)", whiteSpace: "nowrap",
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                  }}
+                >
+                  {figmaAnalysing
+                    ? <><span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid rgba(255,255,255,0.5)", borderTopColor: Z.white, borderRadius: "50%", animation: "brandSpin 0.7s linear infinite" }} />Analysing…</>
+                    : "✦ Analyse Figma"}
+                </button>
+              </div>
+            </>
+          )}
+
+          {figmaNotice && <p style={{ fontFamily: Z.font, fontSize: 12, color: Z.muted, marginTop: 10, marginBottom: 0 }}>{figmaNotice}</p>}
+        </div>
+
         {/* ── Live analysis progress ──────────────────────────────────────── */}
-        {(analysing || uploadAnalysing) && (
-          <AnalysisProgress mode={analysing ? "url" : "file"} />
+        {(analysing || uploadAnalysing || figmaAnalysing) && (
+          <AnalysisProgress mode={analysing ? "url" : figmaAnalysing ? "figma" : "file"} />
         )}
 
         {analyseError && <p style={{ fontFamily: Z.font, fontSize: 12, color: Z.coral, marginTop: 10, marginBottom: 0 }}>{analyseError}</p>}

@@ -288,6 +288,15 @@ export const EVENT_LANDING_COPY_SPEC: CopyPageSpec = {
       ],
     },
     {
+      id: "facilitators",
+      heading: "Facilitators",
+      aliases: ["Team", "Co-facilitators", "Co-hosts", "Meet the facilitators", "Facilitators & Team"],
+      fields: [
+        { label: "Heading", key: "heading", kind: "text", target: "facilitatorsHeading" },
+        { label: "People", aliases: ["Team", "List"], key: "people", kind: "items", itemShape: ["name", "title", "bio"], target: "facilitators" },
+      ],
+    },
+    {
       id: "finalVp",
       heading: "Final Value Proposition",
       fields: [
@@ -464,6 +473,15 @@ export const PROGRAMME_LANDING_COPY_SPEC: CopyPageSpec = {
         { label: "Name", key: "name", kind: "text", target: "bioName" },
         { label: "Body", key: "body", kind: "list", target: "bioParagraphs" },
         { label: "Credentials", key: "credentials", kind: "list", target: "bioCredentials" },
+      ],
+    },
+    {
+      id: "facilitators",
+      heading: "Facilitators",
+      aliases: ["Team", "Co-facilitators", "Co-hosts", "Meet the facilitators", "Facilitators & Team"],
+      fields: [
+        { label: "Heading", key: "heading", kind: "text", target: "facilitatorsHeading" },
+        { label: "People", aliases: ["Team", "List"], key: "people", kind: "items", itemShape: ["name", "title", "bio"], target: "facilitators" },
       ],
     },
     {

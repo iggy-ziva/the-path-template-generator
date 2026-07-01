@@ -27,6 +27,14 @@ export function brandImageBackground(overlay: string, url: string): string {
 // "light"  → surface-canvas background   (warm cream)  default dark text
 export type SectionTheme = "dark" | "accent" | "light";
 
+/** A co-facilitator / additional presenter rendered in the Facilitators section. */
+export interface FacilitatorContent {
+  name?: string;
+  title?: string;
+  bio?: string;
+  headshotUrl?: string;
+}
+
 /**
  * Editor icon override stored at paths like `audienceItemIcons.0`.
  * Legacy plain strings (icon name only) are handled by `parseIconOverride` in
@@ -78,8 +86,14 @@ export interface WizardSnapshot {
   hostTitle?: string;
   hostBio?: string;
   hostHeadshotUrl?: string;
+  hostHeadshotUrls?: string[];
+  facilitators?: FacilitatorContent[];
   businessName?: string;
   logoUrl?: string;
+  /** Light-coloured logo variant — used on dark/accent backgrounds. */
+  logoLightUrl?: string;
+  /** Dark-coloured logo variant — used on light backgrounds. */
+  logoDarkUrl?: string;
   logoTransparent?: boolean;
   contactEmail?: string;
   websiteUrl?: string;
@@ -274,6 +288,9 @@ export interface EventLandingContent {
   bioHeading?: string;
   bioParagraphs?: string[];
   bioSignature?: string;
+  // 17b Facilitators
+  facilitatorsHeading?: string;
+  facilitators?: FacilitatorContent[];
   // 18 Final VP
   finalVpHeading?: string;
   finalVpIntro?: string;
@@ -479,6 +496,9 @@ export interface ProgrammeLandingContent {
   bioName?: string;
   bioParagraphs?: string[];
   bioCredentials?: string[];
+  // 13b Facilitators
+  facilitatorsHeading?: string;
+  facilitators?: FacilitatorContent[];
   // 15 FAQ
   faqEyebrow?: string;
   faqItems?: { question: string; answer: string }[];

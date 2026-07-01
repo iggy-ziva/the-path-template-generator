@@ -35,8 +35,13 @@ export function collectWizardImages(wizard: WizardSnapshot | null | undefined): 
   (wizard.existingMaterialUrls ?? []).forEach((u, i) => push(u, `Material ${i + 1}`));
 
   // Step 1 / 2 — host and brand assets
-  push(wizard.hostHeadshotUrl, "Host headshot");
-  push(wizard.hostSignatureUrl, "Host signature");
+  const headshots = (wizard.hostHeadshotUrls ?? []).length > 0
+    ? wizard.hostHeadshotUrls!
+    : wizard.hostHeadshotUrl ? [wizard.hostHeadshotUrl] : [];
+  headshots.forEach((u, i) => push(u, headshots.length > 1 ? `Headshot ${i + 1}` : "Host headshot"));
+  (wizard.facilitators ?? []).forEach((f, i) => push(f.headshotUrl, f.name ? `${f.name} (facilitator)` : `Facilitator ${i + 1}`));
+  push(wizard.logoLightUrl, "Logo (light)");
+  push(wizard.logoDarkUrl, "Logo (dark)");
   push(wizard.logoUrl, "Logo");
   (wizard.pressLogos ?? []).forEach((p) => push(p?.logoUrl, p?.name ? `${p.name} logo` : "Press logo"));
 

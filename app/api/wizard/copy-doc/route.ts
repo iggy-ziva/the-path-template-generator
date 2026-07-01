@@ -32,18 +32,38 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const storagePath: string | undefined = body?.storagePath;
-    const fileName: string | undefined = body?.fileName;
     const submissionId: string | undefined = body?.submissionId;
-    const pageKey: CopyDocPageKey = body?.pageKey === "programmeLanding" ? "programmeLanding" : "eventLanding";
-
-    if (!storagePath || !/\.docx$/i.test(fileName ?? storagePath)) {
-      return NextResponse.json({ error: "A .docx file is required." }, { status: 400 });
-    }
+    // Reprocess re-parses the file already stored for an existing document —
+    // useful when the copy-doc schema changes (e.g. a new section) without the
+    // user re-selecting the file from disk.
+    const reprocessDocumentId: string | undefined = body?.reprocessDocumentId;
 
     const supabase = await getServiceClient();
     const userId = await getOrCreateUserId(session, supabase);
     if (!userId) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+    let storagePath: string | undefined = body?.storagePath;
+    let fileName: string | undefined = body?.fileName;
+    let pageKey: CopyDocPageKey = body?.pageKey === "programmeLanding" ? "programmeLanding" : "eventLanding";
+
+    if (reprocessDocumentId) {
+      const { data: existing } = await supabase
+        .from("copy_documents")
+        .select("storage_path, file_name, page_key")
+        .eq("id", reprocessDocumentId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!existing?.storage_path) {
+        return NextResponse.json({ error: "Original document not found to reprocess." }, { status: 404 });
+      }
+      storagePath = existing.storage_path;
+      fileName = existing.file_name ?? fileName;
+      pageKey = existing.page_key === "programmeLanding" ? "programmeLanding" : "eventLanding";
+    }
+
+    if (!storagePath || !/\.docx$/i.test(fileName ?? storagePath)) {
+      return NextResponse.json({ error: "A .docx file is required." }, { status: 400 });
+    }
 
     // Defence in depth: uploaded paths are namespaced by user id.
     if (!storagePath.startsWith(`${session.userId}/`)) {

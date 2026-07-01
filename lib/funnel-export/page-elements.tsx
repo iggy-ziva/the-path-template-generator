@@ -1,102 +1,14 @@
 import React from "react";
 import type { FunnelContent, WizardSnapshot } from "@/app/app/preview/[funnelId]/_components/funnel-types";
-import { brandVarsStyle, computeBrandTokens } from "@/lib/brand-tokens";
-import EventLandingPage from "@/app/app/preview/[funnelId]/_components/pages/EventLandingPage";
-import EventCheckoutPage from "@/app/app/preview/[funnelId]/_components/pages/EventCheckoutPage";
-import UpsellPage from "@/app/app/preview/[funnelId]/_components/pages/UpsellPage";
-import EventThankYouPage from "@/app/app/preview/[funnelId]/_components/pages/EventThankYouPage";
-import ReplayPage from "@/app/app/preview/[funnelId]/_components/pages/ReplayPage";
-import ProgrammeLandingPage from "@/app/app/preview/[funnelId]/_components/pages/ProgrammeLandingPage";
-import ProgrammeCheckoutPage from "@/app/app/preview/[funnelId]/_components/pages/ProgrammeCheckoutPage";
-import ProgrammeThankYouPage from "@/app/app/preview/[funnelId]/_components/pages/ProgrammeThankYouPage";
-import { PageContentContext } from "@/app/app/preview/[funnelId]/_components/editor/PageContentContext";
+import ExportPageRenderer from "@/app/app/preview/[funnelId]/_components/ExportPageRenderer";
 import { FUNNEL_PAGES, rewriteExportLinks, type FunnelPageKey } from "./config";
-
-function PageShell({
-  pageKey,
-  children,
-  wizard,
-}: {
-  pageKey: FunnelPageKey;
-  children: React.ReactNode;
-  wizard: WizardSnapshot;
-}) {
-  const tokens = computeBrandTokens(wizard);
-  const vars = brandVarsStyle(tokens);
-  const isProgrammeCheckout = pageKey === "programmeCheckout";
-
-  return (
-    <div
-      className="theme-root"
-      style={{
-        ...vars,
-        background: isProgrammeCheckout ? "var(--surface-inverse)" : "var(--surface-canvas)",
-        color: isProgrammeCheckout ? "var(--text-inverse)" : "var(--text-primary)",
-        fontFamily: "var(--font-body)",
-        minHeight: "100vh",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
 
 export function renderPageElement(
   pageKey: FunnelPageKey,
   content: FunnelContent,
   wizard: WizardSnapshot,
 ): React.ReactNode {
-  let inner: React.ReactNode = null;
-  switch (pageKey) {
-    case "eventLanding":
-      inner = content.eventLanding ? (
-        <EventLandingPage content={content.eventLanding} wizard={wizard} exportMode />
-      ) : null;
-      break;
-    case "eventCheckout":
-      inner = content.eventCheckout ? (
-        <EventCheckoutPage content={content.eventCheckout} wizard={wizard} exportMode />
-      ) : null;
-      break;
-    case "upsell":
-      inner = content.upsell ? (
-        <UpsellPage content={content.upsell} wizard={wizard} exportMode />
-      ) : null;
-      break;
-    case "eventThankYou":
-      inner = content.eventThankYou ? (
-        <EventThankYouPage content={content.eventThankYou} wizard={wizard} exportMode />
-      ) : null;
-      break;
-    case "replay":
-      inner = content.replay ? (
-        <ReplayPage content={content.replay} wizard={wizard} exportMode />
-      ) : null;
-      break;
-    case "programmeLanding":
-      inner = content.programmeLanding ? (
-        <ProgrammeLandingPage content={content.programmeLanding} wizard={wizard} exportMode />
-      ) : null;
-      break;
-    case "programmeCheckout":
-      inner = content.programmeCheckout ? (
-        <ProgrammeCheckoutPage content={content.programmeCheckout} wizard={wizard} exportMode />
-      ) : null;
-      break;
-    case "programmeThankYou":
-      inner = content.programmeThankYou ? (
-        <ProgrammeThankYouPage content={content.programmeThankYou} wizard={wizard} exportMode />
-      ) : null;
-      break;
-  }
-
-  return (
-    <PageContentContext.Provider value={content}>
-      <PageShell pageKey={pageKey} wizard={wizard}>
-        {inner}
-      </PageShell>
-    </PageContentContext.Provider>
-  );
+  return <ExportPageRenderer pageKey={pageKey} content={content} wizard={wizard} />;
 }
 
 export function buildFunnelPageHtml(

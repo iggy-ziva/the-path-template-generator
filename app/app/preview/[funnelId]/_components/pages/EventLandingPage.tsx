@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import type { EventLandingContent, WizardSnapshot, TestimonialItem } from "../funnel-types";
 import { safeUrl } from "../funnel-types";
+import { isSameName } from "@/lib/name-match";
 import EditableLogo from "../editor/EditableLogo";
 import EditableIcon, { IconContainer } from "../editor/icon-library";
 import EditableText from "../editor/EditableText";
@@ -128,6 +129,10 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
   const lifestyle1Url = safeUrl(c.valuePropImageUrl        ?? w.lifestyleImageUrls?.[0]);
   const outcomes1Url  = safeUrl(c.outcomesImageUrl         ?? w.lifestyleImageUrls?.[1]);
   const bioImageUrl   = safeUrl((c as Record<string, unknown>).bioImageUrl as string | undefined ?? w.hostHeadshotUrl);
+  // Facilitators: prefer AI/copy-doc content; fall back to the raw wizard list.
+  // The primary host has a dedicated bio section, so never show them here too.
+  const facilitatorList = ((c.facilitators && c.facilitators.length ? c.facilitators : w.facilitators) ?? [])
+    .filter((f) => !isSameName(f.name, w.hostName) && !isSameName(f.name, c.heroHostName));
   const brandName = w.businessName ?? w.hostName ?? "Your Brand";
   // CTA buttons hold a short label. Guard against a sentence/testimonial that a
   // copy-doc import may have misfiled into a CTA field — a button rendering a
@@ -243,7 +248,10 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
           <EditableLogo
             pageKey="eventLanding"
             fallbackUrl={w.logoUrl}
+            logoLightUrl={w.logoLightUrl}
+            logoDarkUrl={w.logoDarkUrl}
             logoTransparent={w.logoTransparent}
+            background={themeFor("stickyBar", "dark")}
             name={brandName}
             className="logo"
             imgStyle={{ height: 96, objectFit: "contain" }}
@@ -1086,6 +1094,52 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
         </EditableSection>
       )}
 
+      {/* ── 17b Facilitators ── */}
+      {(facilitatorList.length > 0 || editMode) && (
+        <EditableSection pageKey="eventLanding" sectionId="facilitators" theme={themeFor("facilitators", "light")} exportMode={exportMode}>
+          <div className="container">
+            <h2 className="h2 display-section" style={{ textAlign: "center", marginBottom: "var(--s-7)" }}>
+              <PageText pageKey="eventLanding" path="facilitatorsHeading" as="span">
+                {c.facilitatorsHeading ?? "Your facilitators"}
+              </PageText>
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "var(--s-6)", maxWidth: 960, margin: "0 auto" }}>
+              {facilitatorList.map((f, i) => {
+                const photo = safeUrl(f.headshotUrl ?? w.facilitators?.[i]?.headshotUrl);
+                return (
+                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "var(--s-3)" }}>
+                    <EditableImage
+                      pageKey="eventLanding"
+                      path={`facilitators[${i}].headshotUrl`}
+                      url={photo}
+                      alt={f.name ?? "Facilitator"}
+                      imgStyle={{ width: 140, height: 140, objectFit: "cover", borderRadius: "50%" }}
+                    >
+                      <div className="img-placeholder tint-bronze" style={{ width: 140, height: 140, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span className="img-label">Photo</span>
+                      </div>
+                    </EditableImage>
+                    <div>
+                      <div className="h3" style={{ fontFamily: "var(--font-display)", margin: 0 }}>
+                        <PageText pageKey="eventLanding" path={`facilitators[${i}].name`} as="span">{f.name ?? ""}</PageText>
+                      </div>
+                      {(f.title || editMode) && (
+                        <span className="eyebrow" style={{ display: "block", marginTop: "var(--s-1)" }}>
+                          <PageText pageKey="eventLanding" path={`facilitators[${i}].title`} as="span">{f.title ?? ""}</PageText>
+                        </span>
+                      )}
+                    </div>
+                    {(f.bio || editMode) && (
+                      <PageText pageKey="eventLanding" path={`facilitators[${i}].bio`} as="p" html>{f.bio ?? ""}</PageText>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </EditableSection>
+      )}
+
       {/* ── 18 Final VP ── */}
       {(c.finalVpHeading || editMode) && (
         <EditableSection pageKey="eventLanding" sectionId="finalVp" theme={finalVpTheme} base="final-vp" exportMode={exportMode}>
@@ -1211,7 +1265,10 @@ export default function EventLandingPage({ content: c, wizard: w, exportMode = f
             <EditableLogo
               pageKey="eventLanding"
               fallbackUrl={w.logoUrl}
+              logoLightUrl={w.logoLightUrl}
+              logoDarkUrl={w.logoDarkUrl}
               logoTransparent={w.logoTransparent}
+              background="dark"
               name={brandName}
               className="ty-footer-brand"
               imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}

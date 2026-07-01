@@ -97,7 +97,10 @@ export default function ReplayPage({ content: c, wizard: w, exportMode = false }
           {(c.logoUrl ?? w.logoUrl) && (
             <BrandLogo
               logoUrl={c.logoUrl ?? w.logoUrl}
+              logoLightUrl={c.logoUrl ? undefined : w.logoLightUrl}
+              logoDarkUrl={c.logoUrl ? undefined : w.logoDarkUrl}
               logoTransparent={w.logoTransparent}
+              background="dark"
               name={businessName || hostName}
               imgStyle={{ maxHeight: "120px", maxWidth: "200px", width: "100%", objectFit: "contain", display: "block", marginBottom: "28px", marginInline: "auto" }}
             />
@@ -326,7 +329,10 @@ export default function ReplayPage({ content: c, wizard: w, exportMode = false }
           <div className="ty-footer-left">
             <BrandLogo
               logoUrl={c.logoUrl ?? w.logoUrl}
+              logoLightUrl={c.logoUrl ? undefined : w.logoLightUrl}
+              logoDarkUrl={c.logoUrl ? undefined : w.logoDarkUrl}
               logoTransparent={w.logoTransparent}
+              background="dark"
               name={businessName || hostName}
               className="ty-footer-brand"
               imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}

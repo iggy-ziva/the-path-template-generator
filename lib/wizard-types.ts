@@ -2,7 +2,7 @@ import type { BrandProfile } from "@/lib/brand-profile";
 import type { CoverageReport } from "@/lib/copydoc/validate";
 
 /** How a funnel's page copy is produced. */
-export type GenerationMode = "ai_copy" | "copy_doc";
+export type GenerationMode = "ai_copy" | "copy_doc" | "hybrid";
 
 /** Client-side reference to an uploaded + parsed copy document. */
 export interface CopyDocRef {
@@ -12,18 +12,37 @@ export interface CopyDocRef {
   report: CoverageReport;
 }
 
+/** A co-facilitator / additional presenter featured alongside the primary host. */
+export interface Facilitator {
+  name?: string;
+  title?: string;
+  bio?: string;
+  headshotUrl?: string;
+}
+
 export interface WizardData {
   // Step 1 — About You
   hostName?: string;
   hostTitle?: string;
   hostTagline?: string;
   hostBio?: string;
+  /** The primary host's headshot. */
   hostHeadshotUrl?: string;
+  /** @deprecated superseded by hostHeadshotUrl + facilitators[] */
+  hostHeadshotUrls?: string[];
+  /** Additional presenters featured alongside the host, each with their own bio + headshot. */
+  facilitators?: Facilitator[];
+  /** @deprecated no longer collected */
   hostSignatureUrl?: string;
 
   // Step 2 — Your Brand
   businessName?: string;
+  /** Default / primary brand logo. Used as the fallback when no light/dark variant fits. */
   logoUrl?: string;
+  /** Light-coloured logo variant — used on DARK and accent backgrounds (headers, footers). */
+  logoLightUrl?: string;
+  /** Dark-coloured logo variant — used on LIGHT backgrounds. */
+  logoDarkUrl?: string;
   /** Set when logo uploaded with transparent background validation */
   logoTransparent?: boolean;
   contactEmail?: string;
@@ -119,6 +138,8 @@ export interface WizardData {
   // Style guide (auto-detected from website)
   styleGuide?: {
     brandAnalysisUrl?: string;
+    /** Figma file/frame URL last analysed for brand colours + fonts. */
+    figmaFileUrl?: string;
     brandColors?: {
       primary?: string;
       secondary?: string;

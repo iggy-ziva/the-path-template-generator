@@ -44,3 +44,30 @@ export function mergePreservingLayout(
   }
   return merged;
 }
+
+/** A copy value the document actually supplied (skip empty strings/arrays). */
+function isNonEmptyDocValue(value: unknown): boolean {
+  if (value == null) return false;
+  if (typeof value === "string") return value.trim().length > 0;
+  if (Array.isArray(value)) return value.length > 0;
+  return true;
+}
+
+/**
+ * Hybrid merge: overlay the document's verbatim copy onto an AI-generated page.
+ *
+ * The AI page is the base — it owns image assignments, section themes, and any
+ * copy the document did not provide (gap-filling). For every copy field the
+ * document actually supplied, the document's words win (verbatim). Fields the
+ * document left blank keep the AI's copy.
+ */
+export function overlayVerbatimCopy(
+  aiPage: Record<string, unknown> | undefined,
+  docCopy: Record<string, unknown>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...(aiPage ?? {}) };
+  for (const [key, value] of Object.entries(docCopy)) {
+    if (isNonEmptyDocValue(value)) out[key] = value;
+  }
+  return out;
+}

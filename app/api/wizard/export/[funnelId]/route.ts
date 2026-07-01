@@ -9,13 +9,8 @@ import JSZip from "jszip";
 import { splitFunnelContent } from "@/lib/funnel-snapshot";
 import { getOrCreateUserId } from "@/lib/getOrCreateUserId";
 import { computeBrandTokens, buildBrandCSS } from "@/lib/brand-tokens";
-import type { FunnelContent, WizardSnapshot } from "@/app/app/preview/[funnelId]/_components/funnel-types";
-import {
-  FUNNEL_PAGES,
-  buildFunnelPageHtml,
-  getFunnelPageTitles,
-  renderPageElement,
-} from "@/lib/funnel-export/page-elements";
+import type { WizardSnapshot } from "@/app/app/preview/[funnelId]/_components/funnel-types";
+import { FUNNEL_PAGES } from "@/lib/funnel-export/config";
 
 function getServiceClient() {
   return createClient(
@@ -28,8 +23,15 @@ function readPublicCss(filename: string): string {
   return readFileSync(join(process.cwd(), "public", filename), "utf8");
 }
 
-export async function GET(
-  _req: NextRequest,
+/**
+ * Page HTML is rendered on the client (see PreviewClient.handleDownload) because
+ * the funnel page components are interactive Client Components that cannot be
+ * invoked from this server route under the App Router RSC boundary. The client
+ * sends a map of `{ filename: fullHtmlDocument }`; this route validates
+ * ownership, adds the shared CSS + brand tokens + README, and returns the ZIP.
+ */
+export async function POST(
+  req: NextRequest,
   { params }: { params: Promise<{ funnelId: string }> },
 ) {
   const session = await getSession();
@@ -49,7 +51,19 @@ export async function GET(
 
   if (!funnel) return NextResponse.json({ error: "Funnel not found" }, { status: 404 });
 
-  const { pageContent, wizardSnapshot } = splitFunnelContent(
+  let body: { files?: Record<string, string> };
+  try {
+    body = (await req.json()) as { files?: Record<string, string> };
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const files = body.files;
+  if (!files || typeof files !== "object") {
+    return NextResponse.json({ error: "Missing rendered pages" }, { status: 400 });
+  }
+
+  const { wizardSnapshot } = splitFunnelContent(
     funnel.content as Record<string, unknown>,
   );
   let wizard: WizardSnapshot = (wizardSnapshot ?? {}) as WizardSnapshot;
@@ -63,23 +77,20 @@ export async function GET(
     if (submission?.step_data) wizard = submission.step_data as WizardSnapshot;
   }
 
-  const fc = pageContent as FunnelContent;
   const brandCss = buildBrandCSS(computeBrandTokens(wizard));
   const funnelStyleCss = readPublicCss("funnel-style.css");
   const funnelPagesCss = readPublicCss("funnel-pages.css");
-  const titles = getFunnelPageTitles(wizard);
 
-  const { renderToStaticMarkup } = await import("react-dom/server");
+  const allowedFiles = new Set<string>(FUNNEL_PAGES.map((p) => p.file));
 
   const zip = new JSZip();
   zip.file("funnel-style.css", funnelStyleCss);
   zip.file("funnel-pages.css", funnelPagesCss);
   zip.file("brand.css", brandCss);
 
-  for (const { key, file } of FUNNEL_PAGES) {
-    const element = renderPageElement(key, fc, wizard);
-    const body = renderToStaticMarkup(element);
-    zip.file(file, buildFunnelPageHtml(key, fc, wizard, titles[key], body));
+  for (const [file, html] of Object.entries(files)) {
+    if (!allowedFiles.has(file) || typeof html !== "string") continue;
+    zip.file(file, html);
   }
 
   zip.file(

@@ -325,7 +325,10 @@ export default function EventThankYouPage({ content: c, wizard: w, exportMode = 
           <div className="ty-footer-left">
             <BrandLogo
               logoUrl={c.logoUrl ?? w.logoUrl}
+              logoLightUrl={c.logoUrl ? undefined : w.logoLightUrl}
+              logoDarkUrl={c.logoUrl ? undefined : w.logoDarkUrl}
               logoTransparent={w.logoTransparent}
+              background="dark"
               name={businessName || hostName}
               className="ty-footer-brand"
               imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}

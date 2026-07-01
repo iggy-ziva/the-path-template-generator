@@ -92,7 +92,10 @@ export default function EventCheckoutPage({ content: c, wizard: w, exportMode = 
           <div className="logo">
             <BrandLogo
               logoUrl={c.logoUrl ?? w.logoUrl}
+              logoLightUrl={c.logoUrl ? undefined : w.logoLightUrl}
+              logoDarkUrl={c.logoUrl ? undefined : w.logoDarkUrl}
               logoTransparent={w.logoTransparent}
+              background="dark"
               name={businessName || hostName}
               imgStyle={{ height: "96px", objectFit: "contain" }}
             />
@@ -514,7 +517,10 @@ export default function EventCheckoutPage({ content: c, wizard: w, exportMode = 
           <div className="ty-footer-left">
             <BrandLogo
               logoUrl={c.logoUrl ?? w.logoUrl}
+              logoLightUrl={c.logoUrl ? undefined : w.logoLightUrl}
+              logoDarkUrl={c.logoUrl ? undefined : w.logoDarkUrl}
               logoTransparent={w.logoTransparent}
+              background="dark"
               name={businessName || hostName}
               className="ty-footer-brand"
               imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}

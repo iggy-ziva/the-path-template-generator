@@ -71,6 +71,7 @@ export const EVENT_LANDING_SECTIONS: SectionThemeDef[] = [
   { id: "testimonials",  label: "Testimonials",      base: "plain",     defaultTheme: "light"  },
   { id: "finalVp",       label: "Final value prop",  base: "final-vp",  defaultTheme: "dark"   },
   { id: "bio",           label: "Host bio",          base: "plain",     defaultTheme: "light"  },
+  { id: "facilitators",  label: "Facilitators",      base: "plain",     defaultTheme: "light"  },
   { id: "faq",           label: "FAQ",               base: "plain",     defaultTheme: "light"  },
   { id: "register",      label: "Final CTA",         base: "encourage", defaultTheme: "dark"   },
   { id: "ftc",           label: "Disclaimer",        base: "plain",     defaultTheme: "light"  },
@@ -102,6 +103,7 @@ export const PROGRAMME_LANDING_SECTIONS: SectionThemeDef[] = [
   { id: "testimonials", label: "Testimonials",     base: "plain", defaultTheme: "light"  },
   { id: "pricing",      label: "Pricing",          base: "plain", defaultTheme: "light"  },
   { id: "host",         label: "Host",             base: "plain", defaultTheme: "light"  },
+  { id: "facilitators", label: "Facilitators",     base: "plain", defaultTheme: "light"  },
   { id: "faq",          label: "FAQ",              base: "plain", defaultTheme: "light"  },
   { id: "finalCta",     label: "Final CTA",        base: "plain", defaultTheme: "accent" },
 ];

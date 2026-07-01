@@ -4,6 +4,30 @@ export function logoUrlIsOpaque(url: string): boolean {
   return /\.(jpe?g|gif)$/.test(path);
 }
 
+export interface LogoVariants {
+  /** Default / primary logo — the fallback when no variant fits. */
+  logoUrl?: string | null;
+  /** Light-coloured logo, for dark/accent backgrounds. */
+  logoLightUrl?: string | null;
+  /** Dark-coloured logo, for light backgrounds. */
+  logoDarkUrl?: string | null;
+}
+
+/**
+ * Pick the best logo variant for a background.
+ * Dark/accent backgrounds want the LIGHT logo; light backgrounds want the DARK logo.
+ * Falls back to the default logo, then the opposite variant, so we always render
+ * something when at least one asset exists.
+ */
+export function pickLogoVariant(
+  variants: LogoVariants,
+  backgroundIsDark: boolean,
+): string | null | undefined {
+  const preferred = backgroundIsDark ? variants.logoLightUrl : variants.logoDarkUrl;
+  const opposite = backgroundIsDark ? variants.logoDarkUrl : variants.logoLightUrl;
+  return preferred || variants.logoUrl || opposite || null;
+}
+
 /** Whether to render the logo image (vs client name text). */
 export function shouldShowLogoImage(
   logoUrl: string | null | undefined,

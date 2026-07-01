@@ -7,6 +7,10 @@ import type { WizardData } from "@/lib/wizard-types";
 import { withWizardSnapshot } from "@/lib/funnel-snapshot";
 import { computeBrandProfile, buildBrandProfilePromptBlock } from "@/lib/brand-profile";
 import { guardFunnelThemes } from "@/lib/section-theme-guard";
+import { isCopyDocEngineEnabled } from "@/lib/feature-flags";
+import { buildCopyDocFromDocx, mapCopyDocToContent } from "@/lib/copydoc";
+import { overlayVerbatimCopy } from "@/lib/copydoc/merge";
+import { getPageSpec, type CopyDoc, type CopyDocPageKey } from "@/lib/copydoc/copydoc-schema";
 
 export const maxDuration = 300;
 
@@ -70,6 +74,117 @@ async function getServiceClient(): Promise<AnySupabase> {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+}
+
+const COPY_DOCS_BUCKET = "copy-docs";
+
+interface LoadedCopyDoc {
+  copyDoc: CopyDoc;
+  pageKey: CopyDocPageKey;
+  docId: string;
+  version: number | null;
+}
+
+/**
+ * Load a parsed CopyDoc for the hybrid path. Prefers the cached `parsed_json`;
+ * re-parses from storage (with optional AI classification) only if missing.
+ */
+async function loadCopyDocForHybrid(
+  supabase: AnySupabase,
+  userId: string,
+  copyDocumentId: string,
+): Promise<LoadedCopyDoc | null> {
+  const { data: docRow, error } = await supabase
+    .from("copy_documents")
+    .select("id, storage_path, page_key, parsed_json, version")
+    .eq("id", copyDocumentId)
+    .eq("user_id", userId)
+    .single();
+  if (error || !docRow) return null;
+
+  const pageKey = (docRow.page_key as CopyDocPageKey) ?? "eventLanding";
+  let copyDoc = docRow.parsed_json as CopyDoc | null;
+
+  if (!copyDoc) {
+    const { data: blob, error: dlErr } = await supabase.storage
+      .from(COPY_DOCS_BUCKET)
+      .download(docRow.storage_path);
+    if (dlErr || !blob) return null;
+    const buffer = Buffer.from(await blob.arrayBuffer());
+    let anthropic: Anthropic | undefined;
+    if (process.env.ANTHROPIC_API_KEY) {
+      anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    }
+    const parsed = await buildCopyDocFromDocx(buffer, pageKey, anthropic);
+    copyDoc = parsed.copyDoc;
+    await supabase
+      .from("copy_documents")
+      .update({
+        parsed_json: copyDoc,
+        parse_report: parsed.report,
+        parse_status: "parsed",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", docRow.id);
+  }
+
+  return { copyDoc, pageKey, docId: docRow.id, version: docRow.version ?? null };
+}
+
+/**
+ * Render a parsed CopyDoc as a plain-text prompt block so Claude understands
+ * the document's exact structure and wording before it generates any copy.
+ * This is the companion to `overlayVerbatimCopy` — together they form a
+ * belt-and-suspenders guarantee that the client's copy is used verbatim:
+ * Claude is instructed to follow it during generation, and the overlay
+ * enforces it again on the output.
+ */
+function formatCopyDocForPrompt(copyDoc: CopyDoc): string {
+  const lines: string[] = [
+    `=== UPLOADED COPY DOCUMENT — VERBATIM SOURCE OF TRUTH ===`,
+    "",
+    "The client has uploaded a landing-page copy document. This document is the",
+    "CANONICAL SOURCE OF TRUTH for every field it covers on the page it targets.",
+    "",
+    "MANDATORY RULES for this document's copy:",
+    "  1. USE EVERY LINE VERBATIM. Do not rephrase, summarise, expand, or",
+    "     'improve' any copy from this document. Output it word-for-word.",
+    "  2. FOLLOW THE SECTION STRUCTURE EXACTLY. Map each document section to",
+    "     its corresponding JSON field(s) as listed below.",
+    "  3. DO NOT EDITORIALISE. The document says what it says — your job is to",
+    "     place the text faithfully, not rewrite it in a better tone or style.",
+    "  4. For fields NOT covered by this document, write naturally from the",
+    "     brand context above. Never leave those fields empty.",
+    "  5. If the document contains a section you cannot map to a known field,",
+    "     do your best to infer the closest match — do not discard the copy.",
+    "",
+    "DOCUMENT SECTIONS:",
+    "",
+  ];
+
+  for (const section of copyDoc.sections) {
+    lines.push(`--- ${section.heading} ---`);
+    for (const [key, value] of Object.entries(section.fields)) {
+      if (typeof value === "string") {
+        lines.push(`  ${key}: ${value}`);
+      } else if (Array.isArray(value)) {
+        lines.push(`  ${key}:`);
+        for (const item of value) {
+          if (typeof item === "string") {
+            lines.push(`    - ${item}`);
+          } else {
+            lines.push(`    - ${JSON.stringify(item)}`);
+          }
+        }
+      }
+    }
+    if (copyDoc.sections.indexOf(section) < copyDoc.sections.length - 1) {
+      lines.push("");
+    }
+  }
+
+  lines.push("", "=== END OF COPY DOCUMENT ===", "");
+  return lines.join("\n");
 }
 
 // ── Fetch uploaded documents and convert for Claude ─────────────────────
@@ -159,14 +274,21 @@ async function buildVisionBlocks(d: WizardData): Promise<ContentBlockParam[]> {
     url,
     label: `[lifestyle-${i + 1}] LIFESTYLE IMAGE ${i + 1} — use what you observe to write specific, grounded copy`,
   }));
-  const headshotItem = d.hostHeadshotUrl
-    ? [{ url: d.hostHeadshotUrl, label: "[headshot] HOST HEADSHOT — use the person's appearance and energy to inform how you write about them" }]
-    : [];
-  const logoItem = d.logoUrl
-    ? [{ url: d.logoUrl, label: "[logo] BRAND LOGO — note colour and typographic clues about the brand's identity" }]
+
+  // Host headshot + up to one facilitator headshot for visual reference.
+  const hostHeadshot = d.hostHeadshotUrl ?? d.hostHeadshotUrls?.[0];
+  const facilitatorHeadshot = (d.facilitators ?? []).map((f) => f.headshotUrl).find(Boolean);
+  const headshotItems = [
+    hostHeadshot ? { url: hostHeadshot, label: "[headshot-1] HOST HEADSHOT — use the person's appearance and energy to inform how you write about them" } : null,
+    facilitatorHeadshot ? { url: facilitatorHeadshot, label: "[headshot-2] CO-FACILITATOR HEADSHOT — an additional featured presenter; headshots are placed automatically, do not assign them" } : null,
+  ].filter(Boolean) as { url: string; label: string }[];
+
+  const logoForVision = d.logoUrl ?? d.logoLightUrl ?? d.logoDarkUrl;
+  const logoItem = logoForVision
+    ? [{ url: logoForVision, label: "[logo] BRAND LOGO — note colour and typographic clues about the brand's identity" }]
     : [];
 
-  const toInclude = [...heroItems.slice(0, 2), ...headshotItem, ...logoItem, ...lifestyleItems].slice(0, VISION_MAX_IMAGES);
+  const toInclude = [...heroItems.slice(0, 2), ...headshotItems, ...logoItem, ...lifestyleItems].slice(0, VISION_MAX_IMAGES);
 
   for (const item of toInclude) {
     try {
@@ -197,10 +319,18 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const { wizardData, submissionId } = await req.json() as { wizardData: WizardData; submissionId?: string };
+    const { wizardData, submissionId, generationMode, copyDocumentId } = await req.json() as {
+      wizardData: WizardData;
+      submissionId?: string;
+      /** "hybrid" overlays a copy document's verbatim copy onto the AI output. */
+      generationMode?: string;
+      copyDocumentId?: string;
+    };
     const supabase = await getServiceClient();
     const userId = await getOrCreateUserId(session, supabase);
     if (!userId) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+    const hybrid = generationMode === "hybrid" && !!copyDocumentId && isCopyDocEngineEnabled();
 
     const anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
@@ -208,11 +338,20 @@ export async function POST(req: NextRequest) {
       maxRetries: 0,
     });
 
-    // ── Fetch documents and vision blocks in parallel ──
-    const [docBlocks, visionBlocks] = await Promise.all([
+    // ── Fetch documents, vision blocks, and copy doc in parallel ──
+    // The copy doc is loaded early in hybrid mode so its content can be injected
+    // into the generation prompt — ensuring Claude follows the document verbatim
+    // during generation, not just via the post-generation overlay.
+    const [docBlocks, visionBlocks, hybridDoc] = await Promise.all([
       fetchDocumentBlocks(wizardData.existingFileUrls ?? []),
       buildVisionBlocks(wizardData),   // returns ContentBlockParam[] (label+image pairs)
+      hybrid ? loadCopyDocForHybrid(supabase, userId, copyDocumentId!) : Promise.resolve(null),
     ]);
+
+    // Format copy doc as a plain-text prompt block when available.
+    const copyDocPromptText: string | undefined = hybridDoc
+      ? formatCopyDocForPrompt(hybridDoc.copyDoc)
+      : undefined;
 
     // ── Build shared brand context ──
     const brandProfile = computeBrandProfile(wizardData);
@@ -224,12 +363,25 @@ export async function POST(req: NextRequest) {
     const brandContext = buildBrandContext(wizardForGen);
 
     // Run sequentially — two large vision+prompt calls in parallel often hit connection timeouts.
-    const eventResult = await generateEventPages(anthropic, wizardForGen, brandContext, docBlocks, visionBlocks);
+    const eventResult = await generateEventPages(anthropic, wizardForGen, brandContext, docBlocks, visionBlocks, copyDocPromptText);
     // Programme copy uses image URLs from brand context — skip vision blocks to halve payload size.
-    const programmeResult = await generateProgrammePages(anthropic, wizardForGen, brandContext, docBlocks, []);
+    const programmeResult = await generateProgrammePages(anthropic, wizardForGen, brandContext, docBlocks, [], copyDocPromptText);
 
-    const pageContent = { ...eventResult, ...programmeResult };
+    const pageContent: Record<string, unknown> = { ...eventResult, ...programmeResult };
     assertFunnelContent(pageContent);
+
+    // ── Hybrid: overlay the document's verbatim copy onto its landing page ──
+    // Belt-and-suspenders: Claude was already instructed to follow the document
+    // verbatim during generation. The overlay here enforces it unconditionally
+    // on the output, replacing any field the document covers with its exact text.
+    if (hybridDoc) {
+      const spec = getPageSpec(hybridDoc.pageKey);
+      if (spec) {
+        const docCopy = mapCopyDocToContent(hybridDoc.copyDoc, spec);
+        const aiPage = pageContent[hybridDoc.pageKey] as Record<string, unknown> | undefined;
+        pageContent[hybridDoc.pageKey] = overlayVerbatimCopy(aiPage, docCopy);
+      }
+    }
     // Enforce that "accent" is only used on accent-safe band sections — card/grid
     // sections render the accent surface unreadably (translucent cards + brand-
     // coloured details that vanish on the band).
@@ -249,6 +401,13 @@ export async function POST(req: NextRequest) {
         submission_id: submissionId ?? null,
         content,
         theme_slug: wizardForGen.referenceTheme ?? brandProfile.suggestedThemeSlug,
+        ...(hybrid && hybridDoc
+          ? {
+              generation_mode: "hybrid",
+              source_document_id: hybridDoc.docId,
+              copy_doc_version: hybridDoc.version,
+            }
+          : {}),
       })
       .select("id")
       .single();
@@ -407,8 +566,20 @@ Host name: ${d.hostName ?? "NOT PROVIDED"}
 Host title / credentials: ${d.hostTitle ?? "NOT PROVIDED"}
 Host tagline (one-line essence): ${d.hostTagline ?? "NOT PROVIDED"}
 Host bio (full): ${d.hostBio ?? "NOT PROVIDED — derive a credible bio from host name, title, and tagline"}
-Host headshot: ${d.hostHeadshotUrl ? "Uploaded — visible in vision block above. Use its energy and presentation to inform how you write about this person." : "Not uploaded"}
-Host signature: ${d.hostSignatureUrl ? "Uploaded" : "Not uploaded"}
+Host headshot: ${(d.hostHeadshotUrl ?? d.hostHeadshotUrls?.[0]) ? "Uploaded — visible in vision block above. Use its energy and presentation to inform how you write about this person." : "Not uploaded"}
+Facilitators (co-presenters featured alongside the host): ${(() => {
+  const fac = (d.facilitators ?? []).filter((f) => f.name || f.bio);
+  if (!fac.length) return "None — this is a solo host.";
+  const list = fac.map((f, i) => `  ${i + 1}. ${f.name ?? "(unnamed)"}${f.title ? ` — ${f.title}` : ""}${f.bio ? `\n     Bio: ${f.bio}` : ""}`).join("\n");
+  return `${fac.length} provided. Rewrite each bio in the chosen brand tone for the "facilitators" array (keep names/titles verbatim, preserve order and count). Their headshots are placed automatically — do not assign images.\n${list}`;
+})()}
+Brand logo variants: ${(() => {
+  const parts: string[] = [];
+  if (d.logoLightUrl) parts.push("light logo (for dark/accent backgrounds)");
+  if (d.logoDarkUrl) parts.push("dark logo (for light backgrounds)");
+  if (parts.length === 0 && d.logoUrl) parts.push("single logo (used on all backgrounds)");
+  return parts.length ? `${parts.join(" + ")} uploaded — the renderer auto-selects the correct variant per section background; you do not assign logos.` : "Not uploaded";
+})()}
 
 Business name: ${d.businessName ?? "NOT PROVIDED — fall back to host name in brand references"}
 Legal entity name (for FTC disclaimers and copyright): ${d.legalEntityName ?? d.businessName ?? d.hostName ?? "NOT PROVIDED"}
@@ -509,15 +680,30 @@ ${(d.additionalImageUrls ?? []).length > 0
   ? (d.additionalImageUrls ?? []).map((url, i) => `  additional-${i + 1}: ${url}`).join("\n")
   : "  None uploaded"}
 
-HOST HEADSHOT: ${d.hostHeadshotUrl ?? "Not uploaded"}
-BRAND LOGO: ${d.logoUrl ?? "Not uploaded"}
+HEADSHOTS:
+${(() => {
+  const lines: string[] = [];
+  const host = d.hostHeadshotUrl ?? d.hostHeadshotUrls?.[0];
+  if (host) lines.push(`  host: ${host}`);
+  (d.facilitators ?? []).forEach((f, i) => {
+    if (f.headshotUrl) lines.push(`  facilitator-${i + 1}${f.name ? ` (${f.name})` : ""}: ${f.headshotUrl} — placed automatically in the facilitators section`);
+  });
+  return lines.length ? lines.join("\n") : "  Not uploaded";
+})()}
+BRAND LOGO (Step 2): ${(() => {
+  const parts: string[] = [];
+  if (d.logoLightUrl) parts.push(`light=${d.logoLightUrl}`);
+  if (d.logoDarkUrl) parts.push(`dark=${d.logoDarkUrl}`);
+  if (parts.length === 0 && d.logoUrl) parts.push(d.logoUrl);
+  return parts.length ? parts.join(" · ") : "Not uploaded";
+})()}
 
 Image usage guidance:
 - HERO images: rich, atmospheric, with depth. Use as backgrounds with dark overlay. Reflect their mood in opening headlines.
 - LIFESTYLE images: show the practitioner/community in context. Use for sidebars, value-prop blocks, mid-page features.
 - ADDITIONAL images: secondary use — bonus features, upsell products, ambient backgrounds.
-- HOST HEADSHOT: bio sections, personal-message sections, signature blocks.
-- LOGO: header / footer / progress bars only. Never used as decoration.
+- HOST HEADSHOT: bio sections and personal-message sections — use it for the primary host bio. Facilitator headshots are placed automatically into the facilitators section by the renderer; do NOT assign them to image fields.
+- BRAND LOGO: header / footer / progress bars only, and it is placed automatically — do NOT assign the logo to any image field. Light and dark variants are auto-selected by the renderer based on each section's background.
 
 If you set an image field to null, the corresponding imageSuggestions entry must be ACTIONABLE — describe the specific photograph the client should shoot or commission. Not "a nice photo" but "A warm three-quarter portrait of ${d.hostName ?? "the host"} in natural light, mid-explanation, holding a book — shot at golden hour against a soft neutral background."
 
@@ -682,6 +868,7 @@ async function generateEventPages(
   brandContext: string,
   docBlocks: (DocumentBlock | TextBlockParam)[],
   visionBlocks: ContentBlockParam[],
+  copyDocPromptText?: string,
 ): Promise<Record<string, unknown>> {
   const hasVideo = !!d.eventVideoUrl;
   const topContent: ContentBlockParam[] = [];
@@ -694,7 +881,12 @@ async function generateEventPages(
     topContent.push({ type: "text", text: "UPLOADED BRAND DOCUMENTS (methodology, existing materials, etc.):" } as TextBlockParam);
     topContent.push(...(docBlocks as ContentBlockParam[]));
   }
-  topContent.push({ type: "text", text: buildEventPrompt(brandContext, hasVideo, d) } as TextBlockParam);
+  // Inject copy doc as a leading context block so Claude sees the verbatim
+  // source-of-truth content before it reads the generation instructions.
+  if (copyDocPromptText) {
+    topContent.push({ type: "text", text: copyDocPromptText } as TextBlockParam);
+  }
+  topContent.push({ type: "text", text: buildEventPrompt(brandContext, hasVideo, d, !!copyDocPromptText) } as TextBlockParam);
 
   const messages: MessageParam[] = [{ role: "user", content: topContent }];
   const response = await createGenerationMessage(anthropic, messages);
@@ -709,6 +901,7 @@ async function generateProgrammePages(
   brandContext: string,
   docBlocks: (DocumentBlock | TextBlockParam)[],
   visionBlocks: ContentBlockParam[],
+  copyDocPromptText?: string,
 ): Promise<Record<string, unknown>> {
   const topContent: ContentBlockParam[] = [];
 
@@ -720,7 +913,10 @@ async function generateProgrammePages(
     topContent.push({ type: "text", text: "UPLOADED BRAND DOCUMENTS (methodology, existing materials, etc.):" } as TextBlockParam);
     topContent.push(...(docBlocks as ContentBlockParam[]));
   }
-  topContent.push({ type: "text", text: buildProgrammePrompt(brandContext, d) } as TextBlockParam);
+  if (copyDocPromptText) {
+    topContent.push({ type: "text", text: copyDocPromptText } as TextBlockParam);
+  }
+  topContent.push({ type: "text", text: buildProgrammePrompt(brandContext, d, !!copyDocPromptText) } as TextBlockParam);
 
   const messages: MessageParam[] = [{ role: "user", content: topContent }];
   const response = await createGenerationMessage(anthropic, messages);
@@ -729,7 +925,7 @@ async function generateProgrammePages(
 }
 
 // ── Event pages prompt + schema ──────────────────────────────────────────
-function buildEventPrompt(brandContext: string, hasVideo: boolean, d: WizardData): string {
+function buildEventPrompt(brandContext: string, hasVideo: boolean, d: WizardData, hasCopyDoc = false): string {
   // Pre-compute price tier numbers from wizard min/max so Claude sees concrete integers in the example
   const pMin = d.eventPriceMin ?? 11;
   const pMax = d.eventPriceMax ?? 111;
@@ -744,9 +940,16 @@ function buildEventPrompt(brandContext: string, hasVideo: boolean, d: WizardData
 ${brandContext}
 
 Your task: Write compelling, personalised copy for the five EVENT pages of a sales funnel — Event Landing, Event Checkout, Upsell, Event Thank-You, Replay.
-
+${hasCopyDoc ? `
+COPY DOCUMENT REMINDER — SOURCE OF TRUTH:
+A copy document was provided above. Its copy is VERBATIM — use it word-for-word for every
+field it covers. The document's sections are not suggestions or inspiration; they are the
+exact output expected. Do not improve, shorten, reorder, or reinterpret any copy from that
+document. Fill every field the document supplies with the document's exact wording.
+` : ""}
 OUTPUT DISCIPLINE — violating any of these makes the output unusable:
 - Return ONLY a valid JSON object. No prose. No markdown fences. No commentary. No leading/trailing whitespace beyond the JSON itself.
+- NEVER put a raw double-quote (") inside any string value — it breaks the JSON. For quotations, titles, or emphasis use single quotes, e.g. "Break Free from 'Spiritual Burnout'". Do not use “smart quotes” either; plain single quotes only.
 - The JSON structure below shows EXAMPLE values inside string fields. You MUST replace each example with real, specific copy. NEVER copy the instruction string itself as output (e.g. "audience item 2 — a different characteristic..." must become real copy).
 - Every quoted-string value with an "e.g. '...'" example: use the SHAPE of the example, never the literal text. Substitute real data from the brand context.
 - For image URL fields: copy-paste the EXACT URL from the IMAGES AVAILABLE section above. Do NOT invent, guess, shorten, or modify any URL. Set to null if no suitable image exists and add an entry to imageSuggestions describing what to photograph.
@@ -915,6 +1118,12 @@ The JSON must have exactly this structure:
       "paragraph 3"
     ],
     "bioSignature": "e.g. 'I would be glad to spend ${d.eventDuration ?? "this time"} with you${d.eventDate ? ` on ${d.eventDate}` : ""}. — ${d.hostName ?? "the host"}'",
+${(d.facilitators ?? []).filter(f => f.name || f.bio).length > 0 ? `    "facilitatorsHeading": "short heading for the facilitators section, e.g. 'Meet your facilitators'",
+    "facilitators": [
+      // ONE object per facilitator listed in HOST & BRAND IDENTITY, SAME order and count.
+      // Keep name + title verbatim; rewrite bio in the brand tone. Do NOT add a headshot field.
+${(d.facilitators ?? []).filter(f => f.name || f.bio).map(f => `      { "name": ${JSON.stringify(f.name ?? "")}, "title": ${JSON.stringify(f.title ?? "")}, "bio": "rewrite this facilitator's bio in the brand tone" }`).join(",\n")}
+    ],` : `    // No facilitators provided — OMIT the "facilitators" and "facilitatorsHeading" fields entirely.`}
     "finalVpHeading": "final VP heading above FAQ (display size, centered)",
     "finalVpIntro": "opening paragraph of final VP section",
     "finalVpFromTo": [
@@ -1106,7 +1315,7 @@ The JSON must have exactly this structure:
 }
 
 // ── Programme pages prompt + schema ─────────────────────────────────────
-function buildProgrammePrompt(brandContext: string, d: WizardData): string {
+function buildProgrammePrompt(brandContext: string, d: WizardData, hasCopyDoc = false): string {
   const portalUrl = d.programPortalUrl ?? "NOT PROVIDED";
 
   // Pre-build the plans array for programmeCheckout. Pay-in-full is ALWAYS first and featured.
@@ -1130,9 +1339,17 @@ function buildProgrammePrompt(brandContext: string, d: WizardData): string {
 ${brandContext}
 
 Your task: Write compelling, personalised copy for the three PROGRAMME pages — Programme Landing, Programme Checkout, Programme Thank-You.
+${hasCopyDoc ? `
+COPY DOCUMENT REMINDER — SOURCE OF TRUTH:
+A copy document was provided above. Its copy is VERBATIM — use it word-for-word for every
+field it covers. The document's sections are not suggestions or inspiration; they are the
+exact output expected. Do not improve, shorten, reorder, or reinterpret any copy from that
+document. Fill every field the document supplies with the document's exact wording.
+` : ""}
 
 OUTPUT DISCIPLINE — violating any of these makes the output unusable:
 - Return ONLY a valid JSON object. No prose. No markdown fences. No commentary.
+- NEVER put a raw double-quote (") inside any string value — it breaks the JSON. For quotations, titles, or emphasis use single quotes, e.g. "the 'inner work' that matters". Do not use “smart quotes” either; plain single quotes only.
 - The JSON structure below shows EXAMPLE values inside string fields. You MUST replace each example with real, specific copy. NEVER copy the instruction string itself as output.
 - The plans array in programmeCheckout is PRE-COMPUTED for you. Output it verbatim — do not adjust, reorder, or add plans.
 - For image URL fields: copy-paste the EXACT URL from the IMAGES AVAILABLE section above. Do NOT invent, guess, shorten, or modify any URL. Set to null if no suitable image exists and add an entry to imageSuggestions.
@@ -1264,6 +1481,12 @@ The JSON must have exactly this structure:
     "bioName": "host name",
     "bioParagraphs": ["paragraph 1 — first-person bio", "paragraph 2", "paragraph 3"],
     "bioCredentials": ["credential 1", "credential 2", "credential 3"],
+${(d.facilitators ?? []).filter(f => f.name || f.bio).length > 0 ? `    "facilitatorsHeading": "short heading for the facilitators section, e.g. 'Meet your facilitators'",
+    "facilitators": [
+      // ONE object per facilitator listed in HOST & BRAND IDENTITY, SAME order and count.
+      // Keep name + title verbatim; rewrite bio in the brand tone. Do NOT add a headshot field.
+${(d.facilitators ?? []).filter(f => f.name || f.bio).map(f => `      { "name": ${JSON.stringify(f.name ?? "")}, "title": ${JSON.stringify(f.title ?? "")}, "bio": "rewrite this facilitator's bio in the brand tone" }`).join(",\n")}
+    ],` : `    // No facilitators provided — OMIT the "facilitators" and "facilitatorsHeading" fields entirely.`}
     "faqEyebrow": "e.g. 'Questions'",
     "faqItems": [
       { "question": "When does the programme start and what is the weekly commitment?", "answer": "Answer using actual start date, duration, and schedule from brand context. Be specific about time commitment per week." },
@@ -1421,9 +1644,58 @@ function stripJsonComments(json: string): string {
   return result;
 }
 
+/**
+ * Escape stray double-quotes and raw control characters that Claude sometimes
+ * leaves *inside* string values (e.g. `"Break Free from "Spiritual Burnout""`),
+ * which is invalid JSON. We walk the text and, when inside a string, treat a `"`
+ * as a real string terminator only when the next non-whitespace char is a
+ * structural JSON token (`,` `}` `]` `:` or end-of-input); otherwise we escape
+ * it. Raw newlines/tabs inside strings are escaped too. Running this first also
+ * keeps later string-aware passes (comment stripping) from mis-tracking quotes
+ * and corrupting URLs like `https://…`.
+ */
+function escapeInnerQuotes(json: string): string {
+  let result = "";
+  let inString = false;
+  let escape = false;
+  for (let i = 0; i < json.length; i++) {
+    const ch = json[i];
+    if (!inString) {
+      result += ch;
+      if (ch === '"') inString = true;
+      continue;
+    }
+    if (escape) { result += ch; escape = false; continue; }
+    if (ch === "\\") { result += ch; escape = true; continue; }
+    if (ch === "\n") { result += "\\n"; continue; }
+    if (ch === "\r") { result += "\\r"; continue; }
+    if (ch === "\t") { result += "\\t"; continue; }
+    if (ch === '"') {
+      let j = i + 1;
+      while (j < json.length && /\s/.test(json[j])) j++;
+      const next = json[j];
+      if (next === undefined || next === "," || next === "}" || next === "]" || next === ":") {
+        result += ch;
+        inString = false;
+      } else {
+        result += '\\"';
+      }
+      continue;
+    }
+    result += ch;
+  }
+  return result;
+}
+
 function parseJsonResponse(raw: string, label: string): Record<string, unknown> {
   const jsonStr = extractJsonObject(raw);
-  const attempts = [jsonStr, stripJsonComments(jsonStr)];
+  const escaped = escapeInnerQuotes(jsonStr);
+  const attempts = [
+    jsonStr,
+    stripJsonComments(jsonStr),
+    stripJsonComments(escaped),
+    escaped,
+  ];
   for (const candidate of attempts) {
     try {
       const parsed = JSON.parse(candidate);

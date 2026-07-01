@@ -58,19 +58,21 @@ const IMMEDIATE_SAVE_FIELDS = new Set<string>([
   "additionalImageUrls",
   "existingFileUrls",
   "hostHeadshotUrl",
+  "hostHeadshotUrls",
+  "facilitators",
   "hostSignatureUrl",
   "logoUrl",
+  "logoLightUrl",
+  "logoDarkUrl",
   "styleGuide",
   "generationMode",
   "copyDoc",
 ]);
 
-// Steps whose copy is supplied by the uploaded document in copy-doc mode. Their
-// forms are collapsed behind a notice (revealable) so the wizard stays short.
-// Testimonials (Step 8) stays editable: testimonials are social proof/media the
-// user often manages here, and the doc only overrides them when it supplies a
-// Testimonials section.
-const COPY_DOC_HIDDEN_STEPS = new Set<number>([6]);
+// Document mode now runs the full AI pipeline (it builds all 8 pages and fills
+// gaps), so every wizard step must stay editable — the AI needs all the inputs.
+// Kept as an (empty) set so the rendering hook below stays intact.
+const COPY_DOC_HIDDEN_STEPS = new Set<number>([]);
 
 function CopyFromDocNotice({ title, onReveal }: { title: string; onReveal: () => void }) {
   return (

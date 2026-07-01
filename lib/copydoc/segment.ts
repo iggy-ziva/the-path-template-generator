@@ -47,6 +47,60 @@ function stripLead(text: string, lead: string): string {
   return rest.replace(/^[\s.:—–\-]+/, "").trim();
 }
 
+/** Split a "Name — Title" (or "Name, Title") lead into its two parts. */
+function splitNameTitle(lead: string): { name: string; title: string } {
+  const t = lead.trim();
+  const m = t.match(/^(.*?)\s*[—–\-|,·:]\s*(.+)$/);
+  if (m) return { name: m[1].trim(), title: m[2].trim() };
+  return { name: t, title: "" };
+}
+
+/** A short, punctuation-free line reads as a person's name/title, not a bio. */
+function looksLikeName(text: string): boolean {
+  const t = text.trim();
+  if (!t || t.length > 70) return false;
+  if (/[.!?:;]$/.test(t)) return false;
+  return t.split(/\s+/).length <= 7;
+}
+
+/**
+ * Group free-form paragraphs into people. A short, punctuation-free line starts
+ * a new person (its name); the paragraphs that follow are that person's bio. A
+ * bold lead ("**Name — Title** bio") also starts a new person. This prevents a
+ * single facilitator's name + bio from exploding into multiple entries.
+ */
+function assemblePeople(paragraphs: { text: string; boldLead?: string }[], shape: string[]): CopyItem[] {
+  const [kName, kTitle, kBody] = shape;
+  const people: CopyItem[] = [];
+  let cur: CopyItem | null = null;
+  const push = () => { if (cur) { people.push(cur); cur = null; } };
+
+  for (const p of paragraphs) {
+    const text = p.text.trim();
+    if (!text) continue;
+    const lead = p.boldLead?.trim();
+    if (lead) {
+      push();
+      const { name, title } = splitNameTitle(lead);
+      cur = { [kName]: name, [kTitle]: title, [kBody]: stripLead(p.text, p.boldLead!) };
+    } else if (looksLikeName(text)) {
+      // A bare short line after a name (with no bio/title yet) is the title;
+      // otherwise it begins a new person.
+      if (cur && !cur[kBody] && !cur[kTitle]) {
+        cur[kTitle] = text;
+      } else {
+        push();
+        cur = { [kName]: text, [kTitle]: "", [kBody]: "" };
+      }
+    } else {
+      if (!cur) cur = { [kName]: "", [kTitle]: "", [kBody]: "" };
+      cur[kBody] = cur[kBody] ? `${cur[kBody]}\n\n${text}` : text;
+    }
+  }
+  push();
+  return people;
+}
+
 function buildItem(item: { text: string; boldLead?: string }, shape: string[]): CopyItem {
   const [a, b] = shape;
 
@@ -73,6 +127,17 @@ function buildItem(item: { text: string; boldLead?: string }, shape: string[]): 
     const loose = item.text.match(/^from\s+([\s\S]+?)\s+to\s+([\s\S]+?)\.?$/i);
     if (loose) return { from: loose[1].replace(/^["“']|["”']$/g, "").trim(), to: loose[2].replace(/^["“']|["”']$/g, "").trim() };
     return { from: item.text.trim(), to: "" };
+  }
+
+  // Facilitator / person: bold lead is "Name — Title" (or "Name, Title"),
+  // remainder is the bio. Split the lead on the first separator into name + title.
+  if (shape[0] === "name") {
+    const [kName, kTitle, kBody] = shape;
+    if (item.boldLead) {
+      const { name, title } = splitNameTitle(item.boldLead);
+      return { [kName]: name, [kTitle]: title, [kBody]: stripLead(item.text, item.boldLead) };
+    }
+    return { [kName]: item.text.trim(), [kTitle]: "", [kBody]: "" };
   }
 
   // Generic two-part: leading bold = first field, remainder = second. Only the
@@ -105,6 +170,19 @@ export function assembleValue(field: CopyFieldSpec, blocks: Block[]): CopyValue 
 
   // items
   const shape = field.itemShape ?? ["title", "body"];
+
+  // People/facilitators: bullets are explicit delimiters (one person each), but
+  // when authored as prose, group each name line with the bio paragraphs that
+  // follow it — rather than turning every paragraph into a separate person.
+  if (shape[0] === "name") {
+    if (lists.length) {
+      const items = lists.flatMap((l) => l.items).map((i) => buildItem(i, shape));
+      return items.length ? items : undefined;
+    }
+    const people = assemblePeople(paragraphs.map((p) => ({ text: p.text, boldLead: p.boldLead })), shape);
+    return people.length ? people : undefined;
+  }
+
   const rawItems: { text: string; boldLead?: string }[] = [
     ...lists.flatMap((l) => l.items),
     // Allow paragraph-per-item authoring as a fallback.

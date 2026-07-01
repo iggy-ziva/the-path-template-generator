@@ -78,12 +78,26 @@ create index if not exists copy_documents_user_idx on public.copy_documents (use
 -- alter table public.generated_funnels add column if not exists approved_at timestamptz;
 -- alter table public.generated_funnels add column if not exists hosted_url text;
 
+-- Figma OAuth connections (per-user tokens for brand analysis). See migrations/20260701_figma_oauth.sql
+create table if not exists public.figma_connections (
+  user_id uuid primary key references public.users(id) on delete cascade,
+  access_token text not null,
+  refresh_token text,
+  expires_at timestamptz,
+  figma_user_id text,
+  figma_handle text,
+  scope text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- RLS policies
 alter table public.users enable row level security;
 alter table public.verification_codes enable row level security;
 alter table public.wizard_submissions enable row level security;
 alter table public.generated_funnels enable row level security;
 alter table public.copy_documents enable row level security;
+alter table public.figma_connections enable row level security;
 
 -- Service role bypasses RLS; app uses service role key for all mutations
 

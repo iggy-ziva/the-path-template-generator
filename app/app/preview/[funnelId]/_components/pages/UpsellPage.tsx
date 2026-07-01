@@ -261,7 +261,10 @@ export default function UpsellPage({ content: c, wizard: w, exportMode = false }
           <div className="ty-footer-left">
             <BrandLogo
               logoUrl={w.logoUrl}
+              logoLightUrl={w.logoLightUrl}
+              logoDarkUrl={w.logoDarkUrl}
               logoTransparent={w.logoTransparent}
+              background="dark"
               name={brandName}
               className="ty-footer-brand"
               imgStyle={{ maxHeight: "168px", maxWidth: "540px", width: "100%", objectFit: "contain", display: "block" }}
